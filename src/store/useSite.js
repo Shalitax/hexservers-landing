@@ -6,6 +6,14 @@ import { createDefaultState, SCHEMA_VERSION } from '../data/defaultState.js'
 import { DEFAULT_CURRENCY, formatMoney, resolveCurrency } from '../lib/money.js'
 import { mergeTheme } from '../lib/theme.js'
 import { resolveLayout } from '../lib/layouts.js'
+import {
+  fetchRemoteContent,
+  saveRemoteContent,
+  loginRemote,
+  logoutRemote,
+  readToken,
+  writeToken,
+} from '../lib/remote.js'
 import { uid, clone, moveItem, slugify } from '../lib/utils.js'
 
 const DOC_KEY = 'site'
@@ -19,12 +27,58 @@ const VIEWER_LAYOUT_KEY = 'hexservers:catalog-layout'
 
 /* --------------------------------- persistencia -------------------------------- */
 
+/**
+ * Guardado diferido, a dos sitios.
+ *
+ * Siempre al navegador, que es instantáneo y funciona sin red. Y además al
+ * servidor, si lo hay y hay sesión de admin — ese es el que ven los demás. El
+ * orden importa: primero lo local, para que un servidor caído nunca haga perder
+ * lo que se acaba de escribir.
+ *
+ * `onSync` lo pone el store al arrancar para poder pintar el estado en la barra
+ * de administración; aquí no se sabe nada de React.
+ */
 let saveTimer = null
+let onSync = () => {}
+
+export const setSyncListener = (listener) => {
+  onSync = listener
+}
+
 function scheduleSave(site) {
   clearTimeout(saveTimer)
-  saveTimer = setTimeout(() => {
-    writeDoc(DOC_KEY, site).catch((err) => console.error('[hexservers] error al guardar:', err))
+  saveTimer = setTimeout(async () => {
+    try {
+      await writeDoc(DOC_KEY, site)
+    } catch (err) {
+      console.error('[hexservers] error al guardar en el navegador:', err)
+    }
+
+    const token = readToken()
+    if (!token) return
+
+    onSync({ state: 'saving', error: '' })
+    try {
+      await saveRemoteContent(publicSite(site), token)
+      onSync({ state: 'saved', error: '', at: Date.now() })
+    } catch (err) {
+      onSync({ state: 'error', error: err.message })
+    }
   }, 250)
+}
+
+/**
+ * El documento sin nada que no deba ser público.
+ *
+ * Lo que se manda al servidor acaba en un archivo que sirve `GET /api/content`,
+ * y eso lo lee cualquier visitante: el hash de la contraseña y las claves de la
+ * API de WHMCS no pueden ir dentro. Es la misma limpieza que hace `exportJson`.
+ */
+function publicSite(site) {
+  const clean = clone(site)
+  clean.admin = { username: site.admin?.username || 'admin', salt: '', passwordHash: '', defaultPassword: '' }
+  clean.whmcs = { ...site.whmcs, identifier: '', secret: '' }
+  return clean
 }
 
 /* ---------------------------------- plantillas --------------------------------- */
@@ -362,11 +416,30 @@ export const useSite = create((set, get) => ({
   loginOpen: false,
   authError: '',
 
+  /* ¿Hay servidor detrás? Lo resuelve `init()`. Cambia dónde vive el contenido
+     y quién valida la contraseña, así que media app pregunta por esto. */
+  serverMode: false,
+
+  /* Estado del último guardado en el servidor: idle | saving | saved | error. */
+  sync: { state: 'idle', error: '', at: null },
+
   /* ------------------------------- ciclo de vida ------------------------------ */
 
+  /**
+   * Arranque. De dónde sale el contenido, en orden de autoridad:
+   *
+   *   1. El servidor, si lo hay. Es lo que ve todo el mundo, así que manda.
+   *   2. El navegador (IndexedDB). Sin servidor, es lo único que hay; con
+   *      servidor, queda como copia local de quien editó.
+   *   3. El contenido semilla, la primera vez.
+   *
+   * El servidor gana a propósito: si mandara la copia local, quien editó vería
+   * una web distinta de la de sus visitantes y volveríamos al problema original.
+   */
   async init() {
-    const stored = await readDoc(DOC_KEY)
-    let site = migrate(stored)
+    const [stored, remote] = await Promise.all([readDoc(DOC_KEY), fetchRemoteContent()])
+
+    let site = migrate(remote.site || stored)
 
     // Primer arranque: genera el hash de la contraseña por defecto.
     if (!site.admin.passwordHash) {
@@ -382,8 +455,19 @@ export const useSite = create((set, get) => ({
       await writeDoc(DOC_KEY, site)
     }
 
-    const isAdmin = sessionStorage.getItem(SESSION_KEY) === '1'
-    set({ site, ready: true, isAdmin, editMode: isAdmin })
+    /* Con servidor, la sesión válida es la que él reconoce (el token). La marca
+       local por sí sola no basta: reiniciar el servidor cierra las sesiones. */
+    const localSession = sessionStorage.getItem(SESSION_KEY) === '1'
+    const isAdmin = remote.available ? localSession && Boolean(readToken()) : localSession
+
+    set({
+      site,
+      ready: true,
+      isAdmin,
+      editMode: isAdmin,
+      serverMode: remote.available,
+      sync: { state: 'idle', error: '', at: null },
+    })
   },
 
   /** Mutación inmutable + guardado diferido. Único punto de escritura del store. */
@@ -401,7 +485,27 @@ export const useSite = create((set, get) => ({
   openLogin: () => set({ loginOpen: true, authError: '' }),
   closeLogin: () => set({ loginOpen: false, authError: '' }),
 
+  /**
+   * Entrar en modo edición.
+   *
+   * Con servidor, quien decide es él: la contraseña se comprueba contra
+   * `HEX_ADMIN_PASSWORD` y devuelve un token, que es lo único que permite
+   * guardar. Sin servidor, se cae al hash local de siempre — que sólo protege el
+   * modo edición en este navegador y no es seguridad real.
+   */
   async login(username, password) {
+    if (get().serverMode) {
+      try {
+        await loginRemote(password)
+      } catch (err) {
+        set({ authError: err.message })
+        return false
+      }
+      sessionStorage.setItem(SESSION_KEY, '1')
+      set({ isAdmin: true, editMode: true, loginOpen: false, authError: '', panelOpen: true })
+      return true
+    }
+
     const { admin } = get().site
     const ok =
       username.trim().toLowerCase() === String(admin.username).toLowerCase() &&
@@ -418,7 +522,8 @@ export const useSite = create((set, get) => ({
 
   logout() {
     sessionStorage.removeItem(SESSION_KEY)
-    set({ isAdmin: false, editMode: false, panelOpen: false })
+    logoutRemote(readToken())
+    set({ isAdmin: false, editMode: false, panelOpen: false, sync: { state: 'idle', error: '', at: null } })
   },
 
   async changeCredentials(username, newPassword) {
@@ -917,6 +1022,10 @@ export const useSite = create((set, get) => ({
     set({ site })
   },
 }))
+
+/* El guardado diferido vive fuera del store (no sabe nada de React); así puede
+   contar cómo le fue con el servidor y la barra de admin lo pinta. */
+setSyncListener((sync) => useSite.setState((state) => ({ sync: { ...state.sync, ...sync } })))
 
 const pickSecrets = (whmcs) => ({ identifier: whmcs.identifier, secret: whmcs.secret })
 

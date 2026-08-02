@@ -1,4 +1,15 @@
-import { Eye, Pencil, LogOut, SlidersHorizontal, Database } from 'lucide-react'
+import {
+  Eye,
+  Pencil,
+  LogOut,
+  SlidersHorizontal,
+  Database,
+  Cloud,
+  CloudOff,
+  Check,
+  AlertTriangle,
+  Loader2,
+} from 'lucide-react'
 import { useSite } from '../store/useSite.js'
 import { storageEngine } from '../lib/db.js'
 import { cx } from '../lib/utils.js'
@@ -16,6 +27,8 @@ export default function AdminBar() {
   return (
     <div className="fixed inset-x-0 bottom-0 z-[80] flex justify-center p-3 sm:p-4">
       <div className="glass flex items-center gap-1.5 bg-void-2/90 p-1.5 shadow-2xl">
+        <SyncStatus />
+
         <span className="hidden items-center gap-1.5 px-3 text-[10px] font-semibold tracking-wider text-slate-500 uppercase sm:flex">
           <Database size={12} className="text-hex-400" />
           {storageEngine()}
@@ -50,5 +63,51 @@ export default function AdminBar() {
         </button>
       </div>
     </div>
+  )
+}
+
+/**
+ * Si lo editado ha llegado al servidor, que es lo que ven los visitantes.
+ *
+ * Sin servidor lo dice claro en vez de callarse: la diferencia entre «guardado
+ * para todos» y «guardado sólo en tu navegador» es justo lo que hay que saber
+ * antes de dar por publicado un cambio.
+ */
+function SyncStatus() {
+  const serverMode = useSite((s) => s.serverMode)
+  const sync = useSite((s) => s.sync)
+
+  if (!serverMode) {
+    return (
+      <span
+        title="No hay servidor: lo que edites se guarda sólo en este navegador y los visitantes no lo verán."
+        className="flex items-center gap-1.5 rounded-lg px-2.5 py-2 text-[10px] font-semibold tracking-wider text-amber-300/90 uppercase"
+      >
+        <CloudOff size={12} />
+        <span className="hidden sm:inline">Sólo local</span>
+      </span>
+    )
+  }
+
+  const STATES = {
+    saving: { icon: Loader2, text: 'Guardando…', className: 'text-slate-400', spin: true },
+    saved: { icon: Check, text: 'Publicado', className: 'text-emerald-300' },
+    error: { icon: AlertTriangle, text: 'Sin guardar', className: 'text-rose-300' },
+    idle: { icon: Cloud, text: 'En el servidor', className: 'text-hex-300' },
+  }
+  const view = STATES[sync.state] || STATES.idle
+  const StateIcon = view.icon
+
+  return (
+    <span
+      title={sync.error || 'Los cambios se guardan en el servidor y los ven todos los visitantes.'}
+      className={cx(
+        'flex items-center gap-1.5 rounded-lg px-2.5 py-2 text-[10px] font-semibold tracking-wider uppercase',
+        view.className,
+      )}
+    >
+      <StateIcon size={12} className={view.spin ? 'animate-spin' : undefined} />
+      <span className="hidden sm:inline">{view.text}</span>
+    </span>
   )
 }

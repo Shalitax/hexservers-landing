@@ -1,6 +1,12 @@
 node_modules
 dist
 .claude/settings.local.json
+
+# Contenido que escribe el servidor en tiempo de ejecución: es de cada
+# instalación, no del proyecto. Haz copia de seguridad de data/content.json.
+# Anclado a la raíz con la barra: sin ella también ignoraría src/data/.
+/data
+.env
 dist-ssr
 *.local
 .DS_Store

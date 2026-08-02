@@ -25,6 +25,62 @@ npm run dev
 
 Otros comandos: `npm run build` (producción) y `npm run preview` (servir el build).
 
+Requiere **Node 18 o superior**.
+
+## Despliegue en un servidor
+
+Hay dos formas de servir la web, y la diferencia no es de comodidad sino de **dónde
+vive el contenido que editas desde el panel**.
+
+### Con servidor (recomendado): lo que editas lo ven los visitantes
+
+`server/index.js` sirve el build y guarda el contenido en un archivo del disco. No
+tiene dependencias: sólo Node.
+
+```bash
+git clone https://github.com/Shalitax/hexservers-landing.git && cd hexservers-landing
+```
+
+```bash
+npm install && npm run build
+```
+
+```bash
+HEX_ADMIN_PASSWORD='una-contraseña-larga' npm start
+```
+
+Queda escuchando en el puerto 8080 (`PORT` lo cambia). A partir de ahí, entras con
+`Ctrl+Shift+A`, editas, y cada cambio se guarda en `data/content.json`: **todos los
+visitantes lo ven al recargar**. La barra inferior de administración indica
+*Publicado* cuando el cambio llegó al servidor.
+
+| Variable | Para qué | Por defecto |
+| -------- | -------- | ----------- |
+| `HEX_ADMIN_PASSWORD` | Contraseña del panel. **Obligatoria**: sin ella el servidor no arranca | — |
+| `PORT` / `HOST` | Dónde escucha | `8080` / `0.0.0.0` |
+| `HEX_DATA_DIR` | Dónde se guarda `content.json` | `./data` |
+| `HEX_STATIC_DIR` | Qué carpeta se sirve | `./dist` |
+
+Cosas que conviene saber:
+
+- **`data/content.json` es tu contenido**: no está en el repo (va en `.gitignore`) y es
+  lo único que hay que respaldar. Si lo borras, la web vuelve al contenido semilla.
+- **Ponlo detrás de HTTPS** (nginx o Caddy como proxy inverso). La contraseña del panel
+  viaja en el cuerpo de la petición: sin TLS va en claro por la red.
+- Las sesiones viven en memoria: reiniciar el servidor obliga a entrar de nuevo.
+- El archivo se escribe de forma atómica (temporal + `rename`), así que un corte a
+  mitad de guardado no lo deja corrupto.
+- `GET /api/content` es **público** — es el contenido de la web. Por eso el servidor
+  vacía el hash de la contraseña y las claves de WHMCS antes de escribir el archivo.
+
+### Sin servidor (hosting estático)
+
+Subir `dist/` a cualquier hosting estático también funciona, pero entonces **lo que
+edites desde el panel se guarda sólo en tu navegador** y los visitantes seguirán viendo
+el contenido compilado en `src/data/defaultState.js`. La app lo detecta y la barra de
+administración lo avisa con un *Sólo local*. Sirve para maquetar o para una demo, no
+para un sitio que se administra.
+
 ## Estructura del sitio
 
 El catálogo tiene tres niveles:
@@ -145,12 +201,18 @@ Tres formas de abrir el login, ninguna visible para un cliente:
 - añadir `#admin` a la URL
 - 5 clicks seguidos en el punto gris junto al copyright del footer
 
-**Credenciales por defecto: `admin` / `hexadmin`.** Cámbialas en el panel →
-pestaña **Datos** en cuanto entres.
+Cómo se valida la contraseña depende de cómo esté servida la web:
 
-> El login sólo evita que un visitante casual entre al modo edición. No es
-> seguridad real: todo se ejecuta en el navegador. Cuando haya backend, la
-> verificación debe moverse al servidor.
+- **Con servidor** (`npm start`): la comprueba el servidor contra `HEX_ADMIN_PASSWORD` y
+  devuelve un token de sesión. Sin ese token no se puede guardar nada, así que aquí el
+  login **sí** protege el contenido. No hay usuario que elegir ni contraseña de fábrica:
+  el servidor no arranca sin la variable, y limita los intentos por IP.
+- **Sin servidor** (estático): se cae al hash local del documento, con las credenciales
+  por defecto `admin` / `hexadmin`, que cambias en el panel → pestaña **Datos**.
+
+> El login local **no es seguridad**: todo se ejecuta en el navegador y cualquiera con
+> las devtools ve el estado. Sólo evita que un visitante casual entre al modo edición.
+> Si la web se administra de verdad, sírvela con `npm start` y detrás de HTTPS.
 
 ### Qué se puede editar
 
@@ -297,6 +359,7 @@ credenciales; la URL de ese proxy se configura en el panel → WHMCS.
 ## Estructura
 
 ```
+server/index.js              Servidor: estáticos + API de contenido (sin dependencias)
 src/
 ├── App.jsx                  Shell con router + atajos ocultos de admin
 ├── index.css                Tema, glass, tipografías, ritmo (.section), animaciones
@@ -310,6 +373,7 @@ src/
 │   ├── db.js                IndexedDB + fallback localStorage
 │   ├── auth.js              PBKDF2-SHA256 de la contraseña de admin
 │   ├── layouts.js           Las cinco formas de listar el catálogo
+│   ├── remote.js            Contenido del servidor: cargarlo, guardarlo y sesión
 │   ├── whmcs.js             URLs de carrito, precios y placeholder de la API
 │   └── utils.js             Helpers (precios, slugs, imágenes, URLs seguras)
 ├── store/useSite.js         Store Zustand: estado + CRUD + migración + persistencia

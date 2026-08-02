@@ -8,7 +8,10 @@ export default function AdminLogin() {
   const closeLogin = useSite((s) => s.closeLogin)
   const login = useSite((s) => s.login)
   const authError = useSite((s) => s.authError)
-  const usingDefault = useSite((s) => Boolean(s.site.admin.defaultPassword))
+  const serverMode = useSite((s) => s.serverMode)
+  /* El aviso de credenciales de fábrica sólo aplica al login local: con servidor
+     la contraseña es la variable de entorno, y no hay ninguna por defecto. */
+  const usingDefault = useSite((s) => !s.serverMode && Boolean(s.site.admin.defaultPassword))
 
   const [username, setUsername] = useState('')
   const [password, setPassword] = useState('')
@@ -34,20 +37,23 @@ export default function AdminLogin() {
       subtitle="Modo edición del sitio"
     >
       <form onSubmit={submit} className="space-y-4">
-        <div>
-          <label className="label" htmlFor="admin-user">
-            Usuario
-          </label>
-          <input
-            id="admin-user"
-            data-autofocus
-            className="input"
-            value={username}
-            onChange={(event) => setUsername(event.target.value)}
-            autoComplete="username"
-            placeholder="admin"
-          />
-        </div>
+        {/* Con servidor sólo hay una contraseña y ningún usuario que elegir. */}
+        {!serverMode && (
+          <div>
+            <label className="label" htmlFor="admin-user">
+              Usuario
+            </label>
+            <input
+              id="admin-user"
+              data-autofocus
+              className="input"
+              value={username}
+              onChange={(event) => setUsername(event.target.value)}
+              autoComplete="username"
+              placeholder="admin"
+            />
+          </div>
+        )}
 
         <div>
           <label className="label" htmlFor="admin-pass">
@@ -56,6 +62,7 @@ export default function AdminLogin() {
           <input
             id="admin-pass"
             type="password"
+            data-autofocus={serverMode ? '' : undefined}
             className="input"
             value={password}
             onChange={(event) => setPassword(event.target.value)}
@@ -84,8 +91,9 @@ export default function AdminLogin() {
         )}
 
         <p className="text-center text-[11px] leading-relaxed text-slate-600">
-          Este login sólo protege el modo edición en el navegador. No sustituye a la autenticación
-          del servidor.
+          {serverMode
+            ? 'La contraseña la valida el servidor (HEX_ADMIN_PASSWORD). Lo que guardes lo verán todos los visitantes.'
+            : 'No hay servidor detrás: este login sólo protege el modo edición en este navegador, y lo que edites no lo verán los visitantes.'}
         </p>
       </form>
     </Modal>
