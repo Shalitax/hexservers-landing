@@ -23,19 +23,23 @@
  */
 
 import { createServer } from 'node:http'
-import { readFile, writeFile, rename, mkdir } from 'node:fs/promises'
+import { readFile, writeFile, rename, mkdir, stat } from 'node:fs/promises'
 import { createReadStream } from 'node:fs'
-import { stat } from 'node:fs/promises'
 import { randomBytes, timingSafeEqual, scrypt as scryptCb } from 'node:crypto'
 import { promisify } from 'node:util'
-import { join, extname, normalize, dirname } from 'node:path'
+import { join, extname, normalize, dirname, resolve } from 'node:path'
 import { fileURLToPath } from 'node:url'
 
 const scrypt = promisify(scryptCb)
 
 const ROOT = join(dirname(fileURLToPath(import.meta.url)), '..')
-const STATIC_DIR = process.env.HEX_STATIC_DIR || join(ROOT, 'dist')
-const DATA_DIR = process.env.HEX_DATA_DIR || join(ROOT, 'data')
+/* `resolve` normaliza separadores y relativos: sin esto, un HEX_STATIC_DIR escrito
+   con las barras del otro sistema no coincidiría con las rutas que arma `join`, y
+   el guardián contra el recorrido de rutas rechazaría archivos legítimos. */
+const STATIC_DIR = resolve(process.env.HEX_STATIC_DIR || join(ROOT, 'dist'))
+/* Donde Vite deja los archivos con hash en el nombre: los únicos cacheables a largo plazo. */
+const ASSETS_DIR = join(STATIC_DIR, 'assets')
+const DATA_DIR = resolve(process.env.HEX_DATA_DIR || join(ROOT, 'data'))
 const CONTENT_FILE = join(DATA_DIR, 'content.json')
 
 const PORT = Number(process.env.PORT) || 8080
@@ -111,6 +115,21 @@ function noteFailure(ip) {
   entry.count += 1
   attempts.set(ip, entry)
 }
+
+/**
+ * Barrido de lo caducado.
+ *
+ * Los dos mapas sólo se limpiaban al consultarlos, así que un token que expira y
+ * nadie vuelve a usar —lo normal: se cierra la pestaña y ya— se quedaba en memoria
+ * para siempre. En un proceso pensado para estar meses levantado, eso es una fuga.
+ *
+ * `unref()` para que este temporizador no sea motivo de que Node siga vivo.
+ */
+setInterval(() => {
+  const now = Date.now()
+  for (const [token, expires] of sessions) if (now > expires) sessions.delete(token)
+  for (const [ip, entry] of attempts) if (now > entry.until) attempts.delete(ip)
+}, 30 * 60 * 1000).unref()
 
 /* ---------------------------------- contenido -------------------------------- */
 
@@ -292,8 +311,10 @@ async function serveStatic(req, res, url) {
 
   const type = MIME[extname(file).toLowerCase()] || 'application/octet-stream'
   /* Los assets llevan hash en el nombre: se pueden cachear para siempre. El
-     index.html no, o el navegador serviría una versión vieja tras desplegar. */
-  const cache = file.includes(`${join('dist', 'assets')}`) || /\.[0-9a-f]{8,}\./.test(file)
+     index.html no, o el navegador serviría una versión vieja tras desplegar.
+     Se compara contra la carpeta real y no contra el literal 'dist/assets', que
+     dejaba de valer en cuanto se cambiaba HEX_STATIC_DIR. */
+  const cache = file.startsWith(ASSETS_DIR)
     ? 'public, max-age=31536000, immutable'
     : 'no-cache'
 

@@ -53,18 +53,50 @@ function scheduleSave(site) {
     } catch (err) {
       console.error('[hexservers] error al guardar en el navegador:', err)
     }
-
-    const token = readToken()
-    if (!token) return
-
-    onSync({ state: 'saving', error: '' })
-    try {
-      await saveRemoteContent(publicSite(site), token)
-      onSync({ state: 'saved', error: '', at: Date.now() })
-    } catch (err) {
-      onSync({ state: 'error', error: err.message })
-    }
+    if (readToken()) pushToServer(site)
   }, 250)
+}
+
+/**
+ * Envío al servidor, de uno en uno.
+ *
+ * Editando rápido —arrastrando un color, escribiendo en un campo— el retardo de
+ * 250 ms no impide que un envío salga mientras el anterior sigue en vuelo. Dos
+ * peticiones en paralelo pueden llegar en cualquier orden, y entonces el archivo
+ * acabaría con una versión intermedia en lugar de la última.
+ *
+ * Con esto sólo hay una petición viva a la vez: lo que llegue mientras tanto
+ * espera su turno y, si llegan varios, sólo se manda el último — los de en medio
+ * ya no le importan a nadie.
+ */
+let sending = false
+let pendingSite = null
+
+async function pushToServer(site) {
+  pendingSite = site
+  if (sending) return
+
+  sending = true
+  try {
+    while (pendingSite) {
+      const next = pendingSite
+      pendingSite = null
+
+      const token = readToken()
+      if (!token) break
+
+      onSync({ state: 'saving', error: '' })
+      await saveRemoteContent(publicSite(next), token)
+      onSync({ state: 'saved', error: '', at: Date.now() })
+    }
+  } catch (err) {
+    /* Se descarta la cola: si falló la sesión o la red, reintentar en bucle sólo
+       encadenaría errores. El siguiente cambio lo vuelve a intentar. */
+    pendingSite = null
+    onSync({ state: 'error', error: err.message })
+  } finally {
+    sending = false
+  }
 }
 
 /**
@@ -388,6 +420,29 @@ function migrate(stored) {
   return site
 }
 
+/**
+ * `migrate` a prueba de contenido corrupto.
+ *
+ * `migrate` da por hecho que lo que recibe tiene la forma de un documento del
+ * sitio, y con razón: normalmente lo escribió esta misma app. Pero el contenido
+ * del servidor es un archivo de texto en un disco —se respalda, se restaura y a
+ * veces se toca a mano—, así que puede llegar con la forma cambiada. Sin esta
+ * red, un `nav.links` que sea una cadena en vez de una lista deja la web entera
+ * colgada del «CARGANDO…» para todos los visitantes.
+ *
+ * Devuelve el documento o `null`, y deja dicho por qué falló para poder avisar.
+ */
+function safeMigrate(source, origen) {
+  if (!source) return { site: null, error: '' }
+  try {
+    return { site: migrate(source), error: '' }
+  } catch (err) {
+    const error = `El contenido ${origen} no se pudo leer (${err.message}).`
+    console.error(`[hexservers] ${error}`)
+    return { site: null, error }
+  }
+}
+
 const STEPS_ANCHOR = '#como-funciona'
 
 /** Botón del hero que apuntaba a la sección eliminada → el de la semilla actual. */
@@ -423,6 +478,10 @@ export const useSite = create((set, get) => ({
   /* Estado del último guardado en el servidor: idle | saving | saved | error. */
   sync: { state: 'idle', error: '', at: null },
 
+  /* Por qué no se pudo usar el contenido guardado, si es que pasó. Vacío = todo
+     bien. Se enseña sólo al admin: el visitante ya está viendo algo coherente. */
+  contentError: '',
+
   /* ------------------------------- ciclo de vida ------------------------------ */
 
   /**
@@ -437,37 +496,71 @@ export const useSite = create((set, get) => ({
    * una web distinta de la de sus visitantes y volveríamos al problema original.
    */
   async init() {
-    const [stored, remote] = await Promise.all([readDoc(DOC_KEY), fetchRemoteContent()])
+    let contentError = ''
+    let remote = { available: false, site: null }
+    let site = null
 
-    let site = migrate(remote.site || stored)
+    /**
+     * Todo el arranque va dentro de un `try`, y el `finally` garantiza que
+     * `ready` acabe en `true` pase lo que pase. La regla es que **la web siempre
+     * se pinta**: es preferible enseñar el contenido semilla que dejar a los
+     * visitantes mirando un «CARGANDO…» eterno porque un archivo venía torcido.
+     */
+    try {
+      const [stored, fetched] = await Promise.all([readDoc(DOC_KEY), fetchRemoteContent()])
+      remote = fetched
 
-    // Primer arranque: genera el hash de la contraseña por defecto.
-    if (!site.admin.passwordHash) {
-      const salt = randomSalt()
-      site = {
-        ...site,
-        admin: {
-          ...site.admin,
-          salt,
-          passwordHash: await hashPassword(site.admin.defaultPassword || 'hexadmin', salt),
-        },
+      // Cada origen se intenta por separado, para poder caer al siguiente.
+      const fromRemote = safeMigrate(remote.site, 'del servidor')
+      const fromLocal = fromRemote.site ? { site: null, error: '' } : safeMigrate(stored, 'guardado en este navegador')
+
+      contentError = fromRemote.error || fromLocal.error
+      site = fromRemote.site || fromLocal.site
+
+      /* Ni servidor ni copia local utilizables: la semilla. Con el aviso puesto,
+         que es lo que separa «esto acaba de instalarse» de «algo se rompió». */
+      if (!site) site = createDefaultState()
+
+      /**
+       * Primer arranque: genera el hash de la contraseña por defecto.
+       *
+       * Sólo sin servidor. Con servidor la contraseña la valida él, y el
+       * contenido que sirve trae el hash vacío a propósito — sin esta condición,
+       * cada visitante derivaría un PBKDF2 de 120.000 iteraciones en cada carga
+       * para nada.
+       */
+      if (!remote.available && !site.admin.passwordHash) {
+        const salt = randomSalt()
+        site = {
+          ...site,
+          admin: {
+            ...site.admin,
+            salt,
+            passwordHash: await hashPassword(site.admin.defaultPassword || 'hexadmin', salt),
+          },
+        }
+        await writeDoc(DOC_KEY, site)
       }
-      await writeDoc(DOC_KEY, site)
+    } catch (err) {
+      console.error('[hexservers] fallo al arrancar:', err)
+      contentError = contentError || `No se pudo preparar el contenido (${err.message}).`
+      site = site || createDefaultState()
+    } finally {
+      /* Con servidor, la sesión válida es la que él reconoce (el token). La marca
+         local por sí sola no basta: reiniciar el servidor cierra las sesiones. */
+      const localSession = safeSession()
+      const isAdmin = remote.available ? localSession && Boolean(readToken()) : localSession
+
+      set({
+        site: site || createDefaultState(),
+        ready: true,
+        isAdmin,
+        editMode: isAdmin,
+        serverMode: remote.available,
+        contentError,
+        sync: { state: 'idle', error: '', at: null },
+      })
     }
-
-    /* Con servidor, la sesión válida es la que él reconoce (el token). La marca
-       local por sí sola no basta: reiniciar el servidor cierra las sesiones. */
-    const localSession = sessionStorage.getItem(SESSION_KEY) === '1'
-    const isAdmin = remote.available ? localSession && Boolean(readToken()) : localSession
-
-    set({
-      site,
-      ready: true,
-      isAdmin,
-      editMode: isAdmin,
-      serverMode: remote.available,
-      sync: { state: 'idle', error: '', at: null },
-    })
   },
 
   /** Mutación inmutable + guardado diferido. Único punto de escritura del store. */
@@ -1028,6 +1121,15 @@ export const useSite = create((set, get) => ({
 setSyncListener((sync) => useSite.setState((state) => ({ sync: { ...state.sync, ...sync } })))
 
 const pickSecrets = (whmcs) => ({ identifier: whmcs.identifier, secret: whmcs.secret })
+
+/** sessionStorage también puede estar bloqueado, y esto corre en un `finally`. */
+function safeSession() {
+  try {
+    return sessionStorage.getItem(SESSION_KEY) === '1'
+  } catch {
+    return false
+  }
+}
 
 /** localStorage puede estar bloqueado (modo privado antiguo, políticas estrictas). */
 function safeRead(key) {

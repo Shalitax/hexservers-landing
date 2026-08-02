@@ -25,7 +25,9 @@ export default function AdminBar() {
   if (!isAdmin) return null
 
   return (
-    <div className="fixed inset-x-0 bottom-0 z-[80] flex justify-center p-3 sm:p-4">
+    <div className="fixed inset-x-0 bottom-0 z-[80] flex flex-col items-center gap-2 p-3 sm:p-4">
+      <ContentAlert />
+
       <div className="glass flex items-center gap-1.5 bg-void-2/90 p-1.5 shadow-2xl">
         <SyncStatus />
 
@@ -62,6 +64,30 @@ export default function AdminBar() {
           <LogOut size={14} />
         </button>
       </div>
+    </div>
+  )
+}
+
+/**
+ * Aviso de que el contenido guardado no se pudo leer y se está enseñando otro.
+ *
+ * Sólo lo ve el admin: el visitante está viendo una web coherente y no tiene nada
+ * que hacer con esta información. Pero quien administra necesita saberlo ya, porque
+ * el siguiente guardado sobrescribe el archivo roto — que es justo cómo se sale del
+ * problema, pero también cómo se pierde lo que hubiera dentro.
+ */
+function ContentAlert() {
+  const contentError = useSite((s) => s.contentError)
+  if (!contentError) return null
+
+  return (
+    <div className="glass flex max-w-2xl items-start gap-2.5 border-amber-400/30 bg-amber-400/[0.12] p-3 text-[11px] leading-relaxed text-amber-100 shadow-2xl">
+      <AlertTriangle size={14} className="mt-0.5 shrink-0 text-amber-300" />
+      <span>
+        <strong>{contentError}</strong> Se está mostrando una copia anterior o el contenido de
+        ejemplo. Revisa el archivo del servidor antes de seguir editando: al guardar, lo que veas
+        ahora pasará a sustituirlo.
+      </span>
     </div>
   )
 }
