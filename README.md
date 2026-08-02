@@ -29,6 +29,10 @@ Requiere **Node 18 o superior**.
 
 ## Despliegue en un servidor
 
+> Para un servidor Debian o Ubuntu con HTTPS, arranque automático y copias de
+> seguridad, sigue **[DESPLIEGUE.md](DESPLIEGUE.md)** — es la guía paso a paso.
+> Lo de aquí abajo es el resumen conceptual.
+
 Hay dos formas de servir la web, y la diferencia no es de comodidad sino de **dónde
 vive el contenido que editas desde el panel**.
 
