@@ -1,7 +1,8 @@
-import { Mail, MessageCircle, Clock } from 'lucide-react'
+import { Mail, Clock } from 'lucide-react'
 import { useSite } from '../store/useSite.js'
 import { safeUrl } from '../lib/utils.js'
 import Editable from './ui/Editable.jsx'
+import { DiscordIcon } from './ui/icons.jsx'
 
 export default function Contact() {
   const contact = useSite((s) => s.site.contact)
@@ -46,7 +47,7 @@ export default function Contact() {
                 rel="noopener noreferrer"
                 className="btn-ghost px-6 py-3"
               >
-                <MessageCircle size={16} />
+                <DiscordIcon size={16} />
                 Comunidad en Discord
               </a>
             </div>

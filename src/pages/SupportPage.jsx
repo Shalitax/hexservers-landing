@@ -1,9 +1,9 @@
-import { LifeBuoy, Mail, MessageCircle, Clock, ExternalLink } from 'lucide-react'
+import { LifeBuoy, Mail, Clock, ExternalLink } from 'lucide-react'
 import { useSite } from '../store/useSite.js'
 import { safeUrl } from '../lib/utils.js'
 import { ticketUrl } from '../lib/whmcs.js'
 import Editable from '../components/ui/Editable.jsx'
-import { Icon } from '../components/ui/icons.jsx'
+import { Icon, DiscordIcon } from '../components/ui/icons.jsx'
 
 /**
  * Página «Soporte»: una tarjeta con el botón de abrir ticket (que lleva a WHMCS)
@@ -124,7 +124,7 @@ export default function SupportPage() {
 
           <article className="glass glass-hover flex flex-col p-6">
             <span className="mb-4 grid size-10 place-items-center rounded-xl border border-white/10 bg-white/[0.04] text-hex-300">
-              <MessageCircle size={18} />
+              <DiscordIcon size={18} />
             </span>
             <h3 className="display text-base font-bold text-white">Discord</h3>
             <p className="mt-1.5 flex-1 text-sm leading-relaxed text-slate-400">
@@ -136,7 +136,7 @@ export default function SupportPage() {
               rel="noopener noreferrer"
               className="mt-4 inline-flex items-center gap-2 text-sm font-semibold text-hex-300 transition hover:text-hex-200"
             >
-              <MessageCircle size={14} className="shrink-0" />
+              <DiscordIcon size={14} />
               Entrar al servidor
               <ExternalLink size={12} className="opacity-70" />
             </a>
