@@ -142,3 +142,20 @@ export function Glyph({ name, image, size = 20, className = '', alt = '' }) {
   }
   return <Icon name={name} size={size} className={className} />
 }
+
+/**
+ * Clases del recuadro que envuelve a un icono, según lleve imagen propia o no.
+ *
+ * Con imagen se quita el degradado de marca —el nuestro detrás de un logo ajeno
+ * confunde de quién es cada cosa— y se mete algo de aire para que el logo no toque
+ * el borde. Vive aquí y no repetido en cada tarjeta porque son ocho sitios y la
+ * decisión es una sola.
+ *
+ * `flat` para los huecos que ya eran planos y nunca llevaron degradado.
+ */
+export function glyphBox(image, { flat = false } = {}) {
+  if (image) return 'bg-white/[0.06] p-1'
+  return flat
+    ? 'bg-white/[0.04] text-hex-300'
+    : 'bg-gradient-to-br from-hex-500/20 to-plasma-500/15 text-hex-300'
+}

@@ -3,7 +3,7 @@ import { useMoney } from '../../store/useSite.js'
 import { productSummary } from '../../lib/catalog.js'
 import { cx } from '../../lib/utils.js'
 import { productHref } from '../../lib/router.js'
-import { Icon } from '../ui/icons.jsx'
+import { Icon, Glyph } from '../ui/icons.jsx'
 import StatusPill from './StatusPill.jsx'
 
 /**
@@ -42,7 +42,7 @@ export default function ProductCard({ product, group, plans, editMode, onEdit })
           <h3 className="display truncate text-base font-bold text-white">{product.name}</h3>
           {group && (
             <p className="mt-0.5 inline-flex items-center gap-1.5 text-[10px] font-semibold tracking-wider text-slate-500 uppercase">
-              <Icon name={group.icon} size={11} className="text-hex-400" />
+              <Glyph name={group.icon} image={group.image} size={11} className="text-hex-400" />
               {group.name}
             </p>
           )}

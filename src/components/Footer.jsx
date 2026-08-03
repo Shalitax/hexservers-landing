@@ -3,7 +3,7 @@ import { useSite } from '../store/useSite.js'
 import { safeUrl } from '../lib/utils.js'
 import Logo from './ui/Logo.jsx'
 import Editable from './ui/Editable.jsx'
-import { Icon } from './ui/icons.jsx'
+import { Glyph } from './ui/icons.jsx'
 
 export default function Footer() {
   const site = useSite((s) => s.site)
@@ -50,7 +50,7 @@ export default function Footer() {
                   title={social.label}
                   className="grid size-9 place-items-center rounded-lg border border-white/10 bg-white/[0.03] text-slate-400 transition hover:border-hex-500/40 hover:bg-hex-500/10 hover:text-hex-300"
                 >
-                  <Icon name={social.icon} size={16} />
+                  <Glyph name={social.icon} image={social.image} size={16} />
                 </a>
               ))}
             </div>

@@ -2,9 +2,10 @@ import { useEffect, useMemo } from 'react'
 import { ArrowLeft, ArrowRight, ChevronRight, EyeOff, Layers, PackageOpen, Settings2 } from 'lucide-react'
 import { useSite, useMoney, plansOfProduct, findProductBySlug, groupOfProduct } from '../store/useSite.js'
 import { buildFlow, fromPrice, findLocation, findCpu } from '../lib/catalog.js'
+import { cx } from '../lib/utils.js'
 import { href, groupHref, navigate, productPath } from '../lib/router.js'
 import Editable from '../components/ui/Editable.jsx'
-import { Icon } from '../components/ui/icons.jsx'
+import { Icon, Glyph, glyphBox } from '../components/ui/icons.jsx'
 import StatusPill from '../components/catalog/StatusPill.jsx'
 import Configurator from '../components/catalog/Configurator.jsx'
 import PlanDetail from '../components/catalog/PlanDetail.jsx'
@@ -163,8 +164,13 @@ export default function ProductPage({ route, onEditProduct, onEditPlan }) {
                 <div className="mt-5 grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
                   {product.features.map((item) => (
                     <article key={item.id} className="flex gap-3">
-                      <span className="mt-0.5 grid size-8 shrink-0 place-items-center rounded-lg border border-white/10 bg-white/[0.04] text-hex-300">
-                        <Icon name={item.icon} size={15} />
+                      <span
+                        className={cx(
+                          'mt-0.5 grid size-8 shrink-0 place-items-center rounded-lg border border-white/10',
+                          glyphBox(item.image, { flat: true }),
+                        )}
+                      >
+                        <Glyph name={item.icon} image={item.image} size={15} />
                       </span>
                       <div className="min-w-0">
                         <h3 className="text-sm font-semibold text-white">{item.title}</h3>
@@ -214,7 +220,7 @@ function ProductIntro({ product, productIndex, group, plans, flow }) {
             <div className="flex flex-wrap items-center gap-2">
               {group && (
                 <span className="chip !text-[11px]">
-                  <Icon name={group.icon} size={12} className="text-hex-400" />
+                  <Glyph name={group.icon} image={group.image} size={12} className="text-hex-400" />
                   {group.name}
                 </span>
               )}
@@ -295,8 +301,13 @@ function ProductIntro({ product, productIndex, group, plans, flow }) {
         <section className="grid gap-4 sm:grid-cols-3">
           {product.highlights.map((item) => (
             <article key={item.id} className="glass glass-hover p-5">
-              <span className="mb-3.5 grid size-11 place-items-center rounded-xl border border-white/10 bg-gradient-to-br from-hex-500/20 to-plasma-500/15 text-hex-300">
-                <Icon name={item.icon} size={19} />
+              <span
+                className={cx(
+                  'mb-3.5 grid size-11 place-items-center rounded-xl border border-white/10',
+                  glyphBox(item.image),
+                )}
+              >
+                <Glyph name={item.icon} image={item.image} size={item.image ? 28 : 19} />
               </span>
               <h3 className="display text-base font-bold text-white">{item.title}</h3>
               <p className="mt-1.5 text-sm leading-relaxed text-slate-400">{item.description}</p>

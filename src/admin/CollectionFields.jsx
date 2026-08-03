@@ -1,6 +1,6 @@
 import { Plus, Trash2, ChevronUp, ChevronDown } from 'lucide-react'
 import { cx } from '../lib/utils.js'
-import { CompactIconPicker } from './controls.jsx'
+import { CompactGlyphPicker } from './controls.jsx'
 
 /* ------------------------------- piezas comunes ------------------------------ */
 
@@ -141,9 +141,11 @@ export function IconItemList({ title, hint, items, onAdd, onUpdate, onRemove, on
             key={item.id}
             className="flex items-start gap-2 rounded-xl border border-white/10 bg-white/[0.025] p-2.5"
           >
-            <CompactIconPicker
-              value={item.icon || 'sparkles'}
-              onChange={(icon) => onUpdate(item.id, { icon })}
+            <CompactGlyphPicker
+              icon={item.icon || 'sparkles'}
+              image={item.image}
+              onIcon={(icon) => onUpdate(item.id, { icon })}
+              onImage={(image) => onUpdate(item.id, { image })}
             />
 
             <div className="min-w-0 flex-1 space-y-2">

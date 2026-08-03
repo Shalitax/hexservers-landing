@@ -3,7 +3,7 @@ import { ArrowUpRight, Check, Info, Settings2, ShieldCheck } from 'lucide-react'
 import { useSite, useCurrency, useMoney, featuresOfPlan } from '../../store/useSite.js'
 import { buildOrderUrl, computePrice, defaultSelection } from '../../lib/whmcs.js'
 import { cx } from '../../lib/utils.js'
-import { Icon } from '../ui/icons.jsx'
+import { Icon, Glyph, glyphBox } from '../ui/icons.jsx'
 import Flag from '../ui/Flag.jsx'
 import StatusPill from './StatusPill.jsx'
 
@@ -106,8 +106,13 @@ export default function PlanDetail({ product, plan, location, cpu, editMode, onE
             <div className="mt-5 grid gap-4 sm:grid-cols-2">
               {features.map((item) => (
                 <article key={item.id} className="glass-soft flex gap-3 p-4">
-                  <span className="grid size-9 shrink-0 place-items-center rounded-lg border border-white/10 bg-gradient-to-br from-hex-500/20 to-plasma-500/15 text-hex-300">
-                    <Icon name={item.icon} size={17} />
+                  <span
+                    className={cx(
+                      'grid size-9 shrink-0 place-items-center rounded-lg border border-white/10',
+                      glyphBox(item.image),
+                    )}
+                  >
+                    <Glyph name={item.icon} image={item.image} size={item.image ? 24 : 17} />
                   </span>
                   <div className="min-w-0">
                     <h4 className="text-sm font-semibold text-white">{item.title}</h4>

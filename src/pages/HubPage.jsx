@@ -112,9 +112,21 @@ export default function HubPage() {
           <div className="mt-8 grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
             {hub.team.map((member) => (
               <article key={member.id} className="glass glass-hover flex items-start gap-4 p-5">
-                <span className="grid size-11 shrink-0 place-items-center rounded-xl border border-white/10 bg-gradient-to-br from-hex-500/20 to-plasma-500/15 text-hex-300">
-                  <Icon name={member.icon} size={19} />
-                </span>
+                {/* Único sitio donde la imagen se recorta en vez de ajustarse: es la
+                    foto de una persona, y un avatar con bandas a los lados queda peor
+                    que uno bien encuadrado. */}
+                {member.image ? (
+                  <img
+                    src={member.image}
+                    alt=""
+                    loading="lazy"
+                    className="size-11 shrink-0 rounded-xl border border-white/10 object-cover"
+                  />
+                ) : (
+                  <span className="grid size-11 shrink-0 place-items-center rounded-xl border border-white/10 bg-gradient-to-br from-hex-500/20 to-plasma-500/15 text-hex-300">
+                    <Icon name={member.icon} size={19} />
+                  </span>
+                )}
                 <div className="min-w-0 flex-1">
                   <div className="flex items-center gap-2">
                     <h3 className="display truncate text-base font-bold text-white">

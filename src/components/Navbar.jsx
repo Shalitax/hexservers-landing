@@ -5,7 +5,7 @@ import { cx, safeUrl } from '../lib/utils.js'
 import Logo from './ui/Logo.jsx'
 import CurrencyPicker from './ui/CurrencyPicker.jsx'
 import AppearancePicker from './ui/AppearancePicker.jsx'
-import { Icon } from './ui/icons.jsx'
+import { Glyph, glyphBox } from './ui/icons.jsx'
 
 export default function Navbar({ route }) {
   const site = useSite((s) => s.site)
@@ -113,8 +113,13 @@ export default function Navbar({ route }) {
                   onClick={() => setLoginsOpen(false)}
                   className="group flex items-start gap-3 rounded-xl p-3 transition hover:bg-white/[0.07]"
                 >
-                  <span className="mt-0.5 grid size-9 shrink-0 place-items-center rounded-lg border border-white/10 bg-gradient-to-br from-hex-500/20 to-plasma-500/20 text-hex-300">
-                    <Icon name={login.icon} size={17} />
+                  <span
+                    className={cx(
+                      'mt-0.5 grid size-9 shrink-0 place-items-center rounded-lg border border-white/10',
+                      glyphBox(login.image),
+                    )}
+                  >
+                    <Glyph name={login.icon} image={login.image} size={login.image ? 22 : 17} />
                   </span>
                   <span className="min-w-0 flex-1">
                     <span className="flex items-center gap-1.5 text-sm font-semibold text-white">
@@ -184,7 +189,7 @@ export default function Navbar({ route }) {
                   rel="noopener noreferrer"
                   className="glass-soft flex items-center gap-3 p-3"
                 >
-                  <Icon name={login.icon} size={16} className="text-hex-300" />
+                  <Glyph name={login.icon} image={login.image} size={16} className="text-hex-300" />
                   <span className="text-sm font-semibold text-white">{login.label}</span>
                   <ExternalLink size={13} className="ml-auto text-slate-500" />
                 </a>

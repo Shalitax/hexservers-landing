@@ -20,7 +20,7 @@ import {
   TextField,
   SelectField,
   GlyphField,
-  CompactIconPicker,
+  CompactGlyphPicker,
   Row,
   PanelSection,
   Toggle,
@@ -466,9 +466,11 @@ function CpuSection() {
           return (
             <div key={cpu.id} className="space-y-2 rounded-xl border border-white/10 bg-white/[0.025] p-3">
               <div className="flex items-center gap-2">
-                <CompactIconPicker
-                  value={cpu.icon}
-                  onChange={(v) => updateCpu(cpu.id, { icon: v })}
+                <CompactGlyphPicker
+                  icon={cpu.icon}
+                  image={cpu.image}
+                  onIcon={(v) => updateCpu(cpu.id, { icon: v })}
+                  onImage={(v) => updateCpu(cpu.id, { image: v })}
                 />
                 <input
                   className="input"

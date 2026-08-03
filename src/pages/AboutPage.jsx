@@ -1,9 +1,9 @@
 import { ArrowRight } from 'lucide-react'
 import { useSite } from '../store/useSite.js'
-import { safeUrl } from '../lib/utils.js'
+import { cx, safeUrl } from '../lib/utils.js'
 import Editable from '../components/ui/Editable.jsx'
 import Contact from '../components/Contact.jsx'
-import { Icon } from '../components/ui/icons.jsx'
+import { Icon, Glyph, glyphBox } from '../components/ui/icons.jsx'
 
 /** Página «Nosotros»: quiénes somos, cómo trabajamos y en qué se nota. */
 export default function AboutPage() {
@@ -100,8 +100,14 @@ export default function AboutPage() {
             <div className="mt-8 grid gap-4 sm:grid-cols-2">
               {about.pillars.map((pillar, index) => (
                 <article key={pillar.id} className="glass glass-hover group p-6">
-                  <span className="mb-4 grid size-11 place-items-center rounded-xl border border-white/10 bg-gradient-to-br from-hex-500/20 to-plasma-500/15 text-hex-300 transition group-hover:from-hex-500/30 group-hover:text-hex-200">
-                    <Icon name={pillar.icon} size={19} />
+                  <span
+                    className={cx(
+                      'mb-4 grid size-11 place-items-center rounded-xl border border-white/10 transition',
+                      pillar.image ? '' : 'group-hover:from-hex-500/30 group-hover:text-hex-200',
+                      glyphBox(pillar.image),
+                    )}
+                  >
+                    <Glyph name={pillar.icon} image={pillar.image} size={pillar.image ? 28 : 19} />
                   </span>
                   <Editable
                     path={`about.pillars.${index}.title`}

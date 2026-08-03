@@ -3,7 +3,7 @@ import { useSite } from '../../store/useSite.js'
 import Flag from '../../components/ui/Flag.jsx'
 import {
   TextField,
-  IconPicker,
+  CompactGlyphPicker,
   GlyphField,
   ImageField,
   Toggle,
@@ -445,6 +445,17 @@ export default function ContentPanel() {
       <PanelSection title="Accesos del navbar" description="Portal de clientes y panel de juegos.">
         {site.nav.logins.map((login) => (
           <div key={login.id} className="space-y-2 rounded-xl border border-white/10 bg-white/[0.025] p-3">
+            <div className="flex items-center gap-2">
+              <CompactGlyphPicker
+                icon={login.icon}
+                image={login.image}
+                onIcon={(v) => updateListItem('nav.logins', login.id, { icon: v })}
+                onImage={(v) => updateListItem('nav.logins', login.id, { image: v })}
+              />
+              <span className="min-w-0 flex-1 truncate text-sm font-medium text-slate-200">
+                {login.label}
+              </span>
+            </div>
             <Row>
               <TextField
                 label="Etiqueta"
@@ -590,10 +601,11 @@ export default function ContentPanel() {
                   onRemove={() => removeListItem('about.pillars', pillar.id)}
                 />
               </div>
-              <IconPicker
-                label="Icono"
-                value={pillar.icon}
-                onChange={(v) => updateListItem('about.pillars', pillar.id, { icon: v })}
+              <GlyphField
+                icon={pillar.icon}
+                image={pillar.image}
+                onIcon={(v) => updateListItem('about.pillars', pillar.id, { icon: v })}
+                onImage={(v) => updateListItem('about.pillars', pillar.id, { image: v })}
               />
             </div>
           ))}
@@ -696,13 +708,21 @@ export default function ContentPanel() {
 
         <ListEditor
           title="Redes sociales"
+          description="El icono se elige con el botón de cada fila, que también admite subir un logo."
           path="footer.social"
           items={site.footer.social}
           columns={[
             { key: 'label', placeholder: 'Discord' },
             { key: 'url', placeholder: 'https://…' },
-            { key: 'icon', placeholder: 'discord', width: 'w-28' },
           ]}
+          extra={(item) => (
+            <CompactGlyphPicker
+              icon={item.icon}
+              image={item.image}
+              onIcon={(v) => updateListItem('footer.social', item.id, { icon: v })}
+              onImage={(v) => updateListItem('footer.social', item.id, { image: v })}
+            />
+          )}
           onAdd={() => addListItem('footer.social', { label: 'Red', url: '', icon: 'globe' })}
           onUpdate={updateListItem}
           onRemove={removeListItem}

@@ -2,7 +2,7 @@ import { ArrowRight, EyeOff, Layers, Settings2, Star } from 'lucide-react'
 import { useMoney } from '../../store/useSite.js'
 import { cx } from '../../lib/utils.js'
 import { productHref } from '../../lib/router.js'
-import { Icon } from '../ui/icons.jsx'
+import { Icon, Glyph, glyphBox } from '../ui/icons.jsx'
 import StatusPill from './StatusPill.jsx'
 
 /**
@@ -71,7 +71,7 @@ export default function ProductBox({ product, group, plans, editMode, onEdit }) 
 
           {group && (
             <p className="mt-1.5 inline-flex items-center gap-1.5 text-[11px] font-semibold tracking-wider text-slate-500 uppercase">
-              <Icon name={group.icon} size={12} className="text-hex-400" />
+              <Glyph name={group.icon} image={group.image} size={12} className="text-hex-400" />
               {group.name}
             </p>
           )}
@@ -91,8 +91,13 @@ export default function ProductBox({ product, group, plans, editMode, onEdit }) 
         <ul className="relative mt-5 grid gap-3 border-t border-white/8 pt-5 sm:grid-cols-3">
           {product.highlights.map((item) => (
             <li key={item.id} className="flex gap-2.5">
-              <span className="mt-0.5 grid size-7 shrink-0 place-items-center rounded-lg border border-white/10 bg-white/[0.04] text-hex-300">
-                <Icon name={item.icon} size={14} />
+              <span
+                className={cx(
+                  'mt-0.5 grid size-7 shrink-0 place-items-center rounded-lg border border-white/10',
+                  glyphBox(item.image, { flat: true }),
+                )}
+              >
+                <Glyph name={item.icon} image={item.image} size={14} />
               </span>
               <span className="min-w-0">
                 <span className="block text-xs font-semibold text-white">{item.title}</span>

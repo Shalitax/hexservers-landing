@@ -1,7 +1,7 @@
 import { Plus, Trash2, ChevronUp, ChevronDown } from 'lucide-react'
 import { useSite } from '../../store/useSite.js'
 import { ticketUrl } from '../../lib/whmcs.js'
-import { TextField, SelectField, IconPicker, Row, PanelSection } from '../controls.jsx'
+import { TextField, SelectField, GlyphField, Row, PanelSection } from '../controls.jsx'
 
 const NODE_STATUS = [
   { value: 'online', label: 'Operativo' },
@@ -218,10 +218,12 @@ export default function HubPanel() {
                 />
               </Row>
 
-              <IconPicker
-                label="Icono"
-                value={member.icon}
-                onChange={(v) => updateListItem('hub.team', member.id, { icon: v })}
+              <GlyphField
+                icon={member.icon}
+                image={member.image}
+                onIcon={(v) => updateListItem('hub.team', member.id, { icon: v })}
+                onImage={(v) => updateListItem('hub.team', member.id, { image: v })}
+                hint="Sube una foto o un avatar para usarlo en lugar del icono."
               />
             </div>
           ))}

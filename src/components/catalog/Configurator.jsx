@@ -3,7 +3,7 @@ import { PackageOpen, Plus } from 'lucide-react'
 import { useSite, useMoney } from '../../store/useSite.js'
 import { planMatches, fromPrice } from '../../lib/catalog.js'
 import { cx } from '../../lib/utils.js'
-import { Icon } from '../ui/icons.jsx'
+import { Glyph, glyphBox } from '../ui/icons.jsx'
 import Flag from '../ui/Flag.jsx'
 import OptionCard from './OptionCard.jsx'
 import PlanCard from './PlanCard.jsx'
@@ -121,8 +121,13 @@ export default function Configurator({
                   disabled={price === null}
                   onSelect={() => onSelect({ locationId: flow.locationId, cpuId: cpu.id })}
                   leading={
-                    <span className="grid size-11 place-items-center rounded-xl border border-white/10 bg-gradient-to-br from-hex-500/20 to-plasma-500/15 text-hex-300">
-                      <Icon name={cpu.icon} size={20} />
+                    <span
+                      className={cx(
+                        'grid size-11 place-items-center rounded-xl border border-white/10',
+                        glyphBox(cpu.image),
+                      )}
+                    >
+                      <Glyph name={cpu.icon} image={cpu.image} size={cpu.image ? 28 : 20} />
                     </span>
                   }
                   title={cpu.name}
