@@ -1,5 +1,5 @@
-import { useEffect, useMemo } from 'react'
-import { Plus, PackageOpen } from 'lucide-react'
+import { useEffect, useMemo, useState } from 'react'
+import { Plus, PackageOpen, Search, SearchX } from 'lucide-react'
 import {
   useSite,
   useCatalogLayout,
@@ -9,12 +9,16 @@ import {
 } from '../store/useSite.js'
 import { navigate } from '../lib/router.js'
 import SectionHeading from '../components/SectionHeading.jsx'
+import Editable from '../components/ui/Editable.jsx'
+import { Glyph } from '../components/ui/icons.jsx'
 import GroupTabs from '../components/catalog/GroupTabs.jsx'
 import LayoutPicker from '../components/catalog/LayoutPicker.jsx'
+import BillingCyclePicker from '../components/catalog/BillingCyclePicker.jsx'
 import ProductBox from '../components/catalog/ProductBox.jsx'
 import ProductCard from '../components/catalog/ProductCard.jsx'
 import ProductRow from '../components/catalog/ProductRow.jsx'
 import ProductTable from '../components/catalog/ProductTable.jsx'
+import ProductTile from '../components/catalog/ProductTile.jsx'
 
 /**
  * Catálogo: la única página que lista productos (la portada sólo enlaza aquí).
@@ -29,6 +33,7 @@ export default function ProductsPage({ route, onEditProduct }) {
   const addGroup = useSite((s) => s.addGroup)
   const addProduct = useSite((s) => s.addProduct)
   const layout = useCatalogLayout()
+  const [query, setQuery] = useState('')
 
   const activeGroup = route.groupSlug ? findGroupBySlug(site, route.groupSlug) : null
   const activeSlug = activeGroup?.slug || ''
@@ -52,6 +57,21 @@ export default function ProductsPage({ route, onEditProduct }) {
     [site, activeGroup, editMode],
   )
 
+  /**
+   * El buscador es de la rejilla buscable y no del catálogo entero: en los otros
+   * modos hay pocas piezas en pantalla y un campo de texto sobraría. Al cambiar de
+   * modo o de subcategoría se vacía, para no dejar la lista filtrada por algo que
+   * ya no se ve escrito en ningún sitio.
+   */
+  const searchable = layout === 'buscable'
+  useEffect(() => setQuery(''), [layout, activeSlug])
+
+  const visible = useMemo(() => {
+    const term = query.trim().toLowerCase()
+    if (!searchable || !term) return products
+    return products.filter((product) => matchesProduct(site, product, term))
+  }, [searchable, query, products, site])
+
   const countOf = (groupId) => listedProducts(site, groupId || '', editMode).length
 
   const createProduct = () => {
@@ -63,11 +83,21 @@ export default function ProductsPage({ route, onEditProduct }) {
   return (
     <main className="pt-28 pb-20 sm:pt-32 sm:pb-28">
       <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
-        <SectionHeading
-          eyebrow={site.catalog.eyebrow}
-          titlePath="catalog.title"
-          subtitlePath="catalog.subtitle"
-        />
+        {/**
+         * Cabecera. Con una subcategoría activa manda la suya, no la genérica del
+         * catálogo: /productos/juegos y /productos/vps venden cosas distintas y se
+         * presentaban con el mismo titular, así que ninguna de las dos se vendía.
+         * Si la subcategoría no ha escrito titular propio, se cae al del catálogo.
+         */}
+        {activeGroup?.headline ? (
+          <GroupHeading group={activeGroup} groupIndex={site.groups.indexOf(activeGroup)} />
+        ) : (
+          <SectionHeading
+            eyebrow={site.catalog.eyebrow}
+            titlePath="catalog.title"
+            subtitlePath="catalog.subtitle"
+          />
+        )}
 
         <div className="mt-10">
           <GroupTabs
@@ -85,8 +115,9 @@ export default function ProductsPage({ route, onEditProduct }) {
           />
         </div>
 
-        {/* Descripción de la subcategoría activa */}
-        {activeGroup && (activeGroup.description || activeGroup.tagline) && (
+        {/* Descripción suelta: sólo cuando la subcategoría no tiene cabecera propia,
+            porque si la tiene el texto ya va dentro y saldría dos veces. */}
+        {activeGroup && !activeGroup.headline && (activeGroup.description || activeGroup.tagline) && (
           <p className="mx-auto mt-6 max-w-2xl text-center text-sm leading-relaxed text-slate-500">
             {activeGroup.description || activeGroup.tagline}
           </p>
@@ -94,20 +125,53 @@ export default function ProductsPage({ route, onEditProduct }) {
 
         {products.length > 0 ? (
           <>
-            <div className="mt-8">
+            <div className="mt-8 space-y-3">
               <LayoutPicker />
+              <BillingCyclePicker />
             </div>
 
+            {searchable && (
+              <div className="mx-auto mt-8 max-w-md">
+                <label className="relative block">
+                  <Search
+                    size={16}
+                    className="pointer-events-none absolute top-1/2 left-3.5 -translate-y-1/2 text-slate-500"
+                  />
+                  <input
+                    type="search"
+                    value={query}
+                    onChange={(event) => setQuery(event.target.value)}
+                    placeholder={site.catalog.searchLabel}
+                    aria-label={site.catalog.searchLabel}
+                    className="input py-2.5 pl-10"
+                  />
+                </label>
+              </div>
+            )}
+
             <div className="mt-8">
-              <ProductList
-                layout={layout}
-                site={site}
-                products={products}
-                editMode={editMode}
-                onEditProduct={onEditProduct}
-                onCreate={createProduct}
-                activeGroup={activeGroup}
-              />
+              {visible.length > 0 ? (
+                <ProductList
+                  layout={layout}
+                  site={site}
+                  products={visible}
+                  editMode={editMode}
+                  onEditProduct={onEditProduct}
+                  onCreate={createProduct}
+                  activeGroup={activeGroup}
+                />
+              ) : (
+                /* Filtrado a cero: no es un catálogo vacío, es una búsqueda sin suerte. */
+                <div className="glass flex flex-col items-center gap-3 p-12 text-center">
+                  <SearchX size={28} className="text-slate-600" />
+                  <p className="text-sm text-slate-500">
+                    Ningún producto coincide con «{query.trim()}».
+                  </p>
+                  <button onClick={() => setQuery('')} className="btn-ghost btn-sm">
+                    Limpiar la búsqueda
+                  </button>
+                </div>
+              )}
             </div>
 
             {/* Fuera del modo «detalle» el hueco de añadir no encaja en la rejilla. */}
@@ -142,7 +206,71 @@ export default function ProductsPage({ route, onEditProduct }) {
   )
 }
 
-/* --------------------------- las cinco presentaciones ------------------------- */
+/**
+ * Cabecera propia de una subcategoría: antetítulo, titular, texto y argumentos.
+ *
+ * Es la diferencia entre que `/productos/juegos` sea «el catálogo filtrado» y que
+ * sea una página que vende servidores de juegos. Los textos son editables en línea
+ * como el resto, apuntando al grupo por su índice.
+ */
+function GroupHeading({ group, groupIndex }) {
+  return (
+    <div className="mx-auto max-w-3xl text-center">
+      <div className="eyebrow mb-3 flex items-center justify-center gap-2">
+        <Glyph name={group.icon} image={group.image} size={13} />
+        {group.name}
+      </div>
+
+      <Editable
+        path={`groups.${groupIndex}.headline`}
+        as="h1"
+        multiline
+        className="display text-3xl font-bold text-balance text-white sm:text-4xl"
+      />
+
+      {(group.description || group.tagline) && (
+        <Editable
+          path={`groups.${groupIndex}.description`}
+          as="p"
+          multiline
+          className="mt-3 text-base leading-relaxed text-pretty text-slate-400"
+        />
+      )}
+
+      {group.highlights?.length > 0 && (
+        <ul className="mt-7 flex flex-wrap items-center justify-center gap-2">
+          {group.highlights.map((item) => (
+            <li key={item.id} className="chip !text-xs">
+              <Glyph name={item.icon} image={item.image} size={13} className="text-hex-400" />
+              {item.title}
+            </li>
+          ))}
+        </ul>
+      )}
+    </div>
+  )
+}
+
+/**
+ * ¿Encaja el producto con lo que se ha escrito en el buscador?
+ *
+ * Se mira más allá del nombre —descripción, subcategoría y el nombre de sus planes—
+ * porque quien busca «ryzen» o «económico» no está tecleando el título de nada:
+ * está describiendo lo que quiere. Todo en minúsculas y sin más adornos; con
+ * catálogos de este tamaño, montar un índice sería resolver un problema que no hay.
+ */
+function matchesProduct(site, product, term) {
+  const haystack = [
+    product.name,
+    product.tagline,
+    product.description,
+    site.groups.find((group) => group.id === product.groupId)?.name,
+    ...site.plans.filter((plan) => plan.productId === product.id).map((plan) => plan.name),
+  ]
+  return haystack.some((text) => String(text || '').toLowerCase().includes(term))
+}
+
+/* --------------------------- las seis presentaciones -------------------------- */
 
 /**
  * Pinta la misma lista de productos de la forma que toque. Cada modo decide sólo su
@@ -188,6 +316,18 @@ function ProductList({ layout, site, products, editMode, onEditProduct, onCreate
       <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
         {products.map((product) => (
           <ProductCard key={product.id} {...common(product)} />
+        ))}
+      </div>
+    )
+  }
+
+  /* Baldosas más estrechas que la rejilla normal: la imagen aguanta el tamaño y
+     así entran cuatro por fila, que es lo que hace que un catálogo largo se abarque. */
+  if (layout === 'buscable') {
+    return (
+      <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
+        {products.map((product) => (
+          <ProductTile key={product.id} {...common(product)} />
         ))}
       </div>
     )

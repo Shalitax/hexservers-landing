@@ -1,7 +1,7 @@
 /**
  * Formas de listar el catálogo.
  *
- * El mismo contenido, cinco maneras de enseñarlo. No es una decisión de gusto sin
+ * El mismo contenido, seis maneras de enseñarlo. No es una decisión de gusto sin
  * más: un catálogo de tres productos se luce con tarjetas grandes y uno de treinta
  * se vuelve interminable, así que la forma correcta depende de cuántas cosas vendas
  * y de si el visitante viene a descubrir o a comparar.
@@ -41,6 +41,14 @@ export const CATALOG_LAYOUTS = [
     icon: 'sparkles',
     description:
       'Los destacados con la ficha entera y el resto en rejilla. Guía la mirada hacia lo que quieres vender.',
+  },
+  {
+    id: 'buscable',
+    name: 'Rejilla buscable',
+    short: 'Buscar',
+    icon: 'crosshair',
+    description:
+      'Baldosas con la imagen del producto y un buscador encima. Para catálogos largos donde se elige por el título, no por las cifras.',
   },
   {
     id: 'tabla',

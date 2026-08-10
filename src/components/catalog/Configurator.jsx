@@ -9,7 +9,7 @@ import OptionCard from './OptionCard.jsx'
 import PlanCard from './PlanCard.jsx'
 
 /**
- * Configurador de un producto en una sola página: ubicación → CPU → planes.
+ * Configurador de un producto en una sola página: gama → ubicación → CPU → planes.
  *
  * Cada bloque aparece cuando el anterior está resuelto y la vista baja sola hasta
  * él, así que el cliente nunca cambia de pantalla ni pierde de vista lo que ya ha
@@ -45,7 +45,7 @@ export default function Configurator({
     }
     const target = flow.ready ? plansRef.current : cpuRef.current
     target?.scrollIntoView({ behavior: 'smooth', block: 'start' })
-  }, [flow.locationId, flow.cpuId, flow.ready])
+  }, [flow.tierId, flow.locationId, flow.cpuId, flow.ready])
 
   // Numeración de los bloques visibles: sólo se cuentan los que existen.
   let step = 0
@@ -53,7 +53,61 @@ export default function Configurator({
 
   return (
     <div className="space-y-10">
-      {flow.hasLocationChoice && (
+      {/**
+       * Gama. Va la primera porque es la decisión más gruesa —qué clase de máquina
+       * hay debajo— y porque acota las demás: una gama económica puede no existir en
+       * todas las ubicaciones. Al cambiarla se reinicia lo que venía después, que ya
+       * no tiene por qué seguir estando disponible.
+       */}
+      {flow.hasTierChoice && (
+        <Block
+          number={number()}
+          title={sections.tier}
+          hint={sections.tierHint}
+          chosen={flow.tiers.find((item) => item.id === flow.tierId)?.name}
+        >
+          <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
+            {flow.tiers.map((tier) => {
+              const available = plans.filter((plan) => planMatches(plan, { tierId: tier.id }))
+              const price = fromPrice(available)
+
+              return (
+                <OptionCard
+                  key={tier.id}
+                  selected={flow.tierId === tier.id}
+                  disabled={price === null}
+                  onSelect={() => onSelect({ tierId: tier.id, locationId: '', cpuId: '' })}
+                  leading={
+                    <span
+                      className={cx(
+                        'grid size-11 place-items-center rounded-xl border border-line',
+                        glyphBox(tier.image),
+                      )}
+                    >
+                      <Glyph name={tier.icon} image={tier.image} size={tier.image ? 28 : 20} />
+                    </span>
+                  }
+                  title={tier.name}
+                  subtitle={tier.tagline}
+                  badge={tier.badge}
+                  meta={
+                    price === null ? (
+                      'Sin planes en esta gama'
+                    ) : (
+                      <>
+                        {tier.description ? `${tier.description} · ` : ''}desde{' '}
+                        <span className="text-slate-400">{money(price)}</span>
+                      </>
+                    )
+                  }
+                />
+              )
+            })}
+          </div>
+        </Block>
+      )}
+
+      {flow.showLocation && (
         <Block
           number={number()}
           title={sections.location}
@@ -62,7 +116,9 @@ export default function Configurator({
         >
           <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
             {flow.locations.map((location) => {
-              const available = plans.filter((plan) => planMatches(plan, { locationId: location.id }))
+              const available = plans.filter((plan) =>
+                planMatches(plan, { tierId: flow.tierId, locationId: location.id }),
+              )
               const price = fromPrice(available)
               const soon = location.status === 'soon' || price === null
 
@@ -71,13 +127,13 @@ export default function Configurator({
                   key={location.id}
                   selected={flow.locationId === location.id}
                   disabled={soon}
-                  onSelect={() => onSelect({ locationId: location.id, cpuId: '' })}
+                  onSelect={() => onSelect({ tierId: flow.tierId, locationId: location.id, cpuId: '' })}
                   leading={<Flag flag={location.flag} size={36} />}
                   title={location.city}
                   subtitle={location.country}
                   aside={
                     location.ping && !soon ? (
-                      <span className="chip shrink-0 !text-[10px]" title="Latencia de referencia">
+                      <span className="chip shrink-0 !text-micro" title="Latencia de referencia">
                         {location.ping}
                       </span>
                     ) : null
@@ -88,7 +144,7 @@ export default function Configurator({
                     ) : (
                       <>
                         {available.length === 1 ? '1 plan' : `${available.length} planes`} · desde{' '}
-                        <span className="text-slate-300">{money(price)}</span>
+                        <span className="text-slate-400">{money(price)}</span>
                       </>
                     )
                   }
@@ -110,7 +166,7 @@ export default function Configurator({
           <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
             {flow.cpus.map((cpu) => {
               const available = plans.filter((plan) =>
-                planMatches(plan, { locationId: flow.locationId, cpuId: cpu.id }),
+                planMatches(plan, { tierId: flow.tierId, locationId: flow.locationId, cpuId: cpu.id }),
               )
               const price = fromPrice(available)
 
@@ -119,11 +175,13 @@ export default function Configurator({
                   key={cpu.id}
                   selected={flow.cpuId === cpu.id}
                   disabled={price === null}
-                  onSelect={() => onSelect({ locationId: flow.locationId, cpuId: cpu.id })}
+                  onSelect={() =>
+                    onSelect({ tierId: flow.tierId, locationId: flow.locationId, cpuId: cpu.id })
+                  }
                   leading={
                     <span
                       className={cx(
-                        'grid size-11 place-items-center rounded-xl border border-white/10',
+                        'grid size-11 place-items-center rounded-xl border border-line',
                         glyphBox(cpu.image),
                       )}
                     >
@@ -139,7 +197,7 @@ export default function Configurator({
                     ) : (
                       <>
                         {cpu.description ? `${cpu.description} · ` : ''}desde{' '}
-                        <span className="text-slate-300">{money(price)}</span>
+                        <span className="text-slate-400">{money(price)}</span>
                       </>
                     )
                   }
@@ -160,7 +218,12 @@ export default function Configurator({
       >
         {!flow.ready ? (
           <p className="glass p-8 text-center text-sm text-slate-500">
-            Elige {flow.hasLocationChoice && !flow.locationId ? 'la ubicación' : 'el procesador'}{' '}
+            Elige{' '}
+            {flow.hasTierChoice && !flow.tierId
+              ? 'la gama'
+              : flow.hasLocationChoice && !flow.locationId
+                ? 'la ubicación'
+                : 'el procesador'}{' '}
             para ver los planes disponibles.
           </p>
         ) : flow.plans.length > 0 ? (
@@ -195,7 +258,7 @@ export default function Configurator({
           <div className="glass flex flex-col items-center gap-3 p-12 text-center">
             <PackageOpen size={28} className="text-slate-600" />
             <p className="text-sm text-slate-500">
-              {flow.hasLocationChoice || flow.hasCpuChoice
+              {flow.hasTierChoice || flow.hasLocationChoice || flow.hasCpuChoice
                 ? 'No hay planes para esta combinación.'
                 : `${product.name} todavía no tiene planes.`}
             </p>
@@ -221,8 +284,8 @@ function Block({ blockRef, number, title, hint, chosen, muted, children }) {
       <header className="mb-5 flex flex-wrap items-baseline gap-x-3 gap-y-1">
         <span
           className={cx(
-            'grid size-7 shrink-0 place-items-center rounded-full border text-xs font-bold',
-            muted ? 'border-white/10 text-slate-600' : 'border-hex-500/40 bg-hex-500/15 text-hex-200',
+            'grid size-8 shrink-0 place-items-center rounded-full border text-xs font-bold',
+            muted ? 'border-line text-slate-600' : 'border-hex-500/40 bg-hex-500/15 text-hex-200',
           )}
         >
           {number}
@@ -230,7 +293,7 @@ function Block({ blockRef, number, title, hint, chosen, muted, children }) {
         <h2 className={cx('display text-xl font-bold', muted ? 'text-slate-500' : 'text-white')}>
           {title}
         </h2>
-        {chosen && <span className="chip !text-[11px] !text-hex-200">{chosen}</span>}
+        {chosen && <span className="chip !text-micro !text-hex-200">{chosen}</span>}
         {hint && <p className="w-full text-sm text-slate-500 sm:w-auto">{hint}</p>}
       </header>
       {children}

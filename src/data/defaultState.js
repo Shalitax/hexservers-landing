@@ -11,14 +11,15 @@
  * mismo criterio con el que WHMCS agrupa productos (un grupo = una CPU en una
  * ubicación), y es lo que permite el recorrido:
  *
- *   producto → ubicación → CPU → plan → WHMCS
+ *   producto → gama → ubicación → CPU → plan → WHMCS
  *
  * Los planes que dejan ubicación o CPU en blanco valen para cualquier selección.
  */
 
 import { DEFAULT_THEME } from '../lib/theme.js'
+import { DEFAULT_CYCLE_DISCOUNTS } from '../lib/billing.js'
 
-export const SCHEMA_VERSION = 6
+export const SCHEMA_VERSION = 7
 
 export const PRODUCT_STATUS = {
   available: { label: 'Disponible', tone: 'emerald' },
@@ -242,8 +243,9 @@ const UNTURNED_TIERS = [
  *                          a elegir, y el bloque de procesador no se llega a pintar
  * @param {number} pidBase  Los PIDs salen correlativos a partir de aquí
  * @param {func}   specsOf  (tier, cpu) → filas de la tabla de especificaciones
+ * @param {string} tierId   Gama a la que pertenecen todos los planes de la matriz
  */
-function planMatrix(productId, { tiers, cpus = [null], pidBase, specsOf, options }) {
+function planMatrix(productId, { tiers, cpus = [null], pidBase, specsOf, options, tierId = '' }) {
   let pid = pidBase
   return GAME_LOCATIONS.flatMap((location) =>
     cpus.flatMap((cpu) =>
@@ -253,6 +255,7 @@ function planMatrix(productId, { tiers, cpus = [null], pidBase, specsOf, options
         return plan(productId, tier.name, price, pid, specs(specsOf(tier, cpu)), includes(tier.includes), {
           locationId: location.id,
           cpuId: cpu?.id || tier.cpuId || '',
+          tierId,
           featured: Boolean(tier.featured),
           description: tier.description,
           ...(tier.featured && options ? options(tier, pid) : null),
@@ -268,6 +271,7 @@ const minecraftPlans = (productId) =>
     tiers: MC_TIERS,
     cpus: MC_CPUS,
     pidBase: 100,
+    tierId: 'tier_estandar',
     specsOf: (tier, cpu) => [
       ['RAM', tier.ram],
       ['CPU', `${cpu.label} · ${tier.cpu}`],
@@ -297,6 +301,7 @@ const unturnedPlans = (productId) =>
   planMatrix(productId, {
     tiers: UNTURNED_TIERS,
     pidBase: 200,
+    tierId: 'tier_estandar',
     specsOf: (tier) => [
       ['Slots', tier.slots],
       ['RAM', tier.ram],
@@ -410,6 +415,7 @@ const minecraftBudgetPlans = (productId) =>
   planMatrix(productId, {
     tiers: MC_BUDGET_TIERS,
     pidBase: 300,
+    tierId: 'tier_economica',
     specsOf: (tier) => [
       ['RAM', tier.ram],
       ['CPU', `Ryzen 5 3600 · ${tier.cpu}`],
@@ -424,6 +430,7 @@ const unturnedBudgetPlans = (productId) =>
   planMatrix(productId, {
     tiers: UNTURNED_BUDGET_TIERS,
     pidBase: 400,
+    tierId: 'tier_economica',
     specsOf: (tier) => [
       ['Slots', tier.slots],
       ['RAM', tier.ram],
@@ -454,13 +461,6 @@ export function createDefaultState() {
       'Servidores optimizados por juego, con panel web, mods y backups automáticos. Online en menos de un minuto.',
     ),
     group(
-      'economicos',
-      'Económicos',
-      'wallet',
-      'La misma red y el mismo panel, en nodos compartidos',
-      'Servidores de juego al precio más bajo que podemos dar: idéntico panel, anti-DDoS y backups que la gama normal, pero sobre CPU compartida de menor reloj. Para vanilla, plugins ligeros y comunidades que están empezando.',
-    ),
-    group(
       'hosting-web',
       'Hosting Web',
       'globe',
@@ -469,7 +469,7 @@ export function createDefaultState() {
     ),
   ]
 
-  const [gVps, gGames, gBudget, gWeb] = groups.map((g) => g.id)
+  const [gVps, gGames, gWeb] = groups.map((g) => g.id)
 
   const products = [
     /* ------------------------------ Servidores VPS ----------------------------- */
@@ -552,42 +552,6 @@ export function createDefaultState() {
       ]),
     }),
 
-    /* -------------------------- Económicos (juegos) --------------------------- */
-    product('minecraft-economico', gBudget, 'Minecraft Económico', {
-      icon: 'box',
-      badge: 'Desde 2 US$',
-      tagline: 'El mismo Minecraft, en nodos compartidos',
-      description:
-        'Idéntico panel Pterodactyl, mismo anti-DDoS, mismos backups diarios y las mismas ubicaciones que la gama normal. La única diferencia está en el procesador: un Ryzen 5 3600 compartido en lugar de un 7950X con núcleos reservados. Para vanilla, plugins ligeros y servidores de amigos va sobrado; para modpacks grandes o 40 jugadores, vete a la gama de rendimiento.',
-      highlights: funcs([
-        ['wallet', 'La mitad de precio', 'Mismo servicio con hardware más modesto, sin recortar funciones.'],
-        ['cpu', 'CPU compartida', 'Ryzen 5 3600 a 4,2 GHz repartido entre varios servidores.'],
-        ['shield', 'Anti-DDoS incluido', 'La protección no cambia: 1 Tbps también en la gama económica.'],
-      ]),
-      features: funcs([
-        ['layout', 'Panel Pterodactyl', 'El mismo panel completo: consola, archivos y programador.'],
-        ['database', 'Backups diarios', 'No se recortan por ser el plan barato.'],
-        ['network', 'Subdominio gratis', 'tuserver.hexservers.gg apuntando a tu IP y puerto.'],
-        ['headset', 'Soporte 24/7', 'La misma cola de tickets que el resto de clientes.'],
-      ]),
-    }),
-    product('unturned-economico', gBudget, 'Unturned Económico', {
-      icon: 'gamepad',
-      tagline: 'Unturned al precio más bajo del catálogo',
-      description:
-        'Workshop de Steam y RocketMod igual que en la gama normal, sobre CPU compartida. Es el punto de entrada más barato que tenemos: perfecto para probar una comunidad antes de invertir en hardware dedicado.',
-      highlights: funcs([
-        ['wallet', 'Desde 1,50 US$', 'El plan más barato de toda la web.'],
-        ['box', 'Workshop ilimitado', 'Los mods no dependen de la gama que contrates.'],
-        ['cpu', 'CPU compartida', 'Ryzen 5 3600 repartido: de sobra para mapas normales.'],
-      ]),
-      features: funcs([
-        ['layout', 'Panel Pterodactyl', 'Consola, archivos y reinicios programados.'],
-        ['shield', 'Anti-DDoS de 1 Tbps', 'Incluido también aquí.'],
-        ['database', 'Backups diarios', 'Copia diaria del mapa y de la configuración.'],
-        ['headset', 'Soporte 24/7', 'Te ayudamos a montar el primero.'],
-      ]),
-    }),
 
     /* ------------------------------- Hosting Web ------------------------------ */
     product('hosting-cpanel', gWeb, 'Hosting cPanel', {
@@ -802,9 +766,15 @@ export function createDefaultState() {
     /* ------- Unturned: un plan por ubicación (ver `unturnedPlans`) ------------ */
     ...unturnedPlans(byId('unturned')),
 
-    /* --------------- Gama económica: misma matriz, CPU compartida ------------- */
-    ...minecraftBudgetPlans(byId('minecraft-economico')),
-    ...unturnedBudgetPlans(byId('unturned-economico')),
+    /**
+     * Gama económica: los mismos productos, otra liga de hardware.
+     *
+     * Cuelgan de 'minecraft' y 'unturned', no de un producto aparte. Tenerlos
+     * separados partía el mismo juego en dos sitios del árbol y escondía la mitad
+     * de los planes a quien entraba por el otro. Ver `tiers` más abajo.
+     */
+    ...minecraftBudgetPlans(byId('minecraft')),
+    ...unturnedBudgetPlans(byId('unturned')),
 
     /* ----------------------------- Hosting cPanel ---------------------------- */
     plan(
@@ -1387,6 +1357,8 @@ export function createDefaultState() {
        */
       showAllTab: true,
       emptyLabel: 'Todavía no hay productos en esta subcategoría.',
+      /* Marcador del buscador. Sólo se ve en el modo «rejilla buscable». */
+      searchLabel: 'Buscar por nombre, plan o categoría…',
       /**
        * Cómo se listan los productos. Ver CATALOG_LAYOUTS en src/lib/layouts.js:
        * 'detalle' | 'rejilla' | 'lista' | 'escaparate' | 'tabla'.
@@ -1395,11 +1367,25 @@ export function createDefaultState() {
       /* Si el visitante puede cambiar esa forma desde la propia página. */
       allowViewerLayout: true,
       /**
+       * Selector de ciclo de facturación sobre el catálogo. Apagado de fábrica:
+       * los descuentos de abajo son cero y encenderlo sin haberlos rellenado sólo
+       * añadiría botones que no cambian ningún precio. Ver src/lib/billing.js.
+       */
+      showCycles: false,
+      /**
+       * Descuento de cada ciclo, en porcentaje sobre la tarifa mensual. Tienen que
+       * coincidir con lo que cobra WHMCS de verdad: lo que se pinta aquí es lo que
+       * el cliente espera pagar en el carrito.
+       */
+      cycleDiscounts: { ...DEFAULT_CYCLE_DISCOUNTS },
+      /**
        * Bloques del configurador de la ficha de producto. Se apilan en la misma
        * página y cada uno aparece cuando el anterior está resuelto; los de
-       * ubicación y CPU sólo existen si los planes los usan.
+       * gama, ubicación y CPU sólo existen si los planes los usan.
        */
       sections: {
+        tier: 'Elige la gama',
+        tierHint: 'Qué clase de máquina hay debajo. Lo demás —panel, red y soporte— es idéntico.',
         location: 'Elige la ubicación',
         locationHint: 'El datacenter más cercano a tus jugadores.',
         cpu: 'Elige el procesador',
@@ -1423,7 +1409,7 @@ export function createDefaultState() {
             { id: 'fl_1', label: 'VPS Linux', href: '#/producto/vps-linux' },
             { id: 'fl_2', label: 'Minecraft', href: '#/producto/minecraft' },
             { id: 'fl_3', label: 'Unturned', href: '#/producto/unturned' },
-            { id: 'fl_13', label: 'Servidores económicos', href: '#/productos/economicos' },
+            { id: 'fl_13', label: 'Minecraft económico', href: '#/producto/minecraft?gama=tier_economica' },
             { id: 'fl_4', label: 'Hosting cPanel', href: '#/producto/hosting-cpanel' },
           ],
         },
@@ -1491,6 +1477,45 @@ export function createDefaultState() {
       passwordHash: '',
       defaultPassword: 'hexadmin',
     },
+
+    /**
+     * Gamas: el segundo eje del catálogo.
+     *
+     * La subcategoría dice *qué* se vende (VPS, juegos, web) y la gama dice *en qué
+     * liga juega* ese mismo producto. Son ejes distintos, y meterlos en la misma
+     * lista de pestañas es lo que llevaba a tener «Minecraft» y «Minecraft
+     * Económico» como dos productos separados: el mismo juego partido en dos sitios,
+     * con la mitad de los planes escondidos de quien buscaba el otro.
+     *
+     * Cuelga del plan (`plan.tierId`) y no del producto, igual que la ubicación y la
+     * CPU, porque es el plan lo que cambia de gama: un mismo Minecraft tiene planes
+     * en hardware dedicado y planes en hardware compartido, y ambos son Minecraft.
+     * Así es también como lo tienen las referencias — Centrix lleva un campo `tier`
+     * por plan y los llama «Budget VPS | Developer».
+     *
+     * Vacío en un plan = sin gama. Con una sola gama en juego, el selector no se
+     * pinta: no hay nada que elegir.
+     */
+    tiers: [
+      {
+        id: 'tier_estandar',
+        name: 'Estándar',
+        tagline: 'Hardware dedicado',
+        description:
+          'Recursos reservados para ti y el procesador más rápido. Lo que necesitas si el servidor va en serio.',
+        icon: 'zap',
+        badge: 'Recomendada',
+      },
+      {
+        id: 'tier_economica',
+        name: 'Económica',
+        tagline: 'Hardware compartido',
+        description:
+          'El mismo panel y la misma red, en máquinas compartidas. Para empezar o para grupos pequeños.',
+        icon: 'wallet',
+        badge: '',
+      },
+    ],
 
     /**
      * CPUs del catálogo. Junto con `locations.items` forman los grupos de WHMCS:

@@ -19,8 +19,15 @@ import { safeUrl } from './utils.js'
  * @param {object} selection  { [optionId]: valueId }
  * @param {object} whmcsConfig  Config global de WHMCS del sitio
  * @param {object} currency  Divisa que está viendo el visitante (opcional)
+ * @param {string} billingCycle  Ciclo elegido en la web; manda sobre el del plan
  */
-export function buildOrderUrl(product, selection = {}, whmcsConfig = {}, currency = null) {
+export function buildOrderUrl(
+  product,
+  selection = {},
+  whmcsConfig = {},
+  currency = null,
+  billingCycle = '',
+) {
   const base = resolveBaseUrl(product, whmcsConfig)
   if (!base) return '#'
 
@@ -37,8 +44,11 @@ export function buildOrderUrl(product, selection = {}, whmcsConfig = {}, currenc
     url.searchParams.set('pid', String(product.whmcsPid))
   }
 
-  // Ciclo de facturación
-  if (product?.billingCycle) url.searchParams.set('billingcycle', product.billingCycle)
+  /* Ciclo de facturación: el que el visitante haya elegido en el catálogo, y si no
+     el que traiga el plan. Los identificadores son ya los de WHMCS, así que viajan
+     tal cual (ver src/lib/billing.js). */
+  const cycle = String(billingCycle || product?.billingCycle || '').trim()
+  if (cycle) url.searchParams.set('billingcycle', cycle)
 
   // Opciones configurables -> configoption[ID]=VALUE_ID
   if (product?.hasConfigurableOptions) {

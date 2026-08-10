@@ -1,6 +1,6 @@
 import { useEffect, useMemo } from 'react'
 import { ArrowLeft, ArrowRight, ChevronRight, EyeOff, Layers, PackageOpen, Settings2 } from 'lucide-react'
-import { useSite, useMoney, plansOfProduct, findProductBySlug, groupOfProduct } from '../store/useSite.js'
+import { useSite, useCatalogMoney, plansOfProduct, findProductBySlug, groupOfProduct } from '../store/useSite.js'
 import { buildFlow, fromPrice, findLocation, findCpu } from '../lib/catalog.js'
 import { cx } from '../lib/utils.js'
 import { href, groupHref, navigate, productPath } from '../lib/router.js'
@@ -11,7 +11,7 @@ import Configurator from '../components/catalog/Configurator.jsx'
 import PlanDetail from '../components/catalog/PlanDetail.jsx'
 
 /**
- * Producto: ficha y configurador en la misma página (ubicación → CPU → planes,
+ * Producto: ficha y configurador en la misma página (gama → ubicación → CPU → planes,
  * ver src/lib/catalog.js), y el detalle del plan elegido como pantalla aparte,
  * que es la que lleva al carrito de WHMCS.
  *
@@ -29,12 +29,13 @@ export default function ProductPage({ route, onEditProduct, onEditPlan }) {
 
   /* En el detalle, la ubicación y la CPU salen del propio plan: así el enlace de
      volver lleva al configurador tal y como estaba. */
+  const tierId = selectedPlan ? selectedPlan.tierId : route.tierId
   const locationId = selectedPlan ? selectedPlan.locationId : route.locationId
   const cpuId = selectedPlan ? selectedPlan.cpuId : route.cpuId
 
   const flow = useMemo(
-    () => buildFlow(site, allPlans, { locationId, cpuId }),
-    [site, allPlans, locationId, cpuId],
+    () => buildFlow(site, allPlans, { tierId, locationId, cpuId }),
+    [site, allPlans, tierId, locationId, cpuId],
   )
 
   /* Saneado de la URL: enlaces del recorrido antiguo por pasos y planes que ya no
@@ -42,7 +43,11 @@ export default function ProductPage({ route, onEditProduct, onEditPlan }) {
   const stale = route.legacy || (route.stage === 'detail' && !selectedPlan)
   const redirectPath =
     product && stale
-      ? productPath(product, 'config', { locationId: flow.locationId, cpuId: flow.cpuId })
+      ? productPath(product, 'config', {
+          tierId: flow.tierId,
+          locationId: flow.locationId,
+          cpuId: flow.cpuId,
+        })
       : ''
 
   useEffect(() => {
@@ -84,6 +89,7 @@ export default function ProductPage({ route, onEditProduct, onEditPlan }) {
               <a
                 href={href(
                   productPath(product, 'config', {
+                    tierId: flow.tierId,
                     locationId: flow.locationId,
                     cpuId: flow.cpuId,
                   }),
@@ -93,15 +99,15 @@ export default function ProductPage({ route, onEditProduct, onEditPlan }) {
                 {product.name}
               </a>
               <ChevronRight size={12} className="text-slate-700" />
-              <span className="font-semibold text-slate-300">{selectedPlan.name}</span>
+              <span className="font-semibold text-slate-400">{selectedPlan.name}</span>
             </>
           ) : (
-            <span className="font-semibold text-slate-300">{product.name}</span>
+            <span className="font-semibold text-slate-400">{product.name}</span>
           )}
         </nav>
 
         {editMode && product.hidden && (
-          <p className="mt-4 flex items-center gap-2 rounded-xl border border-amber-400/25 bg-amber-400/[0.07] p-3 text-[11px] text-amber-200">
+          <p className="mt-4 flex items-center gap-2 rounded-xl border border-amber-400/25 bg-amber-400/[0.07] p-3 text-micro text-amber-200">
             <EyeOff size={13} className="shrink-0" />
             Este producto está oculto: no aparece en el catálogo ni en la portada, sólo se llega
             por enlace directo.
@@ -113,6 +119,7 @@ export default function ProductPage({ route, onEditProduct, onEditPlan }) {
             <a
               href={href(
                 productPath(product, 'config', {
+                  tierId: flow.tierId,
                   locationId: flow.locationId,
                   cpuId: flow.cpuId,
                 }),
@@ -166,7 +173,7 @@ export default function ProductPage({ route, onEditProduct, onEditPlan }) {
                     <article key={item.id} className="flex gap-3">
                       <span
                         className={cx(
-                          'mt-0.5 grid size-8 shrink-0 place-items-center rounded-lg border border-white/10',
+                          'mt-0.5 grid size-8 shrink-0 place-items-center rounded-lg border border-line',
                           glyphBox(item.image, { flat: true }),
                         )}
                       >
@@ -203,7 +210,7 @@ export default function ProductPage({ route, onEditProduct, onEditPlan }) {
 /* ---------------------------- Cabecera del producto --------------------------- */
 
 function ProductIntro({ product, productIndex, group, plans, flow }) {
-  const money = useMoney()
+  const money = useCatalogMoney()
   const price = fromPrice(plans)
   const reference = plans.find((plan) => plan.status === 'available') || plans[0]
 
@@ -219,13 +226,13 @@ function ProductIntro({ product, productIndex, group, plans, flow }) {
           <div className="max-w-2xl">
             <div className="flex flex-wrap items-center gap-2">
               {group && (
-                <span className="chip !text-[11px]">
+                <span className="chip !text-micro">
                   <Glyph name={group.icon} image={group.image} size={12} className="text-hex-400" />
                   {group.name}
                 </span>
               )}
               {product.badge && (
-                <span className="chip pixel border-hex-400/30 bg-hex-500/15 !text-[8px] !text-hex-200">
+                <span className="chip pixel border-hex-400/30 bg-hex-500/15 !text-micro !text-hex-200">
                   {product.badge}
                 </span>
               )}
@@ -237,10 +244,10 @@ function ProductIntro({ product, productIndex, group, plans, flow }) {
                 <img
                   src={product.image}
                   alt=""
-                  className="size-16 shrink-0 rounded-xl border border-white/10 object-cover"
+                  className="size-16 shrink-0 rounded-xl border border-line object-cover"
                 />
               ) : (
-                <span className="grid size-16 shrink-0 place-items-center rounded-xl border border-white/10 bg-gradient-to-br from-hex-500/20 to-plasma-500/15 text-hex-300">
+                <span className="grid size-16 shrink-0 place-items-center rounded-xl border border-line bg-gradient-to-br from-hex-500/20 to-plasma-500/15 text-hex-300">
                   <Icon name={product.icon} size={30} />
                 </span>
               )}
@@ -270,7 +277,7 @@ function ProductIntro({ product, productIndex, group, plans, flow }) {
 
           {/* Resumen: qué hay disponible y desde cuánto */}
           <div className="glass-soft w-full shrink-0 p-5 lg:w-72">
-            <div className="flex items-center gap-2 text-[11px] font-semibold tracking-wider text-slate-500 uppercase">
+            <div className="flex items-center gap-2 text-micro font-semibold tracking-wider text-slate-500 uppercase">
               <Layers size={12} className="text-hex-400" />
               {plans.length === 1 ? '1 plan disponible' : `${plans.length} planes disponibles`}
             </div>
@@ -286,7 +293,7 @@ function ProductIntro({ product, productIndex, group, plans, flow }) {
             )}
 
             {(flow.hasLocationChoice || flow.hasCpuChoice) && (
-              <p className="mt-3 text-[11px] leading-relaxed text-slate-500">
+              <p className="mt-3 text-micro leading-relaxed text-slate-500">
                 {flow.hasLocationChoice && `${flow.locations.length} ubicaciones`}
                 {flow.hasLocationChoice && flow.hasCpuChoice && ' · '}
                 {flow.hasCpuChoice && `${flow.cpus.length} CPUs`} a elegir aquí abajo.
@@ -303,7 +310,7 @@ function ProductIntro({ product, productIndex, group, plans, flow }) {
             <article key={item.id} className="glass glass-hover p-5">
               <span
                 className={cx(
-                  'mb-3.5 grid size-11 place-items-center rounded-xl border border-white/10',
+                  'mb-3.5 grid size-11 place-items-center rounded-xl border border-line',
                   glyphBox(item.image),
                 )}
               >

@@ -60,7 +60,7 @@ export function parseHash(hash = window.location.hash) {
     const product = { ...base, name: 'product', productSlug: segments[1], legacy: false }
 
     if (sub === 'plan' && segments[3]) {
-      return { ...product, stage: 'detail', planId: segments[3], locationId: '', cpuId: '' }
+      return { ...product, stage: 'detail', planId: segments[3], tierId: '', locationId: '', cpuId: '' }
     }
 
     // Recorrido antiguo por pasos: se conserva la selección y se redirige.
@@ -79,6 +79,7 @@ export function parseHash(hash = window.location.hash) {
       ...product,
       stage: 'config',
       planId: '',
+      tierId: query.get('gama') || '',
       locationId: query.get('ubicacion') || '',
       cpuId: query.get('cpu') || '',
     }
@@ -124,14 +125,19 @@ export const groupHref = (group) => href(`/productos/${group.slug}`)
  * Ruta de una pantalla de producto.
  *
  *   productPath(product)                                   → configurador vacío
- *   productPath(product, 'config', { locationId, cpuId })  → con lo ya elegido
+ *   productPath(product, 'config', { tierId, locationId, cpuId })  → con lo ya elegido
  *   productPath(product, 'detail', { planId })             → detalle del plan
  */
-export function productPath(product, stage = 'config', { locationId = '', cpuId = '', planId = '' } = {}) {
+export function productPath(
+  product,
+  stage = 'config',
+  { tierId = '', locationId = '', cpuId = '', planId = '' } = {},
+) {
   const base = `/producto/${product.slug}`
   if (stage === 'detail' && planId) return `${base}/plan/${planId}`
 
   const query = new URLSearchParams()
+  if (tierId) query.set('gama', tierId)
   if (locationId) query.set('ubicacion', locationId)
   if (cpuId) query.set('cpu', cpuId)
   const search = query.toString()
