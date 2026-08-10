@@ -1,5 +1,5 @@
 import { ArrowRight, EyeOff, Settings2, Star } from 'lucide-react'
-import { useMoney } from '../../store/useSite.js'
+import { useCatalogMoney } from '../../store/useSite.js'
 import { productSummary } from '../../lib/catalog.js'
 import { cx } from '../../lib/utils.js'
 import { productHref } from '../../lib/router.js'
@@ -13,7 +13,7 @@ import StatusPill from './StatusPill.jsx'
  * En móvil se dobla en dos líneas — una fila estrecha no es una fila, es un lío.
  */
 export default function ProductRow({ product, group, plans, editMode, onEdit }) {
-  const money = useMoney()
+  const money = useCatalogMoney()
   const { open, count, price, period } = productSummary(product, plans)
 
   return (
@@ -30,10 +30,10 @@ export default function ProductRow({ product, group, plans, editMode, onEdit }) 
           src={product.image}
           alt=""
           loading="lazy"
-          className="size-12 shrink-0 rounded-xl border border-white/10 object-cover"
+          className="size-11 shrink-0 rounded-xl border border-line object-cover"
         />
       ) : (
-        <span className="grid size-12 shrink-0 place-items-center rounded-xl border border-white/10 bg-gradient-to-br from-hex-500/20 to-plasma-500/15 text-hex-300">
+        <span className="grid size-11 shrink-0 place-items-center rounded-xl border border-line bg-gradient-to-br from-hex-500/20 to-plasma-500/15 text-hex-300">
           <Icon name={product.icon} size={22} />
         </span>
       )}
@@ -42,14 +42,14 @@ export default function ProductRow({ product, group, plans, editMode, onEdit }) 
         <div className="flex flex-wrap items-center gap-2">
           <h3 className="display text-base font-bold text-white">{product.name}</h3>
           {product.badge && (
-            <span className="chip pixel border-hex-400/30 bg-hex-500/15 !text-[8px] !text-hex-200">
+            <span className="chip pixel border-hex-400/30 bg-hex-500/15 !text-micro !text-hex-200">
               <Star size={9} className="fill-current" />
               {product.badge}
             </span>
           )}
           {product.status !== 'available' && <StatusPill status={product.status} />}
           {product.hidden && (
-            <span className="chip border-amber-400/25 bg-amber-400/10 !text-[10px] !text-amber-300">
+            <span className="chip border-amber-400/25 bg-amber-400/10 !text-micro !text-amber-300">
               <EyeOff size={10} />
               Oculto
             </span>
@@ -61,7 +61,7 @@ export default function ProductRow({ product, group, plans, editMode, onEdit }) 
         </p>
 
         {group && (
-          <p className="mt-1.5 inline-flex items-center gap-1.5 text-[10px] font-semibold tracking-wider text-slate-500 uppercase">
+          <p className="mt-1.5 inline-flex items-center gap-1.5 text-micro font-semibold tracking-wider text-slate-500 uppercase">
             <Glyph name={group.icon} image={group.image} size={11} className="text-hex-400" />
             {group.name}
             <span className="text-slate-700">·</span>
@@ -73,9 +73,9 @@ export default function ProductRow({ product, group, plans, editMode, onEdit }) 
       <div className="shrink-0 sm:text-right">
         {price !== null ? (
           <div className="flex items-baseline gap-1.5 sm:justify-end">
-            <span className="text-[11px] text-slate-500">desde</span>
+            <span className="text-micro text-slate-500">desde</span>
             <span className="pixel text-base text-white">{money(price)}</span>
-            <span className="text-[11px] text-slate-500">{period}</span>
+            <span className="text-micro text-slate-500">{period}</span>
           </div>
         ) : (
           <div className="text-xs text-slate-500">Sin planes disponibles</div>

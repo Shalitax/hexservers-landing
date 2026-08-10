@@ -39,7 +39,7 @@ export default function AboutPage() {
                 <div className="pixel bg-gradient-to-b from-white to-hex-300 bg-clip-text text-base text-transparent sm:text-lg">
                   {stat.value}
                 </div>
-                <div className="mt-2.5 text-[11px] font-medium tracking-wide text-slate-500 uppercase">
+                <div className="mt-2.5 text-micro font-medium tracking-wide text-slate-500 uppercase">
                   {stat.label}
                 </div>
               </div>
@@ -102,7 +102,7 @@ export default function AboutPage() {
                 <article key={pillar.id} className="glass glass-hover group p-6">
                   <span
                     className={cx(
-                      'mb-4 grid size-11 place-items-center rounded-xl border border-white/10 transition',
+                      'mb-4 grid size-11 place-items-center rounded-xl border border-line transition',
                       pillar.image ? '' : 'group-hover:from-hex-500/30 group-hover:text-hex-200',
                       glyphBox(pillar.image),
                     )}

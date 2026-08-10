@@ -1,5 +1,5 @@
 import { ArrowRight, EyeOff, Settings2 } from 'lucide-react'
-import { useMoney } from '../../store/useSite.js'
+import { useCatalogMoney } from '../../store/useSite.js'
 import { productSummary } from '../../lib/catalog.js'
 import { cx } from '../../lib/utils.js'
 import { productHref } from '../../lib/router.js'
@@ -17,13 +17,13 @@ import StatusPill from './StatusPill.jsx'
  * se va de ancho en un móvil.
  */
 export default function ProductTable({ products, groupOf, plansOf, editMode, onEdit }) {
-  const money = useMoney()
+  const money = useCatalogMoney()
 
   return (
     <div className="glass overflow-x-auto">
       <table className="w-full min-w-[42rem] border-collapse text-left">
         <thead>
-          <tr className="border-b border-white/8 text-[10px] font-semibold tracking-wider text-slate-500 uppercase">
+          <tr className="border-b border-line-soft text-micro font-semibold tracking-wider text-slate-500 uppercase">
             <th className="px-5 py-3.5 font-semibold">Producto</th>
             <th className="px-5 py-3.5 font-semibold">Subcategoría</th>
             <th className="px-5 py-3.5 font-semibold">Planes</th>
@@ -32,7 +32,7 @@ export default function ProductTable({ products, groupOf, plansOf, editMode, onE
           </tr>
         </thead>
 
-        <tbody className="divide-y divide-white/[0.06]">
+        <tbody className="divide-y divide-line-soft">
           {products.map((product) => {
             const group = groupOf(product)
             const { open, count, price, period } = productSummary(product, plansOf(product))
@@ -41,14 +41,14 @@ export default function ProductTable({ products, groupOf, plansOf, editMode, onE
               <tr
                 key={product.id}
                 className={cx(
-                  'transition hover:bg-white/[0.03]',
+                  'transition hover:bg-surface-1',
                   !open && 'opacity-60',
                   product.featured && 'bg-hex-500/[0.05]',
                 )}
               >
                 <td className="px-5 py-4">
                   <div className="flex items-center gap-3">
-                    <span className="grid size-9 shrink-0 place-items-center rounded-lg border border-white/10 bg-white/[0.04] text-hex-300">
+                    <span className="grid size-11 shrink-0 place-items-center rounded-lg border border-line bg-surface-2 text-hex-300">
                       <Icon name={product.icon} size={16} />
                     </span>
                     <div className="min-w-0">
@@ -81,7 +81,7 @@ export default function ProductTable({ products, groupOf, plansOf, editMode, onE
                   {price !== null ? (
                     <span className="flex items-baseline gap-1">
                       <span className="pixel text-sm text-white">{money(price)}</span>
-                      <span className="text-[11px] text-slate-500">{period}</span>
+                      <span className="text-micro text-slate-500">{period}</span>
                     </span>
                   ) : (
                     <span className="text-xs text-slate-600">—</span>

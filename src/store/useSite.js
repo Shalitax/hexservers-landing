@@ -5,6 +5,7 @@ import { hashPassword, verifyPassword, randomSalt } from '../lib/auth.js'
 import { createDefaultState, SCHEMA_VERSION } from '../data/defaultState.js'
 import { DEFAULT_CURRENCY, formatMoney, resolveCurrency } from '../lib/money.js'
 import { mergeTheme } from '../lib/theme.js'
+import { DEFAULT_CYCLE, monthlyPrice, resolveCycle } from '../lib/billing.js'
 import { resolveLayout } from '../lib/layouts.js'
 import {
   fetchRemoteContent,
@@ -24,6 +25,7 @@ const CURRENCY_KEY = 'hexservers:currency'
 const VIEWER_THEME_KEY = 'hexservers:viewer-theme'
 /* Ídem con la forma de listar el catálogo que elige desde la página de productos. */
 const VIEWER_LAYOUT_KEY = 'hexservers:catalog-layout'
+const VIEWER_CYCLE_KEY = 'hexservers:billing-cycle'
 
 /* --------------------------------- persistencia -------------------------------- */
 
@@ -147,6 +149,8 @@ const emptyPlan = (partial = {}) => ({
   featured: false,
   locationId: '',
   cpuId: '',
+  /* Gama (v7): el segundo eje del catálogo. Vacío = el plan no tiene gama. */
+  tierId: '',
   specs: [],
   includes: [],
   features: [],
@@ -198,6 +202,10 @@ function migrateCatalog(stored, base) {
     image: group.image || '',
     tagline: group.tagline || '',
     description: group.description || '',
+    /* Titular propio de la subcategoría (v7). Vacío = se usa el del catálogo. */
+    headline: group.headline || '',
+    /* Argumentos de venta de la familia, misma forma que los del producto. */
+    highlights: Array.isArray(group.highlights) ? group.highlights : [],
     slug: ensureSlug(group.slug || group.name, groupSlugs, group.id),
   }))
 
@@ -248,6 +256,7 @@ function migrateCatalog(stored, base) {
         id: plan.id || uid('plan'),
         locationId: plan.locationId || '',
         cpuId: plan.cpuId || '',
+        tierId: plan.tierId || '',
         specs: plan.specs || [],
         includes: plan.includes || [],
         features: plan.features || [],
@@ -349,6 +358,22 @@ function migrateCurrency(stored, base) {
   }
 }
 
+/**
+ * Gama del catálogo (v7): el segundo eje, junto a la subcategoría.
+ *
+ * Misma forma que una CPU a propósito — son la misma clase de cosa: una dimensión
+ * transversal que un plan referencia por id en lugar de repetir. Ver el comentario
+ * largo en src/data/defaultState.js.
+ */
+const normalizeTier = (tier = {}) => ({
+  id: tier.id || uid('tier'),
+  name: tier.name || 'Gama',
+  tagline: tier.tagline || '',
+  description: tier.description || '',
+  icon: tier.icon || 'layers',
+  badge: tier.badge || '',
+})
+
 /** CPU del catálogo (v4): la mitad "hardware" de un grupo de productos de WHMCS. */
 const normalizeCpu = (cpu = {}) => ({
   id: cpu.id || uid('cpu'),
@@ -372,6 +397,7 @@ function migrate(stored) {
     theme: { ...base.theme, ...stored.theme },
     currency: migrateCurrency(stored, base),
     cpus: Array.isArray(stored.cpus) ? stored.cpus.map(normalizeCpu) : base.cpus,
+    tiers: Array.isArray(stored.tiers) ? stored.tiers.map(normalizeTier) : base.tiers,
     brand: { ...base.brand, ...stored.brand },
     nav: migrateNav(stored, base),
     hero: { ...base.hero, ...stored.hero },
@@ -463,6 +489,9 @@ export const useSite = create((set, get) => ({
 
   /* Forma de listar el catálogo elegida por el visitante. Vacío = la del sitio. */
   viewerLayout: safeRead(VIEWER_LAYOUT_KEY),
+
+  /* Ciclo de facturación con el que mira los precios. Vacío = mensual. */
+  viewerCycle: safeRead(VIEWER_CYCLE_KEY),
 
   // sesión admin
   isAdmin: false,
@@ -676,6 +705,17 @@ export const useSite = create((set, get) => ({
     set({ viewerLayout: id })
   },
 
+  /** Ciclo de facturación con el que el visitante mira los precios. */
+  setViewerCycle(id) {
+    try {
+      if (id && id !== DEFAULT_CYCLE) localStorage.setItem(VIEWER_CYCLE_KEY, id)
+      else localStorage.removeItem(VIEWER_CYCLE_KEY)
+    } catch {
+      /* Sin localStorage la elección dura lo que la pestaña. */
+    }
+    set({ viewerCycle: id })
+  },
+
   /* --------------------------------- contenido -------------------------------- */
 
   /** Edición inline: setField('hero.title', 'nuevo texto') */
@@ -780,6 +820,48 @@ export const useSite = create((set, get) => ({
     })
   },
 
+  /* ------------------------------- gamas (v7) -------------------------------- */
+
+  addTier(partial = {}) {
+    const id = uid('tier')
+    get().update((d) => {
+      d.tiers.push({
+        id,
+        name: partial.name || 'Nueva gama',
+        tagline: partial.tagline || '',
+        description: partial.description || '',
+        icon: partial.icon || 'layers',
+        badge: partial.badge || '',
+      })
+    })
+    return id
+  },
+
+  updateTier(id, patch) {
+    get().update((d) => {
+      const tier = d.tiers.find((t) => t.id === id)
+      if (tier) Object.assign(tier, patch)
+    })
+  },
+
+  /** Los planes que la usaban quedan sin gama: válidos para cualquiera. */
+  removeTier(id) {
+    get().update((d) => {
+      d.tiers = d.tiers.filter((t) => t.id !== id)
+      d.plans.forEach((plan) => {
+        if (plan.tierId === id) plan.tierId = ''
+      })
+    })
+  },
+
+  reorderTier(id, direction) {
+    get().update((d) => {
+      const index = d.tiers.findIndex((t) => t.id === id)
+      if (index === -1) return
+      d.tiers = moveItem(d.tiers, index, index + direction)
+    })
+  },
+
   /* ---------------------- productos (las "box" grandes) ---------------------- */
 
   addProduct(groupId) {
@@ -816,6 +898,43 @@ export const useSite = create((set, get) => ({
     get().update((d) => {
       d.products = d.products.filter((p) => p.id !== id)
       d.plans = d.plans.filter((p) => p.productId !== id)
+    })
+  },
+
+  /**
+   * Absorbe un producto dentro de otro, marcando sus planes con una gama.
+   *
+   * Es la operación que deshace haber usado las subcategorías para dos cosas a la
+   * vez. Si el catálogo tiene «Minecraft» en Juegos y «Minecraft Económico» en
+   * Económicos, el mismo juego está partido en dos sitios y el cliente que entra
+   * por uno no llega a ver el otro. Esto los junta: los planes del absorbido pasan
+   * al que se queda con la gama puesta, y los que ya estaban reciben la gama que se
+   * indique para no quedar sueltos entre medias.
+   *
+   * El producto absorbido desaparece. Es irreversible desde la interfaz, así que
+   * quien la llama debe confirmarlo antes.
+   *
+   * @param sourceId    producto que se disuelve
+   * @param targetId    producto que se queda con todo
+   * @param sourceTier  gama que reciben los planes que vienen del absorbido
+   * @param targetTier  gama para los que ya tenía el destino ('' = no se tocan)
+   */
+  mergeProductAsTier(sourceId, targetId, sourceTier, targetTier = '') {
+    if (!sourceId || !targetId || sourceId === targetId) return
+    get().update((d) => {
+      const source = d.products.find((p) => p.id === sourceId)
+      const target = d.products.find((p) => p.id === targetId)
+      if (!source || !target) return
+
+      for (const plan of d.plans) {
+        if (plan.productId === sourceId) {
+          plan.productId = targetId
+          plan.tierId = sourceTier
+        } else if (plan.productId === targetId && targetTier && !plan.tierId) {
+          plan.tierId = targetTier
+        }
+      }
+      d.products = d.products.filter((p) => p.id !== sourceId)
     })
   },
 
@@ -884,6 +1003,46 @@ export const useSite = create((set, get) => ({
       const index = list.findIndex((i) => i.id === itemId)
       if (index === -1) return
       product[key] = moveItem(list, index, index + direction)
+    })
+  },
+
+  /**
+   * Argumentos de una subcategoría (`group.highlights`), para su página propia.
+   *
+   * Duplican la forma de las cuatro de arriba, pero contra `groups` en vez de
+   * `products`. Generalizar las ocho en un juego de funciones por colección sería
+   * bonito y ganaría cuatro líneas: se deja explícito porque un `setIn(colección,
+   * id, clave, …)` genérico se lee bastante peor en el sitio donde se llama.
+   */
+  addGroupItem(groupId, item = {}) {
+    get().update((d) => {
+      const group = d.groups.find((g) => g.id === groupId)
+      if (group) group.highlights = [...(group.highlights || []), { id: uid('it'), ...item }]
+    })
+  },
+
+  updateGroupItem(groupId, itemId, patch) {
+    get().update((d) => {
+      const item = d.groups.find((g) => g.id === groupId)?.highlights?.find((i) => i.id === itemId)
+      if (item) Object.assign(item, patch)
+    })
+  },
+
+  removeGroupItem(groupId, itemId) {
+    get().update((d) => {
+      const group = d.groups.find((g) => g.id === groupId)
+      if (group) group.highlights = (group.highlights || []).filter((i) => i.id !== itemId)
+    })
+  },
+
+  moveGroupItem(groupId, itemId, direction) {
+    get().update((d) => {
+      const group = d.groups.find((g) => g.id === groupId)
+      if (!group) return
+      const list = group.highlights || []
+      const index = list.findIndex((i) => i.id === itemId)
+      if (index === -1) return
+      group.highlights = moveItem(list, index, index + direction)
     })
   },
 
@@ -1198,6 +1357,40 @@ export function useCurrency() {
 export function useMoney() {
   const currency = useCurrency()
   return useMemo(() => (amount) => formatMoney(amount, currency), [currency])
+}
+
+/* ---------------------------- ciclo de facturación --------------------------- */
+
+/**
+ * Ciclo con el que se están mirando los precios ahora mismo.
+ *
+ * Mientras el admin no encienda `catalog.showCycles` no hay selector que valga y
+ * todo el mundo ve la tarifa mensual: los descuentos por ciclo son un compromiso
+ * comercial, y anunciarlos sin que nadie los haya configurado sería prometer un
+ * precio que el carrito no va a respetar.
+ */
+export function useBillingCycle() {
+  const enabled = useSite((s) => s.site.catalog.showCycles === true)
+  const discounts = useSite((s) => s.site.catalog.cycleDiscounts)
+  const viewer = useSite((s) => s.viewerCycle)
+  return useMemo(
+    () => resolveCycle(enabled ? viewer : DEFAULT_CYCLE, discounts),
+    [enabled, viewer, discounts],
+  )
+}
+
+/**
+ * Formateador de precios del catálogo: como `useMoney`, pero aplicando antes el
+ * descuento del ciclo activo.
+ *
+ * Es una función aparte y no un cambio dentro de `useMoney` porque no todo importe
+ * es una cuota: los recargos de las opciones configurables y los totales ya
+ * calculados se formatean con `useMoney` a secas.
+ */
+export function useCatalogMoney() {
+  const money = useMoney()
+  const cycle = useBillingCycle()
+  return useMemo(() => (amount) => money(monthlyPrice(amount, cycle)), [money, cycle])
 }
 
 /* -------------------------------- selectores -------------------------------- */

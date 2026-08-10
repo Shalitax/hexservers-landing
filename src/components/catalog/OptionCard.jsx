@@ -37,7 +37,7 @@ export default function OptionCard({
           <div className="flex flex-wrap items-center gap-1.5">
             <span className="display truncate text-base font-bold text-white">{title}</span>
             {badge && (
-              <span className="chip pixel border-hex-400/30 bg-hex-500/15 !text-[8px] !text-hex-200">
+              <span className="chip pixel border-hex-400/30 bg-hex-500/15 !text-micro !text-hex-200">
                 <Star size={9} className="fill-current" />
                 {badge}
               </span>
@@ -52,7 +52,7 @@ export default function OptionCard({
         <span
           className={cx(
             'grid size-5 shrink-0 place-items-center rounded-full border transition',
-            selected ? 'border-hex-400 bg-hex-500' : 'border-white/20',
+            selected ? 'border-hex-400 bg-hex-500' : 'border-line-strong',
           )}
           aria-hidden="true"
         >
@@ -60,7 +60,7 @@ export default function OptionCard({
         </span>
       </div>
 
-      {meta && <div className="mt-3 border-t border-white/8 pt-3 text-xs text-slate-500">{meta}</div>}
+      {meta && <div className="mt-3 border-t border-line-soft pt-3 text-xs text-slate-500">{meta}</div>}
     </button>
   )
 }

@@ -2,6 +2,7 @@ import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { Activity, RefreshCw } from 'lucide-react'
 import { useSite } from '../store/useSite.js'
 import { cx } from '../lib/utils.js'
+import { stagger } from '../lib/reveal.js'
 import { measureLatency, latencyTone, pingTarget } from '../lib/latency.js'
 import SectionHeading from './SectionHeading.jsx'
 import Flag from './ui/Flag.jsx'
@@ -10,7 +11,7 @@ const TONES = {
   emerald: 'border-emerald-400/20 bg-emerald-400/10 !text-emerald-300',
   amber: 'border-amber-400/20 bg-amber-400/10 !text-amber-300',
   rose: 'border-rose-400/20 bg-rose-400/10 !text-rose-300',
-  slate: 'border-white/10 bg-white/[0.05] !text-slate-400',
+  slate: 'border-line bg-surface-2 !text-slate-400',
 }
 
 const DOTS = {
@@ -44,11 +45,13 @@ export default function Locations() {
         />
 
         <div className="mt-10 grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
-          {locations.items.map((location) => {
+          {locations.items.map((location, index) => {
             const online = location.status !== 'soon'
             return (
               <div
                 key={location.id}
+                data-reveal
+                style={stagger(index)}
                 className={cx(
                   'glass glass-hover flex items-center gap-3.5 p-4',
                   !online && 'opacity-60',
@@ -59,7 +62,7 @@ export default function Locations() {
                   <div className="truncate text-sm font-semibold text-white">{location.city}</div>
                   <div className="truncate text-xs text-slate-500">{location.country}</div>
                   {editMode && online && !pingTarget(location.pingUrl) && (
-                    <div className="mt-1 text-[10px] text-amber-400/80">
+                    <div className="mt-1 text-micro text-amber-400/80">
                       Sin endpoint: se muestra el valor fijo
                     </div>
                   )}

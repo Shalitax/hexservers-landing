@@ -58,7 +58,7 @@ export default function WhmcsPanel() {
       >
         <div className="flex items-start gap-2.5 rounded-xl border border-amber-400/25 bg-amber-400/[0.07] p-3">
           <ShieldAlert size={15} className="mt-px shrink-0 text-amber-400" />
-          <p className="text-[11px] leading-relaxed text-amber-200/90">
+          <p className="text-micro leading-relaxed text-amber-200/90">
             <strong>El identifier y el secret nunca deben viajar en el navegador.</strong> WHMCS
             además bloquea las llamadas por CORS. Para sincronizar de verdad hace falta un proxy en
             tu servidor que guarde las credenciales y exponga un endpoint propio. Estos campos
@@ -133,7 +133,7 @@ export default function WhmcsPanel() {
             Probar sincronización
           </button>
           {whmcs.lastSync && (
-            <span className="text-[11px] text-slate-600">
+            <span className="text-micro text-slate-600">
               Último intento: {new Date(whmcs.lastSync).toLocaleString('es-ES')}
             </span>
           )}
@@ -143,8 +143,8 @@ export default function WhmcsPanel() {
           <p
             className={
               syncState.status === 'error'
-                ? 'flex items-start gap-2 rounded-lg border border-rose-400/25 bg-rose-400/10 p-3 text-[11px] leading-relaxed text-rose-300'
-                : 'flex items-start gap-2 rounded-lg border border-emerald-400/25 bg-emerald-400/10 p-3 text-[11px] leading-relaxed text-emerald-300'
+                ? 'flex items-start gap-2 rounded-lg border border-rose-400/25 bg-rose-400/10 p-3 text-micro leading-relaxed text-rose-300'
+                : 'flex items-start gap-2 rounded-lg border border-emerald-400/25 bg-emerald-400/10 p-3 text-micro leading-relaxed text-emerald-300'
             }
           >
             {syncState.status === 'error' ? (

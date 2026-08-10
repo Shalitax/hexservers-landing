@@ -6,7 +6,7 @@ import { CompactGlyphPicker } from './controls.jsx'
 
 function RowActions({ onUp, onDown, onRemove, disableUp, disableDown, vertical }) {
   const base =
-    'rounded-md p-1 text-slate-500 transition hover:bg-white/10 hover:text-white disabled:opacity-25'
+    'rounded-md p-1 text-slate-500 transition hover:bg-surface-3 hover:text-white disabled:opacity-25'
   return (
     <div className={cx('flex shrink-0', vertical ? 'flex-col' : 'items-center')}>
       <button onClick={onUp} disabled={disableUp} aria-label="Subir" className={base}>
@@ -32,9 +32,9 @@ function CollectionHeader({ title, hint, count, addLabel, onAdd }) {
       <div className="min-w-0">
         <h4 className="display text-sm font-bold text-white">
           {title}
-          {typeof count === 'number' && <span className="chip ml-2 !text-[10px]">{count}</span>}
+          {typeof count === 'number' && <span className="chip ml-2 !text-micro">{count}</span>}
         </h4>
-        {hint && <p className="mt-0.5 text-[11px] leading-snug text-slate-500">{hint}</p>}
+        {hint && <p className="mt-0.5 text-micro leading-snug text-slate-500">{hint}</p>}
       </div>
       <button onClick={onAdd} className="btn-ghost btn-sm shrink-0">
         <Plus size={13} />
@@ -46,7 +46,7 @@ function CollectionHeader({ title, hint, count, addLabel, onAdd }) {
 
 function EmptyHint({ children }) {
   return (
-    <p className="rounded-lg border border-dashed border-white/10 p-4 text-center text-[11px] text-slate-600">
+    <p className="rounded-lg border border-dashed border-line p-4 text-center text-micro text-slate-600">
       {children}
     </p>
   )
@@ -139,7 +139,7 @@ export function IconItemList({ title, hint, items, onAdd, onUpdate, onRemove, on
         {items.map((item, index) => (
           <div
             key={item.id}
-            className="flex items-start gap-2 rounded-xl border border-white/10 bg-white/[0.025] p-2.5"
+            className="flex items-start gap-2 rounded-xl border border-line bg-surface-1 p-2.5"
           >
             <CompactGlyphPicker
               icon={item.icon || 'sparkles'}

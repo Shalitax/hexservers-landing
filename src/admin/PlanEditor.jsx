@@ -29,6 +29,7 @@ export default function PlanEditor({ planId, onClose }) {
   const products = useSite((s) => s.site.products)
   const locations = useSite((s) => s.site.locations.items)
   const cpus = useSite((s) => s.site.cpus)
+  const tiers = useSite((s) => s.site.tiers)
   const currency = useSite((s) => s.site.currency)
   const whmcs = useSite((s) => s.site.whmcs)
   const updatePlan = useSite((s) => s.updatePlan)
@@ -140,14 +141,24 @@ export default function PlanEditor({ planId, onClose }) {
         <section className="space-y-3">
           <div>
             <h4 className="display text-sm font-bold text-white">Ubicación y CPU</h4>
-            <p className="mt-0.5 text-[11px] leading-relaxed text-slate-500">
+            <p className="mt-0.5 text-micro leading-relaxed text-slate-500">
               El equivalente al grupo de productos de WHMCS. Si varios planes de este producto
-              declaran ubicación o CPU, el cliente las elige antes de ver la lista:{' '}
-              <strong>producto → ubicación → CPU → plan</strong>. Déjalo en «cualquiera» para que el
-              plan valga para todas las combinaciones.
+              declaran gama, ubicación o CPU, el cliente las elige antes de ver la lista:{' '}
+              <strong>producto → gama → ubicación → CPU → plan</strong>. Déjalo en «cualquiera» para
+              que el plan valga para todas las combinaciones.
             </p>
           </div>
           <Row>
+            <SelectField
+              label="Gama"
+              value={plan.tierId || ''}
+              onChange={(v) => set({ tierId: v })}
+              options={[
+                { value: '', label: 'Sin gama' },
+                ...tiers.map((t) => ({ value: t.id, label: t.name })),
+              ]}
+              hint="El segundo eje: el mismo producto en distintas ligas de hardware."
+            />
             <SelectField
               label="Ubicación"
               value={plan.locationId || ''}
@@ -244,7 +255,7 @@ export default function PlanEditor({ planId, onClose }) {
             </Field>
           </Row>
           {previewUrl !== '#' && (
-            <p className="truncate rounded-lg border border-white/8 bg-black/40 px-3 py-2 font-mono text-[11px] text-slate-500">
+            <p className="truncate rounded-lg border border-line-soft bg-black/40 px-3 py-2 font-mono text-micro text-slate-500">
               {previewUrl}
             </p>
           )}
@@ -289,7 +300,7 @@ function OptionsEditor({ plan, base }) {
       {plan.configurableOptions.map((option) => {
         const open = expanded.has(option.id)
         return (
-          <div key={option.id} className="rounded-lg border border-white/10 bg-black/25">
+          <div key={option.id} className="rounded-lg border border-line bg-black/25">
             <div className="flex items-center gap-2 p-2.5">
               <button
                 onClick={() => toggle(option.id)}
@@ -316,7 +327,7 @@ function OptionsEditor({ plan, base }) {
             </div>
 
             {open && (
-              <div className="space-y-2.5 border-t border-white/8 p-3">
+              <div className="space-y-2.5 border-t border-line-soft p-3">
                 <TextField
                   label="ID de la opción configurable en WHMCS (opcional)"
                   value={option.whmcsOptionId}
@@ -326,7 +337,7 @@ function OptionsEditor({ plan, base }) {
                 />
 
                 <div className="space-y-2">
-                  <div className="grid grid-cols-[1fr_7rem_7rem_4.5rem_2.25rem] gap-2 px-1 text-[10px] font-semibold tracking-wider text-slate-600 uppercase">
+                  <div className="grid grid-cols-[1fr_7rem_7rem_4.5rem_2.25rem] gap-2 px-1 text-micro font-semibold tracking-wider text-slate-600 uppercase">
                     <span>Valor</span>
                     <span>Recargo</span>
                     <span>ID WHMCS</span>
@@ -400,7 +411,7 @@ function OptionsEditor({ plan, base }) {
                     <Plus size={13} />
                     Añadir valor
                   </button>
-                  <span className="text-[11px] text-slate-600">
+                  <span className="text-micro text-slate-600">
                     Rango:{' '}
                     {formatPrice(
                       plan.price + Math.min(0, ...option.values.map((v) => Number(v.priceDelta) || 0)),

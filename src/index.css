@@ -8,8 +8,46 @@
  */
 @theme {
   --font-sans: 'Inter', ui-sans-serif, system-ui, sans-serif;
-  --font-display: 'Space Grotesk', 'Inter', sans-serif;
+  --font-display: 'Sora', 'Inter', sans-serif;
   --font-pixel: 'Press Start 2P', ui-monospace, monospace;
+
+  /**
+   * Escala tipográfica.
+   *
+   * Antes había dieciséis tamaños, y ocho de ellos apretados entre 8 y 14 px: 8, 9,
+   * 10, 11, 12, 12.5, 13 y 14. Ninguno se distingue de su vecino, pero entre todos
+   * hacían que nada de la página cuadrase con nada — que es exactamente en qué
+   * consiste que a un diseño «le falte armonía».
+   *
+   * Abajo quedan tres pasos en esa zona, y son pasos de verdad: cada uno se nota.
+   * Tienen nombre en vez de medida para que al escribirlos haya que decidir qué es
+   * el texto (una etiqueta, una aclaración) y no cuántos píxeles mide.
+   *
+   *   micro → etiquetas, antetítulos, chips y cifras pequeñas
+   *   xs    → aclaraciones y notas al pie (el de Tailwind, 12 px)
+   *   sm    → texto de interfaz corriente (el de Tailwind, 14 px)
+   *
+   * De 16 px para arriba manda la de Tailwind sin tocar: los titulares ya estaban
+   * bien espaciados entre sí.
+   */
+  --text-micro: 0.6875rem; /* 11 px */
+  --text-micro--line-height: 1.45;
+
+  /**
+   * Líneas y superficies.
+   *
+   * Había diez opacidades de borde blanco y diez de fondo, casi todas indistinguibles
+   * entre sí: `border-white/8` (36 usos) y `border-white/10` (71) eran el mismo borde
+   * dibujado de dos maneras. Aquí son tres y tres, con un papel cada una, y se usan
+   * como colores normales: `border-line`, `bg-surface-2`, `hover:border-line-strong`.
+   */
+  --color-line-soft: rgb(255 255 255 / 0.06);
+  --color-line: rgb(255 255 255 / 0.1);
+  --color-line-strong: rgb(255 255 255 / 0.22);
+
+  --color-surface-1: rgb(255 255 255 / 0.03);
+  --color-surface-2: rgb(255 255 255 / 0.06);
+  --color-surface-3: rgb(255 255 255 / 0.1);
 
   --color-void: #0a0a0f;
   --color-void-2: #0d0d12;
@@ -27,6 +65,40 @@
   --color-plasma-500: #a855f7;
   --color-plasma-600: #8b5cf6;
 
+  /**
+   * Grises del texto secundario, calibrados para fondo oscuro.
+   *
+   * La rampa de fábrica de Tailwind está pensada para texto oscuro sobre fondo
+   * claro. Aquí la polaridad es la contraria, y eso importa más de lo que parece:
+   * WCAG 2.x mide las dos igual y **sobreestima** la legibilidad del texto claro
+   * sobre oscuro. Con su fórmula, el slate-400 de fábrica da 7,5:1 y «aprueba AAA»;
+   * medido con APCA —el modelo del borrador de WCAG 3, que sí distingue polaridad—
+   * se queda en Lc 50, que sólo vale para titulares. De ahí que la web se viera
+   * apagada aunque los números de WCAG dijeran que estaba bien.
+   *
+   * Los valores de abajo salen de resolver la luminosidad para un objetivo APCA por
+   * papel del texto, contra el fondo más claro que llega a haber detrás de una letra
+   * (la tarjeta de cristal, no la página):
+   *
+   *   slate-400  Lc 78  texto secundario corrido — descripciones, subtítulos
+   *   slate-500  Lc 66  etiquetas y letra pequeña, casi siempre en semibold
+   *   slate-600  Lc 56  notas tenues
+   *   slate-700  Lc 40  separadores y chevrones; no es texto, y le basta
+   *
+   * La saturación sube según baja la luminosidad, como en la rampa original: un gris
+   * claro con el croma del oscuro deja de ser gris y se vuelve azul.
+   *
+   * Y una consecuencia que conviene saber: sobre un fondo casi negro **no caben
+   * cinco escalones de gris legibles**. slate-400 acaba pisando a slate-300 casi
+   * exactamente, así que la rampa útil es de cuatro tonos, no de seis. Si hace falta
+   * más jerarquía, sale del peso y del tamaño — no de bajar más el brillo, que es lo
+   * que había y es lo que no funcionaba.
+   */
+  --color-slate-400: oklch(86% 0.024 254);
+  --color-slate-500: oklch(79.6% 0.03 256);
+  --color-slate-600: oklch(74% 0.034 257);
+  --color-slate-700: oklch(64% 0.04 257);
+
   --color-glass: color-mix(in oklab, white 6%, transparent);
 
   --radius-glass: 1rem;
@@ -36,9 +108,9 @@
    * sobrio las rebaja de golpe (ver más abajo) sin tocar un solo componente.
    */
   --glass-bg: rgb(255 255 255 / 0.045);
-  --glass-border: rgb(255 255 255 / 0.1);
-  --glass-soft-bg: rgb(255 255 255 / 0.03);
-  --glass-soft-border: rgb(255 255 255 / 0.07);
+  --glass-border: var(--color-line);
+  --glass-soft-bg: var(--color-surface-1);
+  --glass-soft-border: var(--color-line-soft);
   --glass-shadow:
     0 1px 0 0 rgb(255 255 255 / 0.07) inset,
     0 18px 50px -24px rgb(0 0 0 / 0.9);
@@ -55,6 +127,34 @@
   --glass-soft-bg: rgb(255 255 255 / 0.016);
   --glass-soft-border: rgb(255 255 255 / 0.055);
   --glass-shadow: 0 1px 0 0 rgb(255 255 255 / 0.03) inset;
+}
+
+/**
+ * Modo nítido: el lenguaje visual de los hosts modernos. Nada de cristal — la
+ * tarjeta es opaca, se apoya en el fondo con un borde de un píxel y esquinas más
+ * cerradas. El resto de reglas del estilo están agrupadas al final del archivo.
+ */
+:root[data-style='nitido'] {
+  /* La tipografía de titulares ya es Sora en todos los estilos: aquí no hay nada
+     que cambiar. El estilo se distingue por las superficies, no por la letra. */
+
+  /**
+   * La tarjeta ya no deja pasar el fondo: se pinta con la superficie del tema, casi
+   * opaca. Es lo que permite quitarle el desenfoque sin que los menús y los modales
+   * se vuelvan ilegibles con la página moviéndose por detrás.
+   */
+  --glass-bg: color-mix(in oklab, var(--color-void-2) 94%, transparent);
+  --glass-border: rgb(255 255 255 / 0.09);
+  --glass-soft-bg: rgb(255 255 255 / 0.025);
+  --glass-soft-border: rgb(255 255 255 / 0.07);
+  --glass-shadow: none;
+
+  /* Radios propios: el conjunto se lee más compacto y más "producto". */
+  --radius-card: 0.75rem;
+  --radius-control: 0.625rem;
+
+  /* Línea de un píxel que separa secciones y dibuja la rejilla del fondo. */
+  --rule: rgb(255 255 255 / 0.07);
 }
 
 @layer base {
@@ -117,7 +217,7 @@
   }
 
   .glass-hover {
-    @apply transition duration-300 hover:border-white/20 hover:bg-white/[0.07];
+    @apply transition duration-300 hover:border-line-strong hover:bg-surface-3;
   }
 
   /**
@@ -146,7 +246,7 @@
   }
 
   .eyebrow {
-    @apply text-[10px] uppercase text-hex-400;
+    @apply text-micro uppercase text-hex-400;
   }
 
   .display {
@@ -169,7 +269,7 @@
   }
 
   .btn-ghost {
-    @apply border border-white/[0.12] bg-white/[0.04] text-slate-200 backdrop-blur hover:border-white/25 hover:bg-white/[0.09];
+    @apply border border-line bg-surface-2 text-slate-200 backdrop-blur hover:border-line-strong hover:bg-surface-3;
   }
 
   .btn-sm {
@@ -178,18 +278,18 @@
 
   /* ---- Form controls (admin) ---- */
   .input {
-    @apply w-full rounded-lg border border-white/10 bg-black/40 px-3 py-2 text-sm text-slate-100
+    @apply w-full rounded-lg border border-line bg-black/40 px-3 py-2 text-sm text-slate-100
            placeholder:text-slate-600 outline-none transition
            focus:border-hex-500/70 focus:ring-2 focus:ring-hex-500/25;
   }
 
   .label {
-    @apply mb-1.5 block text-[11px] font-semibold uppercase tracking-wider text-slate-500;
+    @apply mb-1.5 block text-micro font-semibold uppercase tracking-wider text-slate-500;
   }
 
   .chip {
-    @apply inline-flex items-center gap-1.5 rounded-full border border-white/10 bg-white/[0.05] px-2.5 py-1
-           text-[11px] font-medium text-slate-300;
+    @apply inline-flex items-center gap-1.5 rounded-full border border-line bg-surface-2 px-2.5 py-1
+           text-micro font-medium text-slate-400;
   }
 }
 
@@ -349,18 +449,340 @@
   }
 }
 
+/* ------------------------------- Modo nítido -------------------------------- */
+
+/**
+ * El estilo que imita a los hosts modernos (centrixnodes, rdsnode, deluxhost).
+ *
+ * Es el mismo HTML: aquí no se mueve un componente de sitio, sólo se repinta. Las
+ * tres decisiones que lo separan del resto son (1) la tarjeta deja de ser cristal
+ * translúcido y pasa a ser una superficie opaca con borde de un píxel, (2) el
+ * fondo cambia halos de color por una rejilla reglada, y (3) las esquinas y el
+ * interlineado se cierran para que todo se lea más compacto.
+ *
+ * Lo único que sí cambia de forma es el hero, que se parte en dos columnas — eso
+ * vive en src/components/Hero.jsx, que consulta el estilo activo.
+ */
+[data-style='nitido'] {
+  /* ---- Superficies ---- */
+
+  /* Sin desenfoque: detrás de la tarjeta ya no hay nada que valga la pena mirar. */
+  .glass {
+    border-radius: var(--radius-card);
+    backdrop-filter: none;
+  }
+
+  .glass-soft {
+    border-radius: var(--radius-control);
+    backdrop-filter: none;
+  }
+
+  /* El hover marca el borde en el color principal en vez de subir el brillo. */
+  .glass-hover:hover {
+    background: color-mix(in oklab, var(--color-void-2) 100%, transparent);
+    border-color: color-mix(in oklab, var(--color-hex-500) 45%, transparent);
+  }
+
+  /* ---- Controles ---- */
+
+  .btn,
+  .btn-primary,
+  .btn-ghost {
+    border-radius: var(--radius-control);
+    font-weight: 600;
+    letter-spacing: -0.005em;
+  }
+
+  /* Color plano con una ceja de luz arriba: el relieve justo, sin degradado. */
+  .btn-primary {
+    background: var(--color-hex-500);
+    box-shadow:
+      0 1px 0 0 rgb(255 255 255 / 0.18) inset,
+      0 1px 2px 0 rgb(0 0 0 / 0.5);
+  }
+  .btn-primary:hover {
+    background: var(--color-hex-400);
+  }
+
+  .btn-ghost {
+    background: rgb(255 255 255 / 0.03);
+    border-color: var(--rule);
+    backdrop-filter: none;
+  }
+  .btn-ghost:hover {
+    background: rgb(255 255 255 / 0.07);
+    border-color: rgb(255 255 255 / 0.16);
+  }
+
+  .input {
+    border-radius: var(--radius-control);
+    border-color: var(--rule);
+  }
+
+  /* La etiqueta se cuadra: casi rectangular y con la cifra en tabular. */
+  .chip {
+    border-radius: 0.375rem;
+    border-color: var(--rule);
+    font-variant-numeric: tabular-nums;
+  }
+
+  /* ---- Tipografía ---- */
+
+  /* Titulares Sora, más apretados: es lo que da el aire de web de producto. */
+  .display {
+    letter-spacing: -0.035em;
+  }
+
+  /* El antetítulo pasa de pixel a versalita espaciada. */
+  .eyebrow {
+    font-family: var(--font-sans);
+    font-size: 11px;
+    font-weight: 600;
+    letter-spacing: 0.16em;
+    color: color-mix(in oklab, var(--color-hex-300) 88%, white);
+  }
+
+  /* Degradado corto y limpio: del blanco al principal, sin pasar por el acento. */
+  .text-gradient {
+    background: linear-gradient(
+      100deg,
+      #fff 10%,
+      var(--color-hex-300) 55%,
+      var(--color-hex-500) 100%
+    );
+    background-clip: text;
+    color: transparent;
+    -webkit-text-fill-color: transparent;
+  }
+
+  /* ---- Ritmo vertical ---- */
+
+  /**
+   * Más aire entre bloques y una línea de un píxel entre secciones vecinas. El
+   * `main >` es a propósito: sólo separa las secciones de una página, no las
+   * tarjetas que por dentro reutilizan la clase.
+   */
+  .section {
+    @apply py-16 sm:py-24;
+  }
+
+  main > .section + .section {
+    border-top: 1px solid var(--rule);
+  }
+
+  /* ---- Fondo ---- */
+
+  /* De halos flotantes a rejilla reglada, quieta y presente en toda la página. */
+  .backdrop-grid {
+    background-image:
+      linear-gradient(var(--rule) 1px, transparent 1px),
+      linear-gradient(90deg, var(--rule) 1px, transparent 1px);
+    background-size: 88px 88px;
+    mask-image: linear-gradient(to bottom, #000 0%, #000 55%, transparent 100%);
+    opacity: 0.5;
+  }
+
+  /* Los tres halos se apagan; en su lugar entra el barrido de `.nitido-wash`. */
+  .glow-blue,
+  .glow-violet {
+    display: none;
+  }
+
+  .nitido-wash {
+    display: block;
+  }
+
+  .anim-drift {
+    animation: none;
+  }
+
+  .logo-mark {
+    filter: none;
+  }
+
+  .shadow-primary {
+    box-shadow: none;
+  }
+}
+
+/**
+ * Barrido de color de la cabecera: una elipse muy ancha y muy tenue pegada al
+ * borde superior, en lugar de las tres manchas redondas del modo vivo. Nace
+ * oculta y sólo el modo nítido la enciende.
+ */
+.nitido-wash {
+  display: none;
+  background:
+    radial-gradient(
+      70% 100% at 50% 0%,
+      color-mix(in oklab, var(--color-hex-500) 22%, transparent),
+      transparent 70%
+    ),
+    radial-gradient(
+      50% 80% at 85% 10%,
+      color-mix(in oklab, var(--color-plasma-500) 14%, transparent),
+      transparent 70%
+    );
+}
+
+/* ------------------------- Kit de animación: entradas ----------------------- */
+
+/**
+ * Revelado por scroll. La lógica está en src/lib/reveal.js; aquí sólo el aspecto.
+ *
+ * Todo cuelga de `[data-anim='on']` a propósito: si el JS no llega a ejecutarse o
+ * el visitante ha apagado las animaciones, estas reglas no existen y el contenido
+ * se ve sin más. Ocultar por defecto y confiar en que el JS aparezca deja la web
+ * en blanco cuando algo falla, y eso no se arriesga por un adorno.
+ *
+ * Es una transición y no una animación porque así el escalonado se controla con
+ * `transition-delay` a partir de `--stagger`, sin escribir un retardo a mano en
+ * cada tarjeta — que es como estaba antes y por lo que había retardos sueltos
+ * apuntando a animaciones que ni existían.
+ */
+[data-anim='on'] {
+  [data-reveal] {
+    opacity: 0;
+    transform: translateY(14px);
+    will-change: opacity, transform;
+  }
+
+  [data-reveal='in'] {
+    opacity: 1;
+    transform: none;
+    transition:
+      opacity 0.55s cubic-bezier(0.22, 1, 0.36, 1),
+      transform 0.55s cubic-bezier(0.22, 1, 0.36, 1);
+    /* 55 ms por puesto: se nota la cascada sin que el último se haga esperar. */
+    transition-delay: calc(var(--stagger, 0) * 55ms);
+    will-change: auto;
+  }
+
+  /* Variantes, para bloques que piden otra dirección. */
+  [data-reveal='fade'],
+  [data-reveal='fade'][data-reveal] {
+    transform: none;
+  }
+}
+
+/* --------------------- Kit de animación: micro-interacción ------------------ */
+
+/**
+ * Pulsación. El hover ya lo cubre Tailwind clase a clase, pero el `:active` no
+ * lo tenía nadie: el botón no acusaba el click y en móvil —donde no hay hover—
+ * no había ninguna respuesta táctil.
+ */
+[data-anim='on'] {
+  .btn,
+  .btn-primary,
+  .btn-ghost {
+    transition:
+      background-color 0.2s,
+      border-color 0.2s,
+      color 0.2s,
+      transform 0.12s ease-out;
+  }
+  .btn:active:not(:disabled),
+  .btn-primary:active:not(:disabled),
+  .btn-ghost:active:not(:disabled) {
+    transform: scale(0.97);
+  }
+}
+
+/**
+ * Acordeón: el contenido crece en lugar de aparecer de golpe.
+ *
+ * `grid-template-rows: 0fr → 1fr` es el único modo de animar hasta la altura real
+ * sin medirla con JS. El hijo necesita `min-height: 0` o el navegador se niega a
+ * encogerlo por debajo de su contenido.
+ */
+.collapse {
+  display: grid;
+  grid-template-rows: 0fr;
+}
+.collapse > * {
+  min-height: 0;
+  overflow: hidden;
+}
+.collapse[data-open='true'] {
+  grid-template-rows: 1fr;
+}
+[data-anim='on'] .collapse {
+  transition: grid-template-rows 0.3s cubic-bezier(0.22, 1, 0.36, 1);
+}
+
+/* ------------------------------ Sprites pixel ------------------------------- */
+
+/**
+ * Los dos fotogramas de un sprite se turnan a saltos, sin transición: es lo que
+ * separa una animación de 8 bits de un icono que se funde. `steps(1, end)` con el
+ * cambio de opacidad al 50% del ciclo deja cada dibujo exactamente medio ciclo en
+ * pantalla. La duración la pone cada sprite en `--sprite-speed`.
+ */
+@keyframes sprite-a {
+  0%,
+  49.99% {
+    opacity: 1;
+  }
+  50%,
+  100% {
+    opacity: 0;
+  }
+}
+@keyframes sprite-b {
+  0%,
+  49.99% {
+    opacity: 0;
+  }
+  50%,
+  100% {
+    opacity: 1;
+  }
+}
+
+.sprite-a {
+  animation: sprite-a var(--sprite-speed, 0.9s) steps(1, end) infinite;
+}
+.sprite-b {
+  animation: sprite-b var(--sprite-speed, 0.9s) steps(1, end) infinite;
+}
+
+/* Cursor de la consola del hero. */
+@keyframes hex-blink {
+  0%,
+  49% {
+    opacity: 1;
+  }
+  50%,
+  100% {
+    opacity: 0;
+  }
+}
+.anim-blink {
+  animation: hex-blink 1.1s step-end infinite;
+}
+
 /* ----------------------------- Tipografía pixel ----------------------------- */
 
 /**
  * Interruptor propio (`data-pixel`), independiente del estilo: se puede tener la
- * web sobria con precios en pixel, o vivos los halos y los precios legibles. El
- * logo (`.wordmark`) nunca cambia — es la marca, no una decisión de estilo.
+ * web sobria con precios en pixel, o vivos los halos y los precios legibles.
+ *
+ * Dos sitios se libran siempre, y son los que sostienen el guiño retro cuando todo
+ * lo demás es una web de producto normal:
+ *
+ *   `.wordmark`    el logo. Es la marca, no una decisión de estilo.
+ *   `.pixel-keep`  los guiños puestos a mano — hoy, el sello del footer.
+ *
+ * La regla de reparto es qué clase de texto es, no dónde está: un dato que alguien
+ * va a leer para decidir una compra —un precio, una cifra de RAM, una etiqueta— se
+ * lee mejor en una tipografía normal, y ahí el pixel resta. En un adorno, suma.
  *
  * Ver PIXEL_MODES en src/lib/theme.js: `auto` se resuelve antes de escribir el
  * atributo, así que aquí sólo llegan `on` y `off`.
  */
 [data-pixel='off'] {
-  .pixel:not(.wordmark) {
+  .pixel:not(.wordmark):not(.pixel-keep) {
     font-family: var(--font-display);
     letter-spacing: -0.01em;
     font-variant-numeric: tabular-nums;
@@ -376,9 +798,41 @@
 @media (prefers-reduced-motion: reduce) {
   .anim-up,
   .anim-pop,
-  .anim-drift {
+  .anim-drift,
+  .anim-blink,
+  .sprite-a,
+  .sprite-b {
     animation: none !important;
   }
+  /* El sprite se queda en su primer fotograma: el segundo iba encima. */
+  .sprite-b {
+    display: none;
+  }
+
+  /**
+   * El revelado se desactiva enseñando el contenido, no congelándolo a medias:
+   * con `animation: none` sobre algo que nace en `opacity: 0` la página se
+   * quedaría en blanco, que es el peor final posible para una preferencia de
+   * accesibilidad.
+   */
+  [data-anim='on'] [data-reveal] {
+    opacity: 1;
+    transform: none;
+    transition: none;
+  }
+
+  [data-anim='on'] .collapse,
+  [data-anim='on'] .btn,
+  [data-anim='on'] .btn-primary,
+  [data-anim='on'] .btn-ghost {
+    transition: none;
+  }
+  [data-anim='on'] .btn:active,
+  [data-anim='on'] .btn-primary:active,
+  [data-anim='on'] .btn-ghost:active {
+    transform: none;
+  }
+
   html {
     scroll-behavior: auto;
   }

@@ -1,10 +1,11 @@
 import { useMemo } from 'react'
 import { ArrowRight, ArrowUpRight } from 'lucide-react'
-import { useSite, useMoney, listedProducts } from '../store/useSite.js'
+import { useSite, useCatalogMoney, listedProducts } from '../store/useSite.js'
 import { href, groupHref } from '../lib/router.js'
 import { cx } from '../lib/utils.js'
 import SectionHeading from './SectionHeading.jsx'
 import { Icon, Glyph } from './ui/icons.jsx'
+import { stagger } from '../lib/reveal.js'
 
 /**
  * Bloque de portada que presenta las subcategorías del catálogo. No vende planes:
@@ -13,7 +14,7 @@ import { Icon, Glyph } from './ui/icons.jsx'
 export default function Showcase() {
   const site = useSite((s) => s.site)
   const showcase = site.showcase
-  const money = useMoney()
+  const money = useCatalogMoney()
 
   const cards = useMemo(
     () =>
@@ -46,10 +47,12 @@ export default function Showcase() {
             cards.length >= 4 && 'lg:grid-cols-4',
           )}
         >
-          {cards.map(({ group, products, from }) => (
+          {cards.map(({ group, products, from }, index) => (
             <a
               key={group.id}
               href={groupHref(group)}
+              data-reveal
+              style={stagger(index)}
               className="glass glass-hover group relative flex flex-col overflow-hidden p-6"
             >
               <div
@@ -59,9 +62,9 @@ export default function Showcase() {
 
               <span
                 className={cx(
-                  'relative grid size-12 place-items-center rounded-xl border border-white/10 transition',
+                  'relative grid size-11 place-items-center rounded-xl border border-line transition',
                   group.image
-                    ? 'bg-white/[0.06] p-1.5'
+                    ? 'bg-surface-2 p-1.5'
                     : 'bg-gradient-to-br from-hex-500/20 to-plasma-500/15 text-hex-300 group-hover:from-hex-500/30 group-hover:text-hex-200',
                 )}
               >
@@ -77,13 +80,13 @@ export default function Showcase() {
               {products.length > 0 && (
                 <ul className="relative mt-4 flex flex-wrap gap-1.5">
                   {products.slice(0, 4).map((product) => (
-                    <li key={product.id} className="chip !text-[11px]">
+                    <li key={product.id} className="chip !text-micro">
                       <Icon name={product.icon} size={11} className="text-hex-400" />
                       {product.name}
                     </li>
                   ))}
                   {products.length > 4 && (
-                    <li className="chip !text-[11px] !text-slate-500">
+                    <li className="chip !text-micro !text-slate-500">
                       +{products.length - 4}
                     </li>
                   )}

@@ -96,13 +96,13 @@ export default function PromoPopup() {
           type="button"
           onClick={close}
           aria-label="Cerrar"
-          className="absolute top-3 right-3 z-10 rounded-lg p-1.5 text-slate-500 transition hover:bg-white/10 hover:text-white"
+          className="absolute top-3 right-3 z-10 rounded-lg p-1.5 text-slate-500 transition hover:bg-surface-3 hover:text-white"
         >
           <X size={16} />
         </button>
 
         <div className="relative">
-          <span className="chip pixel mb-3 border-plasma-500/30 bg-plasma-500/12 !text-[8px] !text-plasma-400">
+          <span className="chip pixel mb-3 border-plasma-500/30 bg-plasma-500/12 !text-micro !text-plasma-400">
             <Tag size={9} />
             {promo.badge}
           </span>
@@ -134,7 +134,7 @@ export default function PromoPopup() {
           </button>
 
           {promo.expires && (
-            <p className="mt-2.5 text-center text-[11px] text-slate-600">{promo.expires}</p>
+            <p className="mt-2.5 text-center text-micro text-slate-600">{promo.expires}</p>
           )}
 
           <a
@@ -145,12 +145,12 @@ export default function PromoPopup() {
             {promo.ctaLabel}
           </a>
 
-          <label className="mt-3 flex cursor-pointer items-center justify-center gap-2 text-[11px] text-slate-600 transition hover:text-slate-400">
+          <label className="mt-3 flex cursor-pointer items-center justify-center gap-2 text-micro text-slate-600 transition hover:text-slate-400">
             <input
               type="checkbox"
               checked={neverAgain}
               onChange={(event) => setNeverAgain(event.target.checked)}
-              className="size-3.5 rounded border-white/20 bg-transparent accent-hex-500"
+              className="size-3.5 rounded border-line-strong bg-transparent accent-hex-500"
             />
             No volver a mostrar
           </label>

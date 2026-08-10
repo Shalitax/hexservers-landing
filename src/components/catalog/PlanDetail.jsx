@@ -1,7 +1,8 @@
 import { useMemo, useState } from 'react'
 import { ArrowUpRight, Check, Info, Settings2, ShieldCheck } from 'lucide-react'
-import { useSite, useCurrency, useMoney, featuresOfPlan } from '../../store/useSite.js'
+import { useSite, useCurrency, useMoney, useBillingCycle, featuresOfPlan } from '../../store/useSite.js'
 import { buildOrderUrl, computePrice, defaultSelection } from '../../lib/whmcs.js'
+import { cycleTotal, monthlyPrice } from '../../lib/billing.js'
 import { cx } from '../../lib/utils.js'
 import { Icon, Glyph, glyphBox } from '../ui/icons.jsx'
 import Flag from '../ui/Flag.jsx'
@@ -16,14 +17,17 @@ export default function PlanDetail({ product, plan, location, cpu, editMode, onE
   const catalog = useSite((s) => s.site.catalog)
   const currency = useCurrency()
   const money = useMoney()
+  const cycle = useBillingCycle()
   const [selection, setSelection] = useState(() => defaultSelection(plan))
 
   const features = featuresOfPlan(product, plan)
   const total = useMemo(() => computePrice(plan, selection), [plan, selection])
-  // El carrito se abre en la misma divisa que el visitante estaba viendo.
+  /* El carrito se abre en la misma divisa y con el mismo ciclo que el visitante
+     estaba viendo: si aquí pone «anual» y el carrito abriera en mensual, el precio
+     que ha decidido pagar no sería el que se le cobra. */
   const orderUrl = useMemo(
-    () => buildOrderUrl(plan, selection, whmcs, currency),
-    [plan, selection, whmcs, currency],
+    () => buildOrderUrl(plan, selection, whmcs, currency, cycle.id),
+    [plan, selection, whmcs, currency, cycle],
   )
   const urlConfigured = orderUrl !== '#'
   const buyable = plan.status === 'available'
@@ -45,13 +49,13 @@ export default function PlanDetail({ product, plan, location, cpu, editMode, onE
               {(location || cpu) && (
                 <div className="mt-3 flex flex-wrap items-center gap-2">
                   {location && (
-                    <span className="chip !text-[11px]">
+                    <span className="chip !text-micro">
                       <Flag flag={location.flag} size={14} />
                       {location.city}
                     </span>
                   )}
                   {cpu && (
-                    <span className="chip !text-[11px]">
+                    <span className="chip !text-micro">
                       <Icon name={cpu.icon} size={11} className="text-hex-400" />
                       {cpu.name}
                     </span>
@@ -64,10 +68,10 @@ export default function PlanDetail({ product, plan, location, cpu, editMode, onE
 
           {/* Especificaciones del plan */}
           {plan.specs?.length > 0 && (
-            <dl className="mt-6 grid grid-cols-2 gap-x-6 gap-y-4 border-t border-white/8 pt-6 sm:grid-cols-3">
+            <dl className="mt-6 grid grid-cols-2 gap-x-6 gap-y-4 border-t border-line-soft pt-6 sm:grid-cols-3">
               {plan.specs.map((spec) => (
                 <div key={spec.id} className="min-w-0">
-                  <dt className="text-[10px] font-semibold tracking-wider text-slate-500 uppercase">
+                  <dt className="text-micro font-semibold tracking-wider text-slate-500 uppercase">
                     {spec.label}
                   </dt>
                   <dd className="mt-1 truncate text-sm font-semibold text-slate-100">
@@ -85,7 +89,7 @@ export default function PlanDetail({ product, plan, location, cpu, editMode, onE
             <h3 className="display text-lg font-bold text-white">{catalog.detailTitle}</h3>
             <ul className="mt-4 grid gap-2.5 sm:grid-cols-2">
               {plan.includes.map((item) => (
-                <li key={item.id} className="flex items-start gap-2.5 text-sm text-slate-300">
+                <li key={item.id} className="flex items-start gap-2.5 text-sm text-slate-400">
                   <span className="mt-0.5 grid size-4 shrink-0 place-items-center rounded-full border border-emerald-400/40 bg-emerald-400/15">
                     <Check size={10} className="text-emerald-300" strokeWidth={3.5} />
                   </span>
@@ -108,7 +112,7 @@ export default function PlanDetail({ product, plan, location, cpu, editMode, onE
                 <article key={item.id} className="glass-soft flex gap-3 p-4">
                   <span
                     className={cx(
-                      'grid size-9 shrink-0 place-items-center rounded-lg border border-white/10',
+                      'grid size-11 shrink-0 place-items-center rounded-lg border border-line',
                       glyphBox(item.image),
                     )}
                   >
@@ -139,7 +143,7 @@ export default function PlanDetail({ product, plan, location, cpu, editMode, onE
       <aside className="glass p-6 lg:sticky lg:top-24">
         {/* Opciones configurables */}
         {plan.hasConfigurableOptions && plan.configurableOptions?.length > 0 && (
-          <div className="space-y-5 border-b border-white/8 pb-6">
+          <div className="space-y-5 border-b border-line-soft pb-6">
             <h3 className="display text-base font-bold text-white">Configura tu plan</h3>
             {plan.configurableOptions.map((option) => (
               <fieldset key={option.id}>
@@ -159,14 +163,14 @@ export default function PlanDetail({ product, plan, location, cpu, editMode, onE
                           'flex w-full items-center justify-between gap-3 rounded-xl border px-3.5 py-2.5 text-left transition',
                           active
                             ? 'border-hex-500/60 bg-hex-500/12'
-                            : 'border-white/10 bg-white/[0.03] hover:border-white/25 hover:bg-white/[0.06]',
+                            : 'border-line bg-surface-1 hover:border-line-strong hover:bg-surface-2',
                         )}
                       >
                         <span className="flex min-w-0 items-center gap-2.5">
                           <span
                             className={cx(
                               'grid size-4 shrink-0 place-items-center rounded-full border transition',
-                              active ? 'border-hex-400 bg-hex-500' : 'border-white/25',
+                              active ? 'border-hex-400 bg-hex-500' : 'border-line-strong',
                             )}
                           >
                             {active && <Check size={10} className="text-white" strokeWidth={3.5} />}
@@ -196,17 +200,24 @@ export default function PlanDetail({ product, plan, location, cpu, editMode, onE
 
         {/* Total */}
         <div className="pt-6 first:pt-0">
-          <div className="text-[11px] font-semibold tracking-wider text-slate-500 uppercase">
+          <div className="text-micro font-semibold tracking-wider text-slate-500 uppercase">
             Total {plan.period?.replace('/', 'al ') || 'al mes'}
           </div>
           <div className="mt-1 flex items-baseline gap-2">
-            <span className="pixel text-2xl text-white">{money(total)}</span>
-            {total !== Number(plan.price) && (
-              <span className="text-xs text-slate-600 line-through">
-                {money(plan.price)}
-              </span>
+            <span className="pixel text-2xl text-white">{money(monthlyPrice(total, cycle))}</span>
+            {/* Tachado: la tarifa sin las opciones, o sin el descuento del ciclo. */}
+            {(total !== Number(plan.price) || cycle.discount > 0) && (
+              <span className="text-xs text-slate-600 line-through">{money(plan.price)}</span>
             )}
           </div>
+
+          {/* En un ciclo largo el cargo real no es el número de arriba: se dice. */}
+          {cycle.months > 1 && (
+            <p className="mt-1.5 text-micro leading-snug text-slate-500">
+              Se cobra {money(cycleTotal(total, cycle))} cada {cycle.months} meses
+              {cycle.discount > 0 && ` · ahorras un ${cycle.discount} %`}.
+            </p>
+          )}
 
           <a
             href={orderUrl}
@@ -225,14 +236,14 @@ export default function PlanDetail({ product, plan, location, cpu, editMode, onE
             <ArrowUpRight size={16} />
           </a>
 
-          <p className="mt-3 flex items-start gap-2 text-[11px] leading-relaxed text-slate-500">
+          <p className="mt-3 flex items-start gap-2 text-micro leading-relaxed text-slate-500">
             <ShieldCheck size={13} className="mt-px shrink-0 text-emerald-400/80" />
             {catalog.checkoutHint}
           </p>
         </div>
 
         {!urlConfigured && (
-          <p className="mt-4 flex items-start gap-2 rounded-xl border border-amber-400/25 bg-amber-400/[0.07] p-3 text-[11px] leading-relaxed text-amber-200">
+          <p className="mt-4 flex items-start gap-2 rounded-xl border border-amber-400/25 bg-amber-400/[0.07] p-3 text-micro leading-relaxed text-amber-200">
             <Info size={13} className="mt-px shrink-0" />
             Este plan aún no tiene URL de WHMCS. Defínela en el panel → Catálogo → {plan.name}.
           </p>

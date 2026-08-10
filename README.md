@@ -93,7 +93,6 @@ El catálogo tiene tres niveles:
 subcategoría          producto                  plan
 Servidores VPS   →    VPS Linux            →    Starter / Pro / Elite / Titan
 Serv. de Juegos  →    Minecraft, Unturned  →    MC Iron / Diamond / Netherite
-Económicos       →    Minecraft Eco…       →    MC Eco 4 / 8 / 12 GB
 Hosting Web      →    Hosting cPanel…      →    Web Start / Pro / Business
 ```
 
@@ -101,10 +100,10 @@ Y el recorrido del cliente es siempre el mismo:
 
 ```
 portada  →  catálogo  →  ficha del producto  →  detalle del plan  →  WHMCS
-                        └─ configurador: [ubicación] → [CPU] → planes
+                        └─ configurador: [gama] → [ubicación] → [CPU] → planes
 ```
 
-**El configurador es una sola página.** Ubicación, CPU y planes son bloques apilados en
+**El configurador es una sola página.** Gama, ubicación, CPU y planes son bloques apilados en
 la ficha del producto: cada uno aparece cuando el anterior está resuelto y la vista baja
 sola hasta él, sin cambiar de pantalla ni perder de vista lo ya elegido.
 
@@ -113,8 +112,10 @@ productos es **una CPU en una ubicación**, así que cada plan puede declarar la
 (panel → editor del plan) y el mismo plan existe una vez por combinación, cada una con su
 PID. La lógica está en `src/lib/catalog.js`:
 
-- con **dos o más** ubicaciones entre los planes del producto → aparece el bloque *Ubicación*;
-- ídem con las CPUs, ya filtradas por la ubicación elegida (no todas están en todas partes);
+- con **dos o más** gamas entre los planes del producto → aparece el bloque *Gama*, que va
+  primero porque es la decisión más gruesa y acota a las demás;
+- ídem con las ubicaciones, ya filtradas por la gama elegida;
+- ídem con las CPUs, filtradas por gama y ubicación (no todas están en todas partes);
 - con **una sola** opción se da por elegida y el bloque no se pinta;
 - un plan que deja ubicación o CPU en blanco es **comodín**: vale para cualquier selección,
   así que un producto que no las use enseña la lista de planes directamente.
@@ -124,10 +125,36 @@ se editan en panel → Catálogo → *CPUs*. En el catálogo de ejemplo, Minecra
 (4 ubicaciones × 2 CPUs) y Unturned sólo ubicación (4), que es el caso de un producto que
 se sirve en varios sitios con el mismo hardware.
 
-La subcategoría **Económicos** es la misma idea llevada al catálogo: *Minecraft Económico*
-y *Unturned Económico* son productos aparte, con su propia ficha y sus propios planes,
-servidos sobre una CPU compartida (Ryzen 5 3600). Todo lo demás —panel, anti-DDoS,
-backups, ubicaciones— es idéntico a la gama normal, y los textos lo dicen así.
+### El segundo eje: gamas
+
+La subcategoría dice **qué** se vende (VPS, juegos, web); la gama, **en qué liga juega** ese
+mismo producto (estándar, económica…). Son ejes distintos, y meterlos en la misma lista de
+pestañas es un error caro: el catálogo acaba con «Minecraft» en una pestaña y «Minecraft
+Económico» en otra, el mismo juego partido en dos sitios, y quien entra por uno no llega a
+ver la mitad de los planes.
+
+Por eso la gama cuelga del **plan** (`plan.tierId` → `site.tiers`), igual que la ubicación y
+la CPU: es el plan lo que cambia de liga, no el producto. Minecraft tiene 24 planes en la
+gama estándar y 12 en la económica, y se ven juntos donde se decide la compra.
+
+Las gamas se gestionan en panel → Catálogo → *Gamas*, y se asignan plan a plan desde su
+editor. Para juntar dos productos ya duplicados hay una herramienta dedicada —
+*Fusionar productos como gamas*— que mueve los planes, les pone la gama y borra el producto
+absorbido, enseñando antes con números lo que va a hacer.
+
+### Ciclos de facturación
+
+Opcional (`catalog.showCycles`, apagado de fábrica). Añade sobre el catálogo un selector
+mensual / trimestral / semestral / anual con el descuento de cada uno (`catalog.cycleDiscounts`).
+
+El precio que se anuncia es siempre el **equivalente mensual** con el descuento aplicado, y
+aparte se aclara el cargo real («61,08 € cada 12 meses»): así los planes siguen siendo
+comparables entre sí, que es lo que se rompe cuando unos precios son mensuales y otros
+anuales. Los identificadores son los de WHMCS, así que el ciclo elegido viaja al carrito en
+`billingcycle`. La aritmética está en `src/lib/billing.js`.
+
+> Los porcentajes son una promesa de precio que la web no puede verificar: tienen que ser
+> los que WHMCS cobra de verdad, o el cliente llegará al carrito con otro número.
 
 ### Divisas
 
@@ -195,7 +222,7 @@ veces. Ambas páginas se editan desde el panel → pestaña **Hub**.
 | Estado         | Zustand (store único en `src/store/useSite.js`)               |
 | Persistencia   | IndexedDB (`src/lib/db.js`), con localStorage sólo como fallback |
 | Iconos         | lucide-react                                                 |
-| Tipografías    | Inter (texto), Space Grotesk (títulos), Press Start 2P (acentos pixel) |
+| Tipografías    | Inter (texto), Sora (títulos), Press Start 2P (logo y sello del pie)   |
 
 ## Panel de administración
 
@@ -254,15 +281,20 @@ Cómo se valida la contraseña depende de cómo esté servida la web:
   nombre y una lista de valores con su recargo; el cliente las ajusta en el detalle del
   plan y viajan al carrito de WHMCS.
 - **Diseño** — el aspecto del sitio:
-  - **estilo** `sobrio` (de fábrica) o `vivo`. Es un interruptor, no una reescritura: se
-    aplica como `data-style` en `<html>` y las reglas del modo sobrio viven juntas al
-    final de `src/index.css` (halos apagados, cristal más plano, sin animaciones de fondo).
-    Volver a `vivo` restaura el aspecto original.
+  - **estilo**: `nitido` (de fábrica), `sobrio` o `vivo`. Es un interruptor, no una
+    reescritura: se aplica como `data-style` en `<html>` y las reglas de cada modo viven
+    juntas al final de `src/index.css`. `nitido` cambia el cristal por superficies planas
+    de borde fino, los halos por una rejilla reglada y parte el hero en dos columnas con
+    una consola; `sobrio` baja el ruido del aspecto original; `vivo` lo restaura entero.
   - **tipografía pixel**: interruptor aparte del estilo, con tres estados — *según el
-    estilo* (de fábrica: encendida en `vivo`, apagada en `sobrio`), *siempre* y *nunca*.
-    Viaja como `data-pixel` en `<html>`, así que las cuatro combinaciones son posibles: web
-    sobria con precios en pixel, o halos de sobra con las cifras legibles. El logo no
-    cambia nunca — es la marca, no una decisión de estilo.
+    estilo* (encendida sólo en `vivo`), *siempre* y *nunca* (de fábrica). Viaja como
+    `data-pixel` en `<html>`. Dos sitios se libran siempre: el logo (`.wordmark`) y el
+    sello del pie (`.pixel-keep`). La regla es qué clase de texto es: un dato que se lee
+    para decidir una compra —un precio, una cifra de RAM— se lee mejor en tipografía
+    normal; en un adorno, el pixel suma.
+  - **sprites**: iconos de pixel art animados (`theme.sprites`), en dos sitios contados —
+    la píldora del hero y el sello del pie. El dibujo se escribe como una rejilla de
+    caracteres en `src/components/ui/PixelSprite.jsx` y se colorea con la paleta del sitio.
   - **selector del visitante**: un menú en el navbar (icono de paleta) deja que quien
     visita la web elija estilo, tipografía pixel, color y fondo. Se guarda en su navegador
     (`hexservers:viewer-theme`) y se superpone al tema del sitio sólo en su dispositivo
@@ -376,7 +408,8 @@ src/
 │   ├── latency.js           Medición de latencia real por ubicación
 │   ├── db.js                IndexedDB + fallback localStorage
 │   ├── auth.js              PBKDF2-SHA256 de la contraseña de admin
-│   ├── layouts.js           Las cinco formas de listar el catálogo
+│   ├── layouts.js           Las seis formas de listar el catálogo
+│   ├── billing.js           Ciclos de facturación y su aritmética
 │   ├── remote.js            Contenido del servidor: cargarlo, guardarlo y sesión
 │   ├── whmcs.js             URLs de carrito, precios y placeholder de la API
 │   └── utils.js             Helpers (precios, slugs, imágenes, URLs seguras)
@@ -390,17 +423,48 @@ src/
 │   └── ProductPage.jsx      Ficha + configurador, y el detalle del plan
 ├── components/
 │   ├── ui/                  Editable, Modal, Logo, Flag (banderas SVG), iconos
-│   ├── catalog/             ProductBox / ProductCard / ProductRow / ProductTable (las
-│   │                        cinco vistas), LayoutPicker, Configurator, OptionCard,
-│   │                        PlanCard, PlanDetail, GroupTabs
+│   ├── catalog/             ProductBox / ProductCard / ProductRow / ProductTable /
+│   │                        ProductTile (las seis vistas), LayoutPicker, Configurator,
+│   │                        BillingCyclePicker, OptionCard, PlanCard, PlanDetail, GroupTabs
 │   └── …                    Navbar, Hero, Showcase, Features, Locations, Payments,
 │                            Contact, Footer
 └── admin/
     ├── ProductEditor.jsx    Producto (box grande) + su lista de planes
-    ├── PlanEditor.jsx       Plan: precio, specs, incluye, ubicación/CPU y WHMCS
+    ├── PlanEditor.jsx       Plan: precio, specs, incluye, gama/ubicación/CPU y WHMCS
+    ├── TierSection.jsx      Gamas: el segundo eje del catálogo
+    ├── MergeProducts.jsx    Juntar dos productos duplicados en uno con dos gamas
     ├── CollectionFields.jsx Editores de listas reutilizables
     └── panels/              Catálogo, Contenido, Hub, Diseño, Promo, WHMCS, Datos
 ```
+
+## Sistema de diseño
+
+Todo lo que se pinta sale de un token declarado en el `@theme` de `src/index.css`. No es
+purismo: sin escala, cada componente se ajusta a ojo y el conjunto deja de encajar aunque
+cada pieza suelta esté bien.
+
+| Token | Para qué |
+| ----- | -------- |
+| `text-micro` (11 px), `text-xs`, `text-sm` | Los tres pasos del texto pequeño. Antes había ocho tamaños entre 8 y 14 px. |
+| `border-line-soft` · `border-line` · `border-line-strong` | Las tres líneas. Antes, diez opacidades casi idénticas. |
+| `bg-surface-1/2/3` | Las tres superficies translúcidas. Antes, diez. |
+| `--color-slate-400/500/600/700` | Grises del texto, recalibrados para fondo oscuro. |
+
+### Contraste en fondo oscuro
+
+La rampa de grises de Tailwind está pensada para texto oscuro sobre fondo claro. Con la
+polaridad invertida, **WCAG 2.x sobreestima la legibilidad**: mide las dos igual. El
+`slate-400` de fábrica da 7,5:1 y «aprueba AAA», pero medido con APCA —el modelo del
+borrador de WCAG 3, que sí distingue polaridad— se queda en Lc 50, que sólo vale para
+titulares.
+
+Los grises de `src/index.css` salen de resolver la luminosidad para un objetivo APCA según
+el papel del texto (Lc 78 texto corrido, 66 etiquetas, 56 notas tenues, 40 separadores),
+contra el fondo más claro que llega a haber detrás de una letra.
+
+Consecuencia práctica: **sobre fondo casi negro no caben cinco escalones de gris legibles**.
+La rampa útil es de cuatro tonos. Si hace falta más jerarquía, sale del peso y del tamaño —
+no de bajar más el brillo, que es lo que había y es lo que no funcionaba.
 
 ## Notas
 

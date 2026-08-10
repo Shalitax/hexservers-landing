@@ -52,7 +52,7 @@ export default function Navbar({ route }) {
       className={cx(
         'fixed inset-x-0 top-0 z-50 transition-all duration-300',
         scrolled
-          ? 'border-b border-white/8 bg-void/70 backdrop-blur-xl shadow-[0_8px_32px_-16px_rgba(0,0,0,0.9)]'
+          ? 'border-b border-line-soft bg-void/70 backdrop-blur-xl shadow-[0_8px_32px_-16px_rgba(0,0,0,0.9)]'
           : 'border-b border-transparent bg-transparent',
       )}
     >
@@ -72,7 +72,7 @@ export default function Navbar({ route }) {
                   'rounded-lg px-3 py-2 text-sm font-medium transition',
                   isActive(link)
                     ? 'bg-hex-500/15 text-white ring-1 ring-hex-500/30'
-                    : 'text-slate-400 hover:bg-white/[0.06] hover:text-white',
+                    : 'text-slate-400 hover:bg-surface-2 hover:text-white',
                 )}
               >
                 {link.label}
@@ -87,7 +87,8 @@ export default function Navbar({ route }) {
           <CurrencyPicker />
         </div>
 
-        <div className="relative hidden lg:block" ref={dropdownRef}>
+        {/* Sin accesos configurados no hay botón: abriría un desplegable vacío. */}
+        <div className={cx('relative hidden', logins.length > 0 && 'lg:block')} ref={dropdownRef}>
           <button
             onClick={() => setLoginsOpen((open) => !open)}
             aria-expanded={loginsOpen}
@@ -111,11 +112,11 @@ export default function Navbar({ route }) {
                   target="_blank"
                   rel="noopener noreferrer"
                   onClick={() => setLoginsOpen(false)}
-                  className="group flex items-start gap-3 rounded-xl p-3 transition hover:bg-white/[0.07]"
+                  className="group flex items-start gap-3 rounded-xl p-3 transition hover:bg-surface-3"
                 >
                   <span
                     className={cx(
-                      'mt-0.5 grid size-9 shrink-0 place-items-center rounded-lg border border-white/10',
+                      'mt-0.5 grid size-11 shrink-0 place-items-center rounded-lg border border-line',
                       glyphBox(login.image),
                     )}
                   >
@@ -152,7 +153,7 @@ export default function Navbar({ route }) {
 
       {/* Menú móvil */}
       {mobileOpen && (
-        <div className="anim-pop border-t border-white/8 bg-void/95 backdrop-blur-xl lg:hidden">
+        <div className="anim-pop border-t border-line-soft bg-void/95 backdrop-blur-xl lg:hidden">
           <div className="space-y-1 px-4 py-4">
             {links.map((link) => (
               <a
@@ -164,23 +165,28 @@ export default function Navbar({ route }) {
                   'block rounded-lg px-3 py-2.5 text-sm font-medium transition',
                   isActive(link)
                     ? 'bg-hex-500/15 text-white'
-                    : 'text-slate-300 hover:bg-white/[0.06] hover:text-white',
+                    : 'text-slate-400 hover:bg-surface-2 hover:text-white',
                 )}
               >
                 {link.label}
               </a>
             ))}
 
-            <div className="!mt-4 space-y-2 border-t border-white/8 pt-4">
+            <div className="!mt-4 space-y-2 border-t border-line-soft pt-4">
               <span className="label !mb-2">Divisa</span>
               <CurrencyPicker variant="inline" />
             </div>
 
-            <div className="!mt-4 border-t border-white/8 pt-4">
+            <div className="!mt-4 border-t border-line-soft pt-4">
               <AppearancePicker variant="inline" />
             </div>
 
-            <div className="!mt-4 space-y-2 border-t border-white/8 pt-4">
+            <div
+              className={cx(
+                '!mt-4 space-y-2 border-t border-line-soft pt-4',
+                logins.length === 0 && 'hidden',
+              )}
+            >
               {logins.map((login) => (
                 <a
                   key={login.id}

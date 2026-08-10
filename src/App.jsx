@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react'
 import { useSite, useEffectiveTheme } from './store/useSite.js'
 import { useRoute } from './lib/router.js'
 import { applyTheme } from './lib/theme.js'
+import { useRevealSystem } from './lib/reveal.js'
 
 import Backdrop from './components/Backdrop.jsx'
 import Navbar from './components/Navbar.jsx'
@@ -42,6 +43,10 @@ export default function App() {
   useEffect(() => {
     applyTheme(theme)
   }, [theme])
+
+  /* Revelado por scroll. Se monta un único observador para toda la página; los
+     componentes sólo marcan `data-reveal`. Ver src/lib/reveal.js. */
+  useRevealSystem(theme.animations !== false)
 
   /* Accesos ocultos al panel: Ctrl+Shift+A y la ruta #admin. */
   useEffect(() => {

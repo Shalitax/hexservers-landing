@@ -31,7 +31,7 @@ export default function AdminBar() {
       <div className="glass flex items-center gap-1.5 bg-void-2/90 p-1.5 shadow-2xl">
         <SyncStatus />
 
-        <span className="hidden items-center gap-1.5 px-3 text-[10px] font-semibold tracking-wider text-slate-500 uppercase sm:flex">
+        <span className="hidden items-center gap-1.5 px-3 text-micro font-semibold tracking-wider text-slate-500 uppercase sm:flex">
           <Database size={12} className="text-hex-400" />
           {storageEngine()}
         </span>
@@ -42,7 +42,7 @@ export default function AdminBar() {
             'btn btn-sm gap-1.5 px-3 py-2',
             editMode
               ? 'bg-hex-500/20 text-hex-200 ring-1 ring-hex-500/40'
-              : 'text-slate-400 hover:bg-white/[0.07] hover:text-white',
+              : 'text-slate-400 hover:bg-surface-3 hover:text-white',
           )}
           title={editMode ? 'Ver como cliente' : 'Volver a editar'}
         >
@@ -81,7 +81,7 @@ function ContentAlert() {
   if (!contentError) return null
 
   return (
-    <div className="glass flex max-w-2xl items-start gap-2.5 border-amber-400/30 bg-amber-400/[0.12] p-3 text-[11px] leading-relaxed text-amber-100 shadow-2xl">
+    <div className="glass flex max-w-2xl items-start gap-2.5 border-amber-400/30 bg-amber-400/[0.12] p-3 text-micro leading-relaxed text-amber-100 shadow-2xl">
       <AlertTriangle size={14} className="mt-0.5 shrink-0 text-amber-300" />
       <span>
         <strong>{contentError}</strong> Se está mostrando una copia anterior o el contenido de
@@ -107,7 +107,7 @@ function SyncStatus() {
     return (
       <span
         title="No hay servidor: lo que edites se guarda sólo en este navegador y los visitantes no lo verán."
-        className="flex items-center gap-1.5 rounded-lg px-2.5 py-2 text-[10px] font-semibold tracking-wider text-amber-300/90 uppercase"
+        className="flex items-center gap-1.5 rounded-lg px-2.5 py-2 text-micro font-semibold tracking-wider text-amber-300/90 uppercase"
       >
         <CloudOff size={12} />
         <span className="hidden sm:inline">Sólo local</span>
@@ -128,7 +128,7 @@ function SyncStatus() {
     <span
       title={sync.error || 'Los cambios se guardan en el servidor y los ven todos los visitantes.'}
       className={cx(
-        'flex items-center gap-1.5 rounded-lg px-2.5 py-2 text-[10px] font-semibold tracking-wider uppercase',
+        'flex items-center gap-1.5 rounded-lg px-2.5 py-2 text-micro font-semibold tracking-wider uppercase',
         view.className,
       )}
     >

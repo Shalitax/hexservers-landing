@@ -49,7 +49,7 @@ export default function SupportPage() {
           />
 
           <div className="relative flex flex-col items-start gap-6 sm:flex-row sm:items-center">
-            <span className="grid size-12 shrink-0 place-items-center rounded-2xl border border-white/10 bg-gradient-to-br from-hex-500/25 to-plasma-500/20 text-hex-200">
+            <span className="grid size-11 shrink-0 place-items-center rounded-2xl border border-line bg-gradient-to-br from-hex-500/25 to-plasma-500/20 text-hex-200">
               <LifeBuoy size={22} />
             </span>
 
@@ -91,13 +91,13 @@ export default function SupportPage() {
 
           {/* Sólo el admin ve por qué el botón no lleva a ninguna parte. */}
           {editMode && !tickets && (
-            <p className="relative mt-4 rounded-xl border border-amber-400/25 bg-amber-400/[0.07] p-3 text-[11px] leading-relaxed text-amber-200">
+            <p className="relative mt-4 rounded-xl border border-amber-400/25 bg-amber-400/[0.07] p-3 text-micro leading-relaxed text-amber-200">
               El botón está apagado porque no hay a dónde ir: rellena la URL del portal en el panel
               → WHMCS, o una URL de tickets propia en el panel → Hub.
             </p>
           )}
 
-          <p className="relative mt-6 inline-flex items-center gap-2 border-t border-white/8 pt-5 text-xs text-slate-500">
+          <p className="relative mt-6 inline-flex items-center gap-2 border-t border-line-soft pt-5 text-xs text-slate-500">
             <Clock size={13} className="text-hex-400" />
             {support.responseTime}
           </p>
@@ -106,7 +106,7 @@ export default function SupportPage() {
         {/* ------------------------------- Contacto -------------------------------- */}
         <section className="mx-auto mt-6 grid max-w-3xl gap-4 sm:grid-cols-2">
           <article className="glass glass-hover flex flex-col p-6">
-            <span className="mb-4 grid size-10 place-items-center rounded-xl border border-white/10 bg-white/[0.04] text-hex-300">
+            <span className="mb-4 grid size-11 place-items-center rounded-xl border border-line bg-surface-2 text-hex-300">
               <Mail size={18} />
             </span>
             <h3 className="display text-base font-bold text-white">Correo de contacto</h3>
@@ -123,7 +123,7 @@ export default function SupportPage() {
           </article>
 
           <article className="glass glass-hover flex flex-col p-6">
-            <span className="mb-4 grid size-10 place-items-center rounded-xl border border-white/10 bg-white/[0.04] text-hex-300">
+            <span className="mb-4 grid size-11 place-items-center rounded-xl border border-line bg-surface-2 text-hex-300">
               <DiscordIcon size={18} />
             </span>
             <h3 className="display text-base font-bold text-white">Discord</h3>

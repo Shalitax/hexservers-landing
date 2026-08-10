@@ -73,7 +73,7 @@ export default function DataPanel() {
           <Stat label="Productos" value={site.products.length} />
           <Stat label="Planes" value={site.plans.length} />
         </div>
-        <p className="flex items-start gap-2 text-[11px] leading-relaxed text-slate-600">
+        <p className="flex items-start gap-2 text-micro leading-relaxed text-slate-600">
           <Database size={13} className="mt-px shrink-0" />
           Los datos viven en este navegador. Exporta una copia antes de limpiar el almacenamiento o
           de cambiar de equipo.
@@ -127,7 +127,7 @@ export default function DataPanel() {
             }}
           />
         </div>
-        <p className="text-[11px] leading-relaxed text-slate-600">
+        <p className="text-micro leading-relaxed text-slate-600">
           La exportación omite credenciales de admin y de la API de WHMCS a propósito.
         </p>
       </PanelSection>
@@ -159,7 +159,7 @@ function Stat({ label, value }) {
   return (
     <div>
       <div className="pixel text-sm text-white">{value}</div>
-      <div className="mt-1.5 text-[10px] tracking-wider text-slate-500 uppercase">{label}</div>
+      <div className="mt-1.5 text-micro tracking-wider text-slate-500 uppercase">{label}</div>
     </div>
   )
 }

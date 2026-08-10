@@ -1,5 +1,5 @@
 import { ArrowRight, EyeOff, Layers, Settings2, Star } from 'lucide-react'
-import { useMoney } from '../../store/useSite.js'
+import { useCatalogMoney } from '../../store/useSite.js'
 import { cx } from '../../lib/utils.js'
 import { productHref } from '../../lib/router.js'
 import { Icon, Glyph, glyphBox } from '../ui/icons.jsx'
@@ -10,7 +10,7 @@ import StatusPill from './StatusPill.jsx'
  * Hosting cPanel… No vende nada por sí misma, lleva al flujo de compra del producto.
  */
 export default function ProductBox({ product, group, plans, editMode, onEdit }) {
-  const money = useMoney()
+  const money = useCatalogMoney()
   const sellable = plans.filter((plan) => plan.status === 'available')
   const reference = sellable[0] || plans[0]
   const fromPrice = sellable.length
@@ -22,7 +22,7 @@ export default function ProductBox({ product, group, plans, editMode, onEdit }) 
     <article
       className={cx(
         'glass group relative flex flex-col overflow-hidden p-6 transition duration-300 sm:p-7',
-        open && 'hover:-translate-y-1 hover:border-white/20 hover:bg-white/[0.07]',
+        open && 'hover:-translate-y-1 hover:border-line-strong hover:bg-surface-3',
         product.featured && 'border-hex-500/35 bg-hex-500/[0.055]',
         !open && 'opacity-75',
         /* Sólo se ve en modo edición: el visitante no lo tiene en la lista. */
@@ -43,10 +43,10 @@ export default function ProductBox({ product, group, plans, editMode, onEdit }) 
             src={product.image}
             alt=""
             loading="lazy"
-            className="size-16 shrink-0 rounded-xl border border-white/10 object-cover sm:size-20"
+            className="size-16 shrink-0 rounded-xl border border-line object-cover sm:size-16"
           />
         ) : (
-          <span className="grid size-16 shrink-0 place-items-center rounded-xl border border-white/10 bg-gradient-to-br from-hex-500/20 to-plasma-500/15 text-hex-300 sm:size-20">
+          <span className="grid size-16 shrink-0 place-items-center rounded-xl border border-line bg-gradient-to-br from-hex-500/20 to-plasma-500/15 text-hex-300 sm:size-16">
             <Icon name={product.icon} size={30} />
           </span>
         )}
@@ -55,14 +55,14 @@ export default function ProductBox({ product, group, plans, editMode, onEdit }) 
           <div className="flex flex-wrap items-center gap-2">
             <h3 className="display text-xl font-bold text-white sm:text-2xl">{product.name}</h3>
             {product.badge && (
-              <span className="chip pixel border-hex-400/30 bg-hex-500/15 !text-[8px] !text-hex-200">
+              <span className="chip pixel border-hex-400/30 bg-hex-500/15 !text-micro !text-hex-200">
                 <Star size={9} className="fill-current" />
                 {product.badge}
               </span>
             )}
             {product.status !== 'available' && <StatusPill status={product.status} />}
             {product.hidden && (
-              <span className="chip shrink-0 border-amber-400/25 bg-amber-400/10 !text-[10px] !text-amber-300">
+              <span className="chip shrink-0 border-amber-400/25 bg-amber-400/10 !text-micro !text-amber-300">
                 <EyeOff size={10} />
                 Oculto
               </span>
@@ -70,14 +70,14 @@ export default function ProductBox({ product, group, plans, editMode, onEdit }) 
           </div>
 
           {group && (
-            <p className="mt-1.5 inline-flex items-center gap-1.5 text-[11px] font-semibold tracking-wider text-slate-500 uppercase">
+            <p className="mt-1.5 inline-flex items-center gap-1.5 text-micro font-semibold tracking-wider text-slate-500 uppercase">
               <Glyph name={group.icon} image={group.image} size={12} className="text-hex-400" />
               {group.name}
             </p>
           )}
 
           {product.tagline && (
-            <p className="mt-2 text-sm font-medium text-slate-300">{product.tagline}</p>
+            <p className="mt-2 text-sm font-medium text-slate-400">{product.tagline}</p>
           )}
         </div>
       </header>
@@ -88,12 +88,12 @@ export default function ProductBox({ product, group, plans, editMode, onEdit }) 
 
       {/* Argumentos de venta del producto */}
       {product.highlights?.length > 0 && (
-        <ul className="relative mt-5 grid gap-3 border-t border-white/8 pt-5 sm:grid-cols-3">
+        <ul className="relative mt-5 grid gap-3 border-t border-line-soft pt-5 sm:grid-cols-3">
           {product.highlights.map((item) => (
             <li key={item.id} className="flex gap-2.5">
               <span
                 className={cx(
-                  'mt-0.5 grid size-7 shrink-0 place-items-center rounded-lg border border-white/10',
+                  'mt-0.5 grid size-8 shrink-0 place-items-center rounded-lg border border-line',
                   glyphBox(item.image, { flat: true }),
                 )}
               >
@@ -101,7 +101,7 @@ export default function ProductBox({ product, group, plans, editMode, onEdit }) 
               </span>
               <span className="min-w-0">
                 <span className="block text-xs font-semibold text-white">{item.title}</span>
-                <span className="mt-0.5 block text-[11px] leading-snug text-slate-500">
+                <span className="mt-0.5 block text-micro leading-snug text-slate-500">
                   {item.description}
                 </span>
               </span>
@@ -111,9 +111,9 @@ export default function ProductBox({ product, group, plans, editMode, onEdit }) 
       )}
 
       {/* Pie: precio de entrada y acceso al flujo de compra */}
-      <div className="relative mt-6 flex flex-wrap items-end justify-between gap-4 border-t border-white/8 pt-5">
+      <div className="relative mt-6 flex flex-wrap items-end justify-between gap-4 border-t border-line-soft pt-5">
         <div>
-          <div className="flex items-center gap-2 text-[11px] font-semibold tracking-wider text-slate-500 uppercase">
+          <div className="flex items-center gap-2 text-micro font-semibold tracking-wider text-slate-500 uppercase">
             <Layers size={12} className="text-hex-400" />
             {plans.length === 1 ? '1 plan' : `${plans.length} planes`}
           </div>

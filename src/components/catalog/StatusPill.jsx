@@ -13,7 +13,7 @@ export default function StatusPill({ status, className = '' }) {
   return (
     <span
       className={cx(
-        'inline-flex items-center rounded-full border px-2 py-px text-[10px] font-semibold',
+        'inline-flex items-center rounded-full border px-2 py-px text-micro font-semibold',
         TONES[meta.tone],
         className,
       )}

@@ -4,11 +4,13 @@ import { safeUrl } from '../lib/utils.js'
 import Logo from './ui/Logo.jsx'
 import Editable from './ui/Editable.jsx'
 import { Glyph } from './ui/icons.jsx'
+import PixelSprite, { useSprites } from './ui/PixelSprite.jsx'
 
 export default function Footer() {
   const site = useSite((s) => s.site)
   const openLogin = useSite((s) => s.openLogin)
   const isAdmin = useSite((s) => s.isAdmin)
+  const sprites = useSprites()
   const clicks = useRef({ count: 0, timer: null })
 
   /** Acceso oculto al panel: 5 clicks seguidos en el punto del copyright. */
@@ -27,7 +29,7 @@ export default function Footer() {
   const { footer, brand } = site
 
   return (
-    <footer className="border-t border-white/8 bg-black/30 backdrop-blur-xl">
+    <footer className="border-t border-line-soft bg-black/30 backdrop-blur-xl">
       <div className="mx-auto max-w-7xl px-4 py-14 sm:px-6 lg:px-8">
         <div className="grid gap-10 lg:grid-cols-[1.4fr_repeat(3,1fr)]">
           {/* Marca */}
@@ -48,7 +50,7 @@ export default function Footer() {
                   rel="noopener noreferrer"
                   aria-label={social.label}
                   title={social.label}
-                  className="grid size-9 place-items-center rounded-lg border border-white/10 bg-white/[0.03] text-slate-400 transition hover:border-hex-500/40 hover:bg-hex-500/10 hover:text-hex-300"
+                  className="grid size-11 place-items-center rounded-lg border border-line bg-surface-1 text-slate-400 transition hover:border-hex-500/40 hover:bg-hex-500/10 hover:text-hex-300"
                 >
                   <Glyph name={social.icon} image={social.image} size={16} />
                 </a>
@@ -59,7 +61,7 @@ export default function Footer() {
           {/* Columnas de enlaces */}
           {footer.columns.map((column) => (
             <div key={column.id}>
-              <h3 className="pixel mb-4 text-[10px] text-slate-300 uppercase">{column.title}</h3>
+              <h3 className="pixel mb-4 text-micro text-slate-400 uppercase">{column.title}</h3>
               <ul className="space-y-2.5">
                 {column.links.map((link) => (
                   <li key={link.id}>
@@ -79,7 +81,7 @@ export default function Footer() {
           ))}
         </div>
 
-        <div className="mt-12 flex flex-col items-center justify-between gap-4 border-t border-white/8 pt-6 sm:flex-row">
+        <div className="mt-12 flex flex-col items-center justify-between gap-4 border-t border-line-soft pt-6 sm:flex-row">
           <p className="flex items-center gap-1.5 text-xs text-slate-600">
             <button
               onClick={secretClick}
@@ -89,8 +91,17 @@ export default function Footer() {
             />
             {footer.legal}
           </p>
+          {/**
+           * El sello conserva la tipografía pixel aunque el resto de la web la haya
+           * apagado (`pixel-keep`, ver index.css). Es el segundo de los dos guiños
+           * retro que sobreviven al estilo moderno — el otro es el logo — y funciona
+           * justo porque no hay más: aquí abajo no hay ningún dato que leer.
+           */}
           {brand.poweredBy && (
-            <p className="pixel text-[9px] text-slate-500 uppercase">{brand.poweredBy}</p>
+            <p className="pixel pixel-keep flex items-center gap-2 text-[9px] text-slate-500 uppercase">
+              {sprites && <PixelSprite name="heart" size={12} speed="1.4s" />}
+              {brand.poweredBy}
+            </p>
           )}
         </div>
       </div>

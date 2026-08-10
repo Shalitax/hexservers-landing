@@ -15,6 +15,7 @@ import { useSite, useCatalogLayout, productsOfGroup, plansOfProduct } from '../.
 import { cx, formatPrice } from '../../lib/utils.js'
 import { href, productHref } from '../../lib/router.js'
 import { CATALOG_LAYOUTS, findLayout } from '../../lib/layouts.js'
+import { BILLING_CYCLES, monthlyPrice, resolveCycle, usableCycles } from '../../lib/billing.js'
 import { Icon } from '../../components/ui/icons.jsx'
 import {
   TextField,
@@ -26,6 +27,9 @@ import {
   Toggle,
 } from '../controls.jsx'
 import { IconButton, StatusDot } from '../ProductEditor.jsx'
+import MergeProducts from '../MergeProducts.jsx'
+import TierSection from '../TierSection.jsx'
+import { IconItemList } from '../CollectionFields.jsx'
 
 /**
  * Pestaña "Catálogo": los tres niveles del árbol.
@@ -42,13 +46,14 @@ export default function CatalogPanel({ onEditProduct, onEditPlan }) {
 
   return (
     <div className="space-y-6">
-      <p className="rounded-xl border border-hex-500/20 bg-hex-500/[0.06] p-3 text-[11px] leading-relaxed text-hex-200/90">
+      <p className="rounded-xl border border-hex-500/20 bg-hex-500/[0.06] p-3 text-micro leading-relaxed text-hex-200/90">
         El catálogo tiene tres niveles: <strong>subcategoría</strong> (Servidores VPS, Servidores de
         Juegos, Hosting Web) → <strong>producto</strong> (la box grande: Minecraft, Unturned…) →{' '}
         <strong>plan</strong> (lo que se compra y va a WHMCS).
       </p>
 
       <CatalogLayoutSection />
+      <BillingCycleSection />
 
       <PanelSection
         title="Subcategorías"
@@ -70,7 +75,7 @@ export default function CatalogPanel({ onEditProduct, onEditPlan }) {
             )
 
             return (
-              <div key={group.id} className="rounded-xl border border-white/10 bg-white/[0.025]">
+              <div key={group.id} className="rounded-xl border border-line bg-surface-1">
                 {/* Cabecera de la subcategoría */}
                 <div className="flex items-center gap-2 p-2.5">
                   <button
@@ -84,7 +89,7 @@ export default function CatalogPanel({ onEditProduct, onEditPlan }) {
                     />
                     <Icon name={group.icon} size={15} className="shrink-0 text-hex-300" />
                     <span className="truncate text-sm font-semibold text-white">{group.name}</span>
-                    <span className="chip shrink-0 !text-[10px]">
+                    <span className="chip shrink-0 !text-micro">
                       {products.length} prod · {planCount} planes
                     </span>
                   </button>
@@ -119,11 +124,11 @@ export default function CatalogPanel({ onEditProduct, onEditPlan }) {
                 </div>
 
                 {open && (
-                  <div className="space-y-4 border-t border-white/8 p-3">
+                  <div className="space-y-4 border-t border-line-soft p-3">
                     <GroupForm group={group} />
 
                     <div className="space-y-2">
-                      <h4 className="text-[10px] font-semibold tracking-wider text-slate-500 uppercase">
+                      <h4 className="text-micro font-semibold tracking-wider text-slate-500 uppercase">
                         Productos
                       </h4>
 
@@ -154,13 +159,16 @@ export default function CatalogPanel({ onEditProduct, onEditPlan }) {
           })}
 
           {site.groups.length === 0 && (
-            <p className="rounded-xl border border-dashed border-white/10 p-6 text-center text-xs text-slate-600">
+            <p className="rounded-xl border border-dashed border-line p-6 text-center text-xs text-slate-600">
               No hay subcategorías. Crea la primera con el botón «Nueva».
             </p>
           )}
         </div>
       </PanelSection>
 
+      <FaqSection />
+      <TierSection />
+      <MergeProducts />
       <CpuSection />
       <CurrencySection />
     </div>
@@ -170,7 +178,7 @@ export default function CatalogPanel({ onEditProduct, onEditPlan }) {
 /* --------------------------- Presentación del catálogo ----------------------- */
 
 /**
- * Cómo se listan los productos en #/productos. Cinco formas del mismo contenido
+ * Cómo se listan los productos en #/productos. Seis formas del mismo contenido
  * (ver src/lib/layouts.js); aquí se fija la que ve todo el mundo al entrar y si el
  * visitante puede cambiarla desde la propia página.
  */
@@ -179,6 +187,7 @@ function CatalogLayoutSection() {
   const allowViewer = useSite((s) => s.site.catalog.allowViewerLayout !== false)
   const showAllTab = useSite((s) => s.site.catalog.showAllTab !== false)
   const allLabel = useSite((s) => s.site.catalog.allLabel)
+  const searchLabel = useSite((s) => s.site.catalog.searchLabel)
   const viewerLayout = useSite((s) => s.viewerLayout)
   const setViewerLayout = useSite((s) => s.setViewerLayout)
   const setField = useSite((s) => s.setField)
@@ -210,23 +219,23 @@ function CatalogLayoutSection() {
                 'rounded-xl border p-3 text-left transition',
                 selected
                   ? 'border-hex-500/60 bg-hex-500/12'
-                  : 'border-white/10 bg-white/[0.03] hover:border-white/25 hover:bg-white/[0.06]',
+                  : 'border-line bg-surface-1 hover:border-line-strong hover:bg-surface-2',
               )}
             >
               <span className="flex items-center gap-2">
                 <span
                   className={cx(
-                    'grid size-7 shrink-0 place-items-center rounded-lg border transition',
+                    'grid size-8 shrink-0 place-items-center rounded-lg border transition',
                     selected
                       ? 'border-hex-400/50 bg-hex-500/20 text-hex-200'
-                      : 'border-white/10 bg-white/[0.04] text-slate-500',
+                      : 'border-line bg-surface-2 text-slate-500',
                   )}
                 >
                   <Icon name={option.icon} size={14} />
                 </span>
                 <span className="text-sm font-medium text-slate-200">{option.name}</span>
               </span>
-              <span className="mt-1.5 block text-[11px] leading-snug text-slate-500">
+              <span className="mt-1.5 block text-micro leading-snug text-slate-500">
                 {option.description}
               </span>
             </button>
@@ -259,7 +268,7 @@ function CatalogLayoutSection() {
 
       {/* Sólo aparece si lo que estás viendo no es lo que verá un visitante nuevo. */}
       {active !== (layout || 'detalle') && (
-        <p className="flex items-center justify-between gap-3 rounded-xl border border-amber-400/25 bg-amber-400/[0.07] p-3 text-[11px] leading-relaxed text-amber-200">
+        <p className="flex items-center justify-between gap-3 rounded-xl border border-amber-400/25 bg-amber-400/[0.07] p-3 text-micro leading-relaxed text-amber-200">
           <span>
             En este navegador estás viendo el catálogo como{' '}
             <strong>{findLayout(active).name}</strong>, no como lo verá un visitante nuevo.
@@ -270,10 +279,195 @@ function CatalogLayoutSection() {
         </p>
       )}
 
+      {(layout || 'detalle') === 'buscable' && (
+        <TextField
+          label="Marcador del buscador"
+          value={searchLabel}
+          placeholder="Buscar por nombre, plan o categoría…"
+          hint="El texto en gris del campo de búsqueda. Sólo se ve en la rejilla buscable."
+          onChange={(value) => setField('catalog.searchLabel', value)}
+        />
+      )}
+
       <a href={href('/productos')} className="btn-ghost btn-sm w-full py-2">
         <ExternalLink size={12} />
         Ver la página de productos
       </a>
+    </PanelSection>
+  )
+}
+
+/* --------------------------- Ciclos de facturación --------------------------- */
+
+/**
+ * Descuento por pagar por adelantado.
+ *
+ * Lo que se escribe aquí es una promesa: el visitante ve el precio ya rebajado y
+ * espera que el carrito le cobre eso. Por eso el aviso de abajo insiste en que los
+ * porcentajes tienen que ser los mismos que hay configurados en WHMCS — la web no
+ * puede comprobarlo por su cuenta.
+ */
+function BillingCycleSection() {
+  const showCycles = useSite((s) => s.site.catalog.showCycles === true)
+  const discounts = useSite((s) => s.site.catalog.cycleDiscounts) || {}
+  const setField = useSite((s) => s.setField)
+
+  const sample = 10
+  const active = usableCycles(discounts)
+
+  return (
+    <PanelSection
+      title="Ciclos de facturación"
+      description="Un selector sobre el catálogo para ver los precios pagando por trimestres, semestres o años."
+    >
+      <Toggle
+        label="Ofrecer pago por adelantado"
+        hint="Añade el selector sobre el catálogo. Los precios que se enseñan pasan a ser el equivalente mensual ya rebajado, y bajo cada uno se aclara cuánto se cobra de una vez."
+        checked={showCycles}
+        onChange={(value) => setField('catalog.showCycles', value)}
+      />
+
+      <div className="space-y-2">
+        {BILLING_CYCLES.filter((cycle) => cycle.months > 1).map((cycle) => (
+          <div key={cycle.id} className="flex items-center gap-3">
+            <span className="w-28 shrink-0 text-sm text-slate-400">{cycle.name}</span>
+            <div className="relative flex-1">
+              <input
+                type="number"
+                min="0"
+                max="90"
+                step="1"
+                className="input pr-7"
+                value={discounts[cycle.id] ?? 0}
+                onChange={(event) =>
+                  setField(`catalog.cycleDiscounts.${cycle.id}`, Number(event.target.value) || 0)
+                }
+              />
+              <span className="pointer-events-none absolute top-1/2 right-3 -translate-y-1/2 text-xs text-slate-500">
+                %
+              </span>
+            </div>
+            <span className="w-32 shrink-0 text-right text-micro text-slate-500 tabular-nums">
+              {formatPrice(monthlyPrice(sample, resolveCycle(cycle.id, discounts)))} /mes
+            </span>
+          </div>
+        ))}
+      </div>
+
+      <p className="text-micro leading-relaxed text-slate-500">
+        La columna de la derecha es lo que costaría un plan de {formatPrice(sample)} al mes con cada
+        descuento. Un ciclo al 0 % no aparece en el selector: serían botones que no cambian nada.
+        {showCycles && active.length < 2 && (
+          <strong className="mt-1 block text-amber-300">
+            Ahora mismo no hay ningún descuento, así que el selector no se está pintando.
+          </strong>
+        )}
+      </p>
+
+      <p className="rounded-xl border border-amber-400/25 bg-amber-400/[0.07] p-3 text-micro leading-relaxed text-amber-200">
+        Estos porcentajes tienen que ser los que WHMCS cobra de verdad en cada ciclo. La web no
+        puede comprobarlo: si aquí pones un 15 % anual que allí no existe, el cliente llega al
+        carrito con un precio distinto del que le prometiste. El ciclo elegido sí viaja al carrito
+        (<code className="text-amber-100">billingcycle</code>).
+      </p>
+    </PanelSection>
+  )
+}
+
+/* -------------------------- Preguntas frecuentes ---------------------------- */
+
+/**
+ * El acordeón del pie del catálogo.
+ *
+ * Se apoya en las listas genéricas del store (`catalog.faq`) en vez de tener CRUD
+ * propio: son cuatro campos y no hay nada que la haga especial. La respuesta
+ * también se puede editar en la propia página, abriendo la pregunta.
+ */
+function FaqSection() {
+  const faq = useSite((s) => s.site.catalog.faq) || []
+  const faqTitle = useSite((s) => s.site.catalog.faqTitle)
+  const faqSubtitle = useSite((s) => s.site.catalog.faqSubtitle)
+  const setField = useSite((s) => s.setField)
+  const addListItem = useSite((s) => s.addListItem)
+  const updateListItem = useSite((s) => s.updateListItem)
+  const removeListItem = useSite((s) => s.removeListItem)
+  const moveListItem = useSite((s) => s.moveListItem)
+
+  return (
+    <PanelSection
+      title="Preguntas frecuentes"
+      description="Acordeón al pie de la página de productos. Son las dudas que llegan justo antes de pagar: contestarlas aquí cierra ventas y quita tickets."
+      action={
+        <button
+          onClick={() =>
+            addListItem('catalog.faq', { question: 'Nueva pregunta', answer: '' })
+          }
+          className="btn-ghost btn-sm"
+        >
+          <Plus size={13} />
+          Añadir
+        </button>
+      }
+    >
+      <Row>
+        <TextField
+          label="Título de la sección"
+          value={faqTitle}
+          onChange={(v) => setField('catalog.faqTitle', v)}
+        />
+        <TextField
+          label="Subtítulo"
+          value={faqSubtitle}
+          onChange={(v) => setField('catalog.faqSubtitle', v)}
+        />
+      </Row>
+
+      <div className="space-y-2">
+        {faq.map((item, index) => (
+          <div key={item.id} className="space-y-2 rounded-xl border border-line bg-surface-1 p-3">
+            <div className="flex items-start gap-2">
+              <input
+                className="input"
+                placeholder="¿Cuánto tarda en estar listo mi servidor?"
+                value={item.question ?? ''}
+                onChange={(e) => updateListItem('catalog.faq', item.id, { question: e.target.value })}
+              />
+              <div className="flex shrink-0 items-center">
+                <IconButton
+                  icon={ChevronUp}
+                  label="Subir"
+                  disabled={index === 0}
+                  onClick={() => moveListItem('catalog.faq', item.id, -1)}
+                />
+                <IconButton
+                  icon={ChevronDown}
+                  label="Bajar"
+                  disabled={index === faq.length - 1}
+                  onClick={() => moveListItem('catalog.faq', item.id, 1)}
+                />
+                <IconButton
+                  icon={Trash2}
+                  label="Eliminar pregunta"
+                  danger
+                  onClick={() => removeListItem('catalog.faq', item.id)}
+                />
+              </div>
+            </div>
+            <textarea
+              className="input min-h-16 resize-y"
+              placeholder="La respuesta, en dos o tres líneas. Sin rodeos."
+              value={item.answer ?? ''}
+              onChange={(e) => updateListItem('catalog.faq', item.id, { answer: e.target.value })}
+            />
+          </div>
+        ))}
+
+        {faq.length === 0 && (
+          <p className="rounded-xl border border-dashed border-line p-6 text-center text-xs text-slate-600">
+            Sin preguntas: la sección no se pinta y la página termina en la última tarjeta.
+          </p>
+        )}
+      </div>
     </PanelSection>
   )
 }
@@ -335,7 +529,7 @@ function CurrencySection() {
       </Row>
 
       <div className="space-y-2">
-        <div className="grid grid-cols-[4.5rem_1fr_6rem_5rem_2.5rem] gap-2 px-1 text-[10px] font-semibold tracking-wider text-slate-600 uppercase">
+        <div className="grid grid-cols-[4.5rem_1fr_6rem_5rem_2.5rem] gap-2 px-1 text-micro font-semibold tracking-wider text-slate-600 uppercase">
           <span>Código</span>
           <span>Nombre</span>
           <span>Cambio</span>
@@ -347,7 +541,7 @@ function CurrencySection() {
           const isBase = item.code === currency.base
 
           return (
-            <div key={item.id} className="space-y-2 rounded-xl border border-white/10 bg-white/[0.025] p-2.5">
+            <div key={item.id} className="space-y-2 rounded-xl border border-line bg-surface-1 p-2.5">
               <div className="grid grid-cols-[4.5rem_1fr_6rem_5rem_2.5rem] items-center gap-2">
                 <input
                   className="input uppercase"
@@ -404,7 +598,7 @@ function CurrencySection() {
                   value={item.locale ?? ''}
                   onChange={(event) => set(item.id, { locale: event.target.value })}
                 />
-                <span className="chip shrink-0 !text-[11px]">
+                <span className="chip shrink-0 !text-micro">
                   {formatPrice(10 * (isBase ? 1 : Number(item.rate) || 0), item.code, item.locale)}
                 </span>
                 <IconButton
@@ -420,7 +614,7 @@ function CurrencySection() {
         })}
       </div>
 
-      <p className="rounded-xl border border-amber-400/25 bg-amber-400/[0.07] p-3 text-[11px] leading-relaxed text-amber-200">
+      <p className="rounded-xl border border-amber-400/25 bg-amber-400/[0.07] p-3 text-micro leading-relaxed text-amber-200">
         Los cambios los fijas tú: aquí no hay servidor que consulte cotizaciones, y colgar los
         precios de una API ajena sería dejarlos en manos de un tercero. Revísalos de vez en cuando.
         La muestra de al lado es cómo se vería un plan de 10 {currency.base}.
@@ -454,7 +648,7 @@ function CpuSection() {
         </button>
       }
     >
-      <p className="rounded-xl border border-white/10 bg-white/[0.025] p-3 text-[11px] leading-relaxed text-slate-500">
+      <p className="rounded-xl border border-line bg-surface-1 p-3 text-micro leading-relaxed text-slate-500">
         Los pasos de ubicación y CPU sólo aparecen cuando hay más de una opción entre los planes de
         un producto. Las ubicaciones se editan en <strong>Contenido → Ubicaciones</strong>.
       </p>
@@ -464,7 +658,7 @@ function CpuSection() {
           const used = plans.filter((plan) => plan.cpuId === cpu.id).length
 
           return (
-            <div key={cpu.id} className="space-y-2 rounded-xl border border-white/10 bg-white/[0.025] p-3">
+            <div key={cpu.id} className="space-y-2 rounded-xl border border-line bg-surface-1 p-3">
               <div className="flex items-center gap-2">
                 <CompactGlyphPicker
                   icon={cpu.icon}
@@ -478,7 +672,7 @@ function CpuSection() {
                   value={cpu.name}
                   onChange={(event) => updateCpu(cpu.id, { name: event.target.value })}
                 />
-                <span className="chip shrink-0 !text-[10px]">{used} planes</span>
+                <span className="chip shrink-0 !text-micro">{used} planes</span>
                 <div className="flex shrink-0 items-center">
                   <IconButton
                     icon={ChevronUp}
@@ -534,7 +728,7 @@ function CpuSection() {
         })}
 
         {cpus.length === 0 && (
-          <p className="rounded-xl border border-dashed border-white/10 p-6 text-center text-xs text-slate-600">
+          <p className="rounded-xl border border-dashed border-line p-6 text-center text-xs text-slate-600">
             Sin CPUs: los productos van directos de la ficha a la lista de planes.
           </p>
         )}
@@ -547,6 +741,10 @@ function CpuSection() {
 
 function GroupForm({ group }) {
   const updateGroup = useSite((s) => s.updateGroup)
+  const addGroupItem = useSite((s) => s.addGroupItem)
+  const updateGroupItem = useSite((s) => s.updateGroupItem)
+  const removeGroupItem = useSite((s) => s.removeGroupItem)
+  const moveGroupItem = useSite((s) => s.moveGroupItem)
   const set = (patch) => updateGroup(group.id, patch)
 
   return (
@@ -557,6 +755,19 @@ function GroupForm({ group }) {
         value={group.slug}
         onChange={(v) => set({ slug: v })}
         hint={`#/productos/${group.slug || '…'}`}
+      />
+      {/**
+       * Con titular propio, `#/productos/{slug}` deja de ser «el catálogo filtrado»
+       * y se presenta como una página que vende esta familia. Vacío = se usa el
+       * titular genérico del catálogo, como hasta ahora.
+       */}
+      <TextField
+        label="Titular propio de la página"
+        value={group.headline}
+        onChange={(v) => set({ headline: v })}
+        className="sm:col-span-2"
+        placeholder="Elige tu juego. Del resto nos encargamos nosotros."
+        hint={`Encabeza #/productos/${group.slug || '…'} en lugar del titular general. Déjalo vacío para usar el del catálogo.`}
       />
       <TextField
         label="Frase corta"
@@ -582,6 +793,24 @@ function GroupForm({ group }) {
           hint="Sube una imagen para usarla en lugar del icono, en la portada y en las pestañas."
         />
       </div>
+
+      {/* Sólo tienen dónde pintarse si la subcategoría tiene cabecera propia. */}
+      {group.headline && (
+        <div className="sm:col-span-2">
+          <IconItemList
+            title="Argumentos de la familia"
+            hint="Píldoras bajo el titular de la página de la subcategoría. De la descripción se encarga el campo de arriba; esto son los tres o cuatro motivos de un vistazo."
+            items={group.highlights || []}
+            onAdd={() =>
+              addGroupItem(group.id, { icon: 'sparkles', title: 'Nuevo argumento', description: '' })
+            }
+            onUpdate={(itemId, patch) => updateGroupItem(group.id, itemId, patch)}
+            onRemove={(itemId) => removeGroupItem(group.id, itemId)}
+            onMove={(itemId, dir) => moveGroupItem(group.id, itemId, dir)}
+            emptyHint="Sin argumentos: bajo el titular sólo irá la descripción."
+          />
+        </div>
+      )}
     </div>
   )
 }
@@ -601,7 +830,7 @@ function ProductRow({ product, plans, position, total, onEditProduct, onEditPlan
   return (
     <div
       className={cx(
-        'rounded-lg border border-white/8 bg-black/25',
+        'rounded-lg border border-line-soft bg-black/25',
         product.hidden && 'border-dashed border-amber-400/25',
       )}
     >
@@ -639,10 +868,10 @@ function ProductRow({ product, plans, position, total, onEditProduct, onEditPlan
               {product.name}
             </span>
             <StatusDot status={product.status} />
-            {product.featured && <span className="chip !text-[9px] !text-hex-300">destacado</span>}
-            {product.hidden && <span className="chip !text-[9px] !text-amber-300">oculto</span>}
+            {product.featured && <span className="chip !text-micro !text-hex-300">destacado</span>}
+            {product.hidden && <span className="chip !text-micro !text-amber-300">oculto</span>}
           </span>
-          <span className="mt-0.5 block text-[11px] text-slate-500">
+          <span className="mt-0.5 block text-micro text-slate-500">
             /{product.slug} · {plans.length} planes ·{' '}
             {missingWhmcs === 0 ? (
               <span className="text-emerald-400/80">WHMCS OK</span>
@@ -682,17 +911,17 @@ function ProductRow({ product, plans, position, total, onEditProduct, onEditPlan
       </div>
 
       {openPlans && (
-        <div className="space-y-1.5 border-t border-white/8 p-2">
+        <div className="space-y-1.5 border-t border-line-soft p-2">
           {plans.map((plan) => (
-            <div key={plan.id} className="flex items-center gap-2 rounded-md bg-white/[0.03] px-2 py-1.5">
+            <div key={plan.id} className="flex items-center gap-2 rounded-md bg-surface-1 px-2 py-1.5">
               <StatusDot status={plan.status} />
               <button
                 onClick={() => onEditPlan(plan.id)}
-                className="min-w-0 flex-1 truncate text-left text-[13px] text-slate-300 transition hover:text-white"
+                className="min-w-0 flex-1 truncate text-left text-sm text-slate-400 transition hover:text-white"
               >
                 {plan.name}
               </button>
-              <span className="shrink-0 text-[11px] text-slate-500">
+              <span className="shrink-0 text-micro text-slate-500">
                 {formatPrice(plan.price, site.currency.base)}
                 {plan.period}
               </span>
