@@ -1,65 +1,52 @@
-import { RotateCcw } from 'lucide-react'
 import { useSite, useCatalogLayout } from '../../store/useSite.js'
-import { CATALOG_LAYOUTS } from '../../lib/layouts.js'
+import { DENSITIES, densityOf } from '../../lib/layouts.js'
 import { cx } from '../../lib/utils.js'
 import { Icon } from '../ui/icons.jsx'
 
 /**
- * Selector de la forma de listar el catálogo, para el visitante.
+ * Densidad del catálogo, para el visitante.
  *
- * Vive en la propia página de productos y no en el navbar porque sólo tiene sentido
- * donde se ve el efecto. Lo que elija se guarda en su navegador; el modo que fije el
- * admin sigue siendo el que ve todo el mundo al entrar, y se puede quitar del todo
- * con `catalog.allowViewerLayout`.
+ * Antes esto enseñaba las seis formas de listar el catálogo más un botón de
+ * restablecer: siete controles, la mitad del ruido de la página, para responder a
+ * una pregunta que no se hace nadie que venga a comprar un servidor. Las seis
+ * siguen ahí — las elige el admin, en el panel. Aquí queda lo que tiene cualquier
+ * tienda: ver más grande o ver más denso.
+ *
+ * «Tarjetas» no fija ningún modo: **borra** la preferencia del visitante, así que
+ * devuelve la vista que haya elegido el sitio, sea cual sea de las que llevan
+ * tarjetas. Es lo que permite que dos botones cubran seis modos sin mentir sobre
+ * cuál está activo, y por eso tampoco hace falta un botón de restablecer.
  */
 export default function LayoutPicker() {
   const allowViewer = useSite((s) => s.site.catalog.allowViewerLayout !== false)
-  const viewerLayout = useSite((s) => s.viewerLayout)
   const setViewerLayout = useSite((s) => s.setViewerLayout)
-  const active = useCatalogLayout()
+  const active = densityOf(useCatalogLayout())
 
   if (!allowViewer) return null
 
   return (
-    <div className="flex flex-wrap items-center justify-center gap-2">
-      <span className="text-micro font-semibold tracking-wider text-slate-500 uppercase">
-        Ver como
-      </span>
-
-      <div
-        role="group"
-        aria-label="Forma de ver el catálogo"
-        className="glass-soft flex flex-wrap items-center gap-1 p-1"
-      >
-        {CATALOG_LAYOUTS.map((layout) => (
-          <button
-            key={layout.id}
-            onClick={() => setViewerLayout(layout.id)}
-            aria-pressed={active === layout.id}
-            title={layout.description}
-            className={cx(
-              'inline-flex items-center gap-1.5 rounded-lg px-2.5 py-1.5 text-xs font-semibold transition',
-              active === layout.id
-                ? 'bg-hex-500/20 text-white ring-1 ring-hex-500/40'
-                : 'text-slate-500 hover:bg-surface-2 hover:text-white',
-            )}
-          >
-            <Icon name={layout.icon} size={13} />
-            <span className="hidden sm:inline">{layout.short}</span>
-          </button>
-        ))}
-      </div>
-
-      {viewerLayout && (
+    <div
+      role="group"
+      aria-label="Densidad del catálogo"
+      className="glass-soft flex shrink-0 items-center gap-1 p-1"
+    >
+      {DENSITIES.map((density) => (
         <button
-          onClick={() => setViewerLayout('')}
-          title="Volver a la vista por defecto de la web"
-          className="btn-ghost btn-sm py-1.5 text-micro"
+          key={density.id}
+          onClick={() => setViewerLayout(density.id === 'lista' ? 'lista' : '')}
+          aria-pressed={active === density.id}
+          title={`Ver en ${density.name.toLowerCase()}`}
+          className={cx(
+            'inline-flex items-center gap-1.5 rounded-lg px-2.5 py-1.5 text-xs font-semibold transition',
+            active === density.id
+              ? 'bg-hex-500/20 text-white ring-1 ring-hex-500/40'
+              : 'text-slate-500 hover:bg-surface-2 hover:text-white',
+          )}
         >
-          <RotateCcw size={11} />
-          Por defecto
+          <Icon name={density.icon} size={13} />
+          <span className="hidden sm:inline">{density.name}</span>
         </button>
-      )}
+      ))}
     </div>
   )
 }

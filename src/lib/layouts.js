@@ -60,12 +60,39 @@ export const CATALOG_LAYOUTS = [
   },
 ]
 
-export const DEFAULT_LAYOUT = 'detalle'
+export const DEFAULT_LAYOUT = 'buscable'
 
 const IDS = new Set(CATALOG_LAYOUTS.map((layout) => layout.id))
 
 /** Modo válido, con el de fábrica como red de seguridad. */
 export const resolveLayout = (id) => (IDS.has(id) ? id : DEFAULT_LAYOUT)
+
+
+/**
+ * Densidad: las dos únicas opciones que se le ofrecen al visitante.
+ *
+ * El selector enseñaba las seis formas de arriba, siete controles contando el de
+ * restablecer, y era la mitad del ruido de la página. «¿Cómo prefieres que te
+ * listemos el catálogo?» no es una pregunta que se haga quien viene a comprar un
+ * servidor — ninguna de las webs de referencia la hace — y cada botón le quitaba
+ * sitio a lo que sí se vende.
+ *
+ * Las seis siguen existiendo: las elige el admin. Al visitante le queda lo que
+ * tiene cualquier tienda, ver más grande o ver más denso:
+ *
+ *   `tarjetas` respeta lo que haya elegido el sitio, sea cual sea de las cinco
+ *              formas con tarjetas. Por eso no fija un modo: quita la preferencia.
+ *   `lista`    una fila por producto, para abarcar mucho de un vistazo.
+ */
+export const LIST_LAYOUTS = new Set(['lista', 'tabla'])
+
+export const DENSITIES = [
+  { id: 'tarjetas', name: 'Tarjetas', icon: 'layers' },
+  { id: 'lista', name: 'Lista', icon: 'box' },
+]
+
+/** Densidad a la que corresponde un modo, para saber qué botón va marcado. */
+export const densityOf = (layoutId) => (LIST_LAYOUTS.has(resolveLayout(layoutId)) ? 'lista' : 'tarjetas')
 
 export const findLayout = (id) =>
   CATALOG_LAYOUTS.find((layout) => layout.id === resolveLayout(id)) || CATALOG_LAYOUTS[0]

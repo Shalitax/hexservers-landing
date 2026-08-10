@@ -1,4 +1,4 @@
-import { ArrowRight, EyeOff, Settings2, Star } from 'lucide-react'
+import { ArrowRight, Check, EyeOff, Settings2, Star } from 'lucide-react'
 import { useSite, useCatalogMoney } from '../../store/useSite.js'
 import { productSummary, tiersOf } from '../../lib/catalog.js'
 import { cx } from '../../lib/utils.js'
@@ -17,8 +17,13 @@ import StatusPill from './StatusPill.jsx'
  * Sin imagen no se deja el hueco vacío: el icono del producto se pinta en grande
  * sobre un degradado de la marca, que es feo sólo si se compara con una carátula
  * que no existe.
+ *
+ * En versión `featured` ocupa el doble de ancho y añade lo que en la compacta no
+ * cabe: los argumentos del producto y el precio en grande. Sin eso el catálogo era
+ * una cuadrícula plana donde las ocho piezas pesaban igual y la mirada no tenía
+ * dónde caer — que es medio motivo por el que una página de catálogo no vende.
  */
-export default function ProductTile({ product, group, plans, editMode, onEdit }) {
+export default function ProductTile({ product, group, plans, editMode, onEdit, featured = false }) {
   const site = useSite((s) => s.site)
   const money = useCatalogMoney()
   const { open, price, period } = productSummary(product, plans)
@@ -37,7 +42,12 @@ export default function ProductTile({ product, group, plans, editMode, onEdit })
       )}
     >
       {/* Portada */}
-      <div className="relative aspect-[16/10] overflow-hidden border-b border-line-soft">
+      <div
+        className={cx(
+          'relative overflow-hidden border-b border-line-soft',
+          featured ? 'aspect-[16/7]' : 'aspect-[16/10]',
+        )}
+      >
         {product.image ? (
           <img
             src={product.image}
@@ -71,7 +81,9 @@ export default function ProductTile({ product, group, plans, editMode, onEdit })
 
       {/* Ficha */}
       <div className="flex flex-1 flex-col p-4">
-        <h3 className="display truncate text-base font-bold text-white">{product.name}</h3>
+        <h3 className={cx('display truncate font-bold text-white', featured ? 'text-xl' : 'text-base')}>
+          {product.name}
+        </h3>
 
         {group && (
           <p className="mt-1 inline-flex items-center gap-1.5 text-micro font-semibold tracking-wider text-slate-500 uppercase">
@@ -91,10 +103,30 @@ export default function ProductTile({ product, group, plans, editMode, onEdit })
         )}
 
         {product.tagline && (
-          <p className="mt-2.5 line-clamp-2 text-sm leading-snug text-slate-400">
+          <p
+            className={cx(
+              'mt-2.5 text-sm leading-snug text-slate-400',
+              featured ? 'line-clamp-3' : 'line-clamp-2',
+            )}
+          >
             {product.tagline}
           </p>
         )}
+
+        {/* Sólo en el destacado: los argumentos, que es lo que justifica el tamaño. */}
+        {featured && product.highlights?.length > 0 && (
+          <ul className="mt-4 grid gap-2 sm:grid-cols-2">
+            {product.highlights.slice(0, 4).map((item) => (
+              <li key={item.id} className="flex items-start gap-2 text-sm text-slate-400">
+                <Check size={14} className="mt-0.5 shrink-0 text-hex-400" />
+                <span className="min-w-0">{item.title}</span>
+              </li>
+            ))}
+          </ul>
+        )}
+
+        {/* Empuja el pie abajo para que las baldosas de una fila cuadren entre sí. */}
+        <div className="min-h-2 grow" aria-hidden="true" />
 
         <div className="mt-4 flex items-end justify-between gap-2 border-t border-line-soft pt-3">
           {price !== null ? (
@@ -103,8 +135,17 @@ export default function ProductTile({ product, group, plans, editMode, onEdit })
                 Desde
               </div>
               <div className="flex items-baseline gap-1">
-                <span className="pixel text-sm text-white">{money(price)}</span>
-                <span className="text-micro text-slate-500">{period}</span>
+                {/**
+                 * En el destacado el precio es lo segundo más grande de la pieza,
+                 * después del nombre: es el dato por el que se está mirando esto.
+                 * En la compacta se queda pequeño para no competir con él.
+                 */}
+                <span className={cx('pixel text-white', featured ? 'text-2xl' : 'text-sm')}>
+                  {money(price)}
+                </span>
+                <span className={cx('text-slate-500', featured ? 'text-sm' : 'text-micro')}>
+                  {period}
+                </span>
               </div>
             </div>
           ) : (

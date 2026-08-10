@@ -19,6 +19,8 @@ import ProductCard from '../components/catalog/ProductCard.jsx'
 import ProductRow from '../components/catalog/ProductRow.jsx'
 import ProductTable from '../components/catalog/ProductTable.jsx'
 import ProductTile from '../components/catalog/ProductTile.jsx'
+import GroupArguments from '../components/catalog/GroupArguments.jsx'
+import CatalogFaq from '../components/catalog/CatalogFaq.jsx'
 
 /**
  * Catálogo: la única página que lista productos (la portada sólo enlaza aquí).
@@ -125,14 +127,17 @@ export default function ProductsPage({ route, onEditProduct }) {
 
         {products.length > 0 ? (
           <>
-            <div className="mt-8 space-y-3">
-              <LayoutPicker />
-              <BillingCyclePicker />
-            </div>
-
-            {searchable && (
-              <div className="mx-auto mt-8 max-w-md">
-                <label className="relative block">
+            {/**
+             * Todos los controles en una fila.
+             *
+             * Estaban en tres filas apiladas —vistas, ciclo y buscador—, y entre las
+             * pestañas y ellos había trece elementos interactivos antes de que se
+             * viera un solo producto. Las referencias ponen uno o dos. Aquí caben en
+             * una línea porque el selector de vistas bajó de siete botones a dos.
+             */}
+            <div className="mt-8 flex flex-wrap items-center justify-center gap-3 sm:justify-between">
+              {searchable ? (
+                <label className="relative min-w-56 flex-1 sm:max-w-sm">
                   <Search
                     size={16}
                     className="pointer-events-none absolute top-1/2 left-3.5 -translate-y-1/2 text-slate-500"
@@ -146,8 +151,15 @@ export default function ProductsPage({ route, onEditProduct }) {
                     className="input py-2.5 pl-10"
                   />
                 </label>
+              ) : (
+                <span />
+              )}
+
+              <div className="flex flex-wrap items-center justify-center gap-3">
+                <BillingCyclePicker />
+                <LayoutPicker />
               </div>
-            )}
+            </div>
 
             <div className="mt-8">
               {visible.length > 0 ? (
@@ -159,6 +171,8 @@ export default function ProductsPage({ route, onEditProduct }) {
                   onEditProduct={onEditProduct}
                   onCreate={createProduct}
                   activeGroup={activeGroup}
+                  searching={Boolean(query.trim())}
+                  restLabel={site.catalog.restLabel}
                 />
               ) : (
                 /* Filtrado a cero: no es un catálogo vacío, es una búsqueda sin suerte. */
@@ -201,6 +215,13 @@ export default function ProductsPage({ route, onEditProduct }) {
             )}
           </div>
         )}
+        {/**
+         * El cierre de la página. Antes terminaba en seco después de la última
+         * tarjeta: un directorio. Los argumentos de la familia sólo salen si la
+         * subcategoría activa los tiene escritos, y el FAQ es del catálogo entero.
+         */}
+        <GroupArguments group={activeGroup} />
+        <CatalogFaq />
       </div>
     </main>
   )
@@ -276,7 +297,17 @@ function matchesProduct(site, product, term) {
  * Pinta la misma lista de productos de la forma que toque. Cada modo decide sólo su
  * rejilla y qué pieza usa; los datos ya vienen resueltos y ordenados de arriba.
  */
-function ProductList({ layout, site, products, editMode, onEditProduct, onCreate, activeGroup }) {
+function ProductList({
+  layout,
+  site,
+  products,
+  editMode,
+  onEditProduct,
+  onCreate,
+  activeGroup,
+  searching = false,
+  restLabel = 'Todo el catálogo',
+}) {
   const groupOf = (product) => site.groups.find((g) => g.id === product.groupId)
   const plansOf = (product) => plansOfProduct(site, product.id)
 
@@ -321,14 +352,46 @@ function ProductList({ layout, site, products, editMode, onEditProduct, onCreate
     )
   }
 
-  /* Baldosas más estrechas que la rejilla normal: la imagen aguanta el tamaño y
-     así entran cuatro por fila, que es lo que hace que un catálogo largo se abarque. */
+  /**
+   * Rejilla buscable, con jerarquía.
+   *
+   * Los destacados ocupan dos columnas y llevan argumentos y precio en grande; el
+   * resto va en baldosas compactas de cuatro por fila. Sin esa diferencia el
+   * catálogo era una cuadrícula plana donde todo pesaba igual y la mirada no tenía
+   * dónde caer: es el patrón de deluxhost, que abre con tres planes grandes y mete
+   * el resto debajo bajo un «All plans».
+   *
+   * Buscando se apaga la jerarquía a propósito: quien ha escrito «minecraft» ya ha
+   * dicho qué quiere, y destacarle otra cosa encima sería ruido.
+   */
   if (layout === 'buscable') {
+    const featured = searching ? [] : products.filter((product) => product.featured)
+    const rest = searching ? products : products.filter((product) => !product.featured)
+
     return (
-      <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
-        {products.map((product) => (
-          <ProductTile key={product.id} {...common(product)} />
-        ))}
+      <div className="space-y-10">
+        {featured.length > 0 && (
+          <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
+            {featured.map((product) => (
+              <div key={product.id} className="lg:col-span-2">
+                <ProductTile {...common(product)} featured />
+              </div>
+            ))}
+          </div>
+        )}
+
+        {rest.length > 0 && (
+          <section>
+            {featured.length > 0 && (
+              <h2 className="eyebrow mb-4">{restLabel}</h2>
+            )}
+            <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
+              {rest.map((product) => (
+                <ProductTile key={product.id} {...common(product)} />
+              ))}
+            </div>
+          </section>
+        )}
       </div>
     )
   }

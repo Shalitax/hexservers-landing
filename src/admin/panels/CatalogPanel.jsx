@@ -166,6 +166,7 @@ export default function CatalogPanel({ onEditProduct, onEditPlan }) {
         </div>
       </PanelSection>
 
+      <FaqSection />
       <TierSection />
       <MergeProducts />
       <CpuSection />
@@ -369,6 +370,104 @@ function BillingCycleSection() {
         carrito con un precio distinto del que le prometiste. El ciclo elegido sí viaja al carrito
         (<code className="text-amber-100">billingcycle</code>).
       </p>
+    </PanelSection>
+  )
+}
+
+/* -------------------------- Preguntas frecuentes ---------------------------- */
+
+/**
+ * El acordeón del pie del catálogo.
+ *
+ * Se apoya en las listas genéricas del store (`catalog.faq`) en vez de tener CRUD
+ * propio: son cuatro campos y no hay nada que la haga especial. La respuesta
+ * también se puede editar en la propia página, abriendo la pregunta.
+ */
+function FaqSection() {
+  const faq = useSite((s) => s.site.catalog.faq) || []
+  const faqTitle = useSite((s) => s.site.catalog.faqTitle)
+  const faqSubtitle = useSite((s) => s.site.catalog.faqSubtitle)
+  const setField = useSite((s) => s.setField)
+  const addListItem = useSite((s) => s.addListItem)
+  const updateListItem = useSite((s) => s.updateListItem)
+  const removeListItem = useSite((s) => s.removeListItem)
+  const moveListItem = useSite((s) => s.moveListItem)
+
+  return (
+    <PanelSection
+      title="Preguntas frecuentes"
+      description="Acordeón al pie de la página de productos. Son las dudas que llegan justo antes de pagar: contestarlas aquí cierra ventas y quita tickets."
+      action={
+        <button
+          onClick={() =>
+            addListItem('catalog.faq', { question: 'Nueva pregunta', answer: '' })
+          }
+          className="btn-ghost btn-sm"
+        >
+          <Plus size={13} />
+          Añadir
+        </button>
+      }
+    >
+      <Row>
+        <TextField
+          label="Título de la sección"
+          value={faqTitle}
+          onChange={(v) => setField('catalog.faqTitle', v)}
+        />
+        <TextField
+          label="Subtítulo"
+          value={faqSubtitle}
+          onChange={(v) => setField('catalog.faqSubtitle', v)}
+        />
+      </Row>
+
+      <div className="space-y-2">
+        {faq.map((item, index) => (
+          <div key={item.id} className="space-y-2 rounded-xl border border-line bg-surface-1 p-3">
+            <div className="flex items-start gap-2">
+              <input
+                className="input"
+                placeholder="¿Cuánto tarda en estar listo mi servidor?"
+                value={item.question ?? ''}
+                onChange={(e) => updateListItem('catalog.faq', item.id, { question: e.target.value })}
+              />
+              <div className="flex shrink-0 items-center">
+                <IconButton
+                  icon={ChevronUp}
+                  label="Subir"
+                  disabled={index === 0}
+                  onClick={() => moveListItem('catalog.faq', item.id, -1)}
+                />
+                <IconButton
+                  icon={ChevronDown}
+                  label="Bajar"
+                  disabled={index === faq.length - 1}
+                  onClick={() => moveListItem('catalog.faq', item.id, 1)}
+                />
+                <IconButton
+                  icon={Trash2}
+                  label="Eliminar pregunta"
+                  danger
+                  onClick={() => removeListItem('catalog.faq', item.id)}
+                />
+              </div>
+            </div>
+            <textarea
+              className="input min-h-16 resize-y"
+              placeholder="La respuesta, en dos o tres líneas. Sin rodeos."
+              value={item.answer ?? ''}
+              onChange={(e) => updateListItem('catalog.faq', item.id, { answer: e.target.value })}
+            />
+          </div>
+        ))}
+
+        {faq.length === 0 && (
+          <p className="rounded-xl border border-dashed border-line p-6 text-center text-xs text-slate-600">
+            Sin preguntas: la sección no se pinta y la página termina en la última tarjeta.
+          </p>
+        )}
+      </div>
     </PanelSection>
   )
 }

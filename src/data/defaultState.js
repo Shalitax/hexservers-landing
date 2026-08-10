@@ -43,7 +43,7 @@ const funcs = (items) =>
   items.map(([icon, title, description]) => ({ id: sid('fn'), icon, title, description }))
 
 /** Subcategoría del catálogo (pestaña de la página de productos). */
-const group = (slug, name, icon, tagline, description) => ({
+const group = (slug, name, icon, tagline, description, extra = {}) => ({
   id: `grp_${slug.replace(/-/g, '_')}`,
   slug,
   name,
@@ -52,6 +52,11 @@ const group = (slug, name, icon, tagline, description) => ({
   image: '',
   tagline,
   description,
+  /* Titular propio de su página. Vacío = se usa el genérico del catálogo. */
+  headline: '',
+  /* Argumentos de la familia: píldoras bajo el titular y tarjetas al pie. */
+  highlights: [],
+  ...extra,
 })
 
 /** Producto: la box grande. Contiene planes, no precios propios. */
@@ -452,6 +457,15 @@ export function createDefaultState() {
       'server',
       'KVM dedicado con NVMe y root completo',
       'Máquinas virtuales con recursos garantizados, acceso root y consola VNC. Para hospedar webs, bots, paneles o lo que se te ocurra.',
+      {
+        headline: 'Tu máquina, tus reglas.',
+        highlights: funcs([
+          ['lock', 'Root completo', 'Acceso total por SSH y consola VNC para cuando el SSH no arranca.'],
+          ['disk', 'NVMe de verdad', 'Sin discos compartidos ni sorpresas de IOPS a las ocho de la tarde.'],
+          ['shield', 'Anti-DDoS incluido', '1 Tbps de filtrado, también en el plan más pequeño.'],
+          ['refresh', 'Amplía sin reinstalar', 'Se suben recursos en caliente y sólo pagas la diferencia.'],
+        ]),
+      },
     ),
     group(
       'juegos',
@@ -459,6 +473,15 @@ export function createDefaultState() {
       'gamepad',
       'Anti-DDoS y panel Pterodactyl incluidos',
       'Servidores optimizados por juego, con panel web, mods y backups automáticos. Online en menos de un minuto.',
+      {
+        headline: 'Elige tu juego. Del resto nos encargamos nosotros.',
+        highlights: funcs([
+          ['rocket', 'Online en 60 segundos', 'El servidor se crea solo en cuanto se confirma el pago.'],
+          ['layout', 'Panel Pterodactyl', 'Consola en vivo, archivos por SFTP, backups y tareas programadas.'],
+          ['box', 'Mods en un click', 'Instaladores de modpacks y plugins integrados en el panel.'],
+          ['users', 'Slots ilimitados', 'Nunca pagas por jugador: pagas por RAM y CPU.'],
+        ]),
+      },
     ),
     group(
       'hosting-web',
@@ -466,6 +489,14 @@ export function createDefaultState() {
       'globe',
       'cPanel, SSL y correo profesional',
       'Alojamiento compartido con NVMe, certificados SSL gratuitos y migración asistida sin cortes de servicio.',
+      {
+        headline: 'Tu web online, sin pelearte con el servidor.',
+        highlights: funcs([
+          ['lock', 'SSL gratis y automático', 'Certificado emitido y renovado solo, sin tocar nada.'],
+          ['mail', 'Correo profesional', 'Buzones con tu dominio, webmail y antispam incluidos.'],
+          ['refresh', 'Migración asistida', 'Te traemos la web desde tu proveedor actual sin cortes.'],
+        ]),
+      },
     ),
   ]
 
@@ -1359,6 +1390,51 @@ export function createDefaultState() {
       emptyLabel: 'Todavía no hay productos en esta subcategoría.',
       /* Marcador del buscador. Sólo se ve en el modo «rejilla buscable». */
       searchLabel: 'Buscar por nombre, plan o categoría…',
+      /* Encabeza la rejilla compacta cuando hay destacados por encima. */
+      restLabel: 'Todo el catálogo',
+      /**
+       * Preguntas frecuentes del catálogo, plegadas al pie de la página.
+       *
+       * La página terminaba en seco después de la última tarjeta: un directorio, y
+       * los directorios no venden. Esto es lo que hacen las tres referencias — y de
+       * paso quita tickets, porque son las dudas que llegan siempre antes de pagar.
+       *
+       * Vacío = la sección no se pinta.
+       */
+      faqTitle: 'Preguntas frecuentes',
+      faqSubtitle: 'Lo que casi todo el mundo pregunta antes de contratar.',
+      faq: [
+        {
+          id: 'faq_activacion',
+          question: '¿Cuánto tarda en estar listo mi servidor?',
+          answer:
+            'Se crea solo en cuanto se confirma el pago, normalmente en menos de un minuto. Recibes los accesos al panel por correo y ya puedes arrancarlo.',
+        },
+        {
+          id: 'faq_cambiar',
+          question: '¿Puedo cambiar de plan más adelante?',
+          answer:
+            'Sí, y sin reinstalar nada ni perder tus datos. Se amplían los recursos sobre la misma máquina y sólo pagas la diferencia del tiempo que quede.',
+        },
+        {
+          id: 'faq_gama',
+          question: '¿Qué diferencia hay entre la gama estándar y la económica?',
+          answer:
+            'El procesador, y nada más. La económica va sobre CPU compartida de menor reloj; el panel, el anti-DDoS, los backups y las ubicaciones son los mismos. Para vanilla y grupos pequeños va sobrada; para modpacks grandes, vete a la estándar.',
+        },
+        {
+          id: 'faq_ddos',
+          question: '¿El anti-DDoS es un extra que se paga aparte?',
+          answer:
+            'No. Va incluido en todos los planes, también en el más barato. No cobramos por que tu servidor siga en pie.',
+        },
+        {
+          id: 'faq_reembolso',
+          question: '¿Y si no me convence?',
+          answer:
+            'Escríbenos por ticket o por Discord y lo hablamos. Preferimos devolver el dinero a tener a alguien pagando por algo que no le sirve.',
+        },
+      ],
       /**
        * Cómo se listan los productos. Ver CATALOG_LAYOUTS en src/lib/layouts.js:
        * 'detalle' | 'rejilla' | 'lista' | 'escaparate' | 'tabla'.
