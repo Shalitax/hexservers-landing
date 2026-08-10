@@ -113,15 +113,36 @@ export const BACKGROUND_PRESETS = [
 /** Combinaciones listas para usar. `custom` no está aquí: es "ninguna de estas". */
 export const THEME_PRESETS = [
   { id: 'noche', name: 'Noche', primary: '#5b8def', accent: '#7a6ff0', background: '#07070a', surface: '#0e0e13', text: '#e4e6ee' },
-  { id: 'grafito', name: 'Grafito', primary: '#8ea3bf', accent: '#64748b', background: '#050506', surface: '#0d0e10', text: '#e6e7ea' },
+  { id: 'grafito', name: 'Grafito', primary: '#7d93b1', accent: '#64748b', background: '#050506', surface: '#0d0e10', text: '#e6e7ea' },
   { id: 'bosque', name: 'Bosque', primary: '#3f9d72', accent: '#2f8f8f', background: '#050907', surface: '#0c1310', text: '#e3ede7' },
   { id: 'brasa', name: 'Brasa', primary: '#d97642', accent: '#b8453a', background: '#0a0705', surface: '#140f0b', text: '#f0e7e1' },
-  { id: 'arctic', name: 'Arctic', primary: '#06b6d4', accent: '#6366f1', background: '#060f14', surface: '#0a161c', text: '#e2f0f5' },
+  { id: 'arctic', name: 'Arctic', primary: '#0e9fbb', accent: '#6366f1', background: '#060f14', surface: '#0a161c', text: '#e2f0f5' },
+  /* Hex no se toca aunque su superficie apenas se despegue del fondo: es la
+     referencia literal de cómo era la web antes del rediseño, y retocarla la
+     inutilizaría como punto de comparación. */
   { id: 'hex', name: 'Hex (original)', primary: '#4f7cff', accent: '#a855f7', background: '#0a0a0f', surface: '#0d0d12', text: '#e7e9f0' },
   /* Las dos siguientes están pensadas para el estilo «Nítido»: son las paletas que
      usan los hosts en los que se inspira. Funcionan igual en los otros estilos. */
-  { id: 'violeta', name: 'Violeta', primary: '#8c32ff', accent: '#a762ff', background: '#07051b', surface: '#14112f', text: '#f0f0ff' },
-  { id: 'acero', name: 'Acero', primary: '#3b82f6', accent: '#6366f1', background: '#0a0b10', surface: '#151a24', text: '#e8eaf2' },
+  { id: 'violeta', name: 'Violeta', primary: '#a462ff', accent: '#a762ff', background: '#07051b', surface: '#14112f', text: '#f0f0ff' },
+  { id: 'acero', name: 'Acero', primary: '#4a8af8', accent: '#6366f1', background: '#0a0b10', surface: '#151a24', text: '#e8eaf2' },
+
+  /**
+   * Tonos que faltaban: no había rojo, ni rosa, ni ámbar, ni turquesa.
+   *
+   * No están elegidos a ojo. El primario tiene que cumplir dos cosas a la vez que
+   * tiran en direcciones opuestas: blanco legible encima (es el fondo del botón)
+   * y su versión aclarada legible sobre el fondo (es el color de los enlaces y del
+   * antetítulo). Subir el brillo arregla lo segundo y hunde lo primero, así que la
+   * ventana es estrecha — un cian vistoso deja el texto del botón ilegible, y por
+   * eso «Arctic» hubo que bajarlo. Cada uno de estos sale de resolver esa ventana
+   * para su tono, y todos pasan las mismas medidas APCA que el resto.
+   */
+  { id: 'carmesi', name: 'Carmesí', primary: '#e96963', accent: '#d9506f', background: '#0f0605', surface: '#1c0f0e', text: '#f2e6e5' },
+  { id: 'fucsia', name: 'Fucsia', primary: '#e164a5', accent: '#b866d8', background: '#0e0509', surface: '#1c0e15', text: '#f2e4ec' },
+  { id: 'ambar', name: 'Ámbar', primary: '#be831c', accent: '#c96a2c', background: '#0c0702', surface: '#181107', text: '#f0e9dc' },
+  { id: 'turquesa', name: 'Turquesa', primary: '#12a195', accent: '#2f8fb0', background: '#020c0a', surface: '#061816', text: '#e0efed' },
+  { id: 'lila', name: 'Lila', primary: '#a37ce1', accent: '#7f83e6', background: '#0a0711', surface: '#16111f', text: '#eae6f4' },
+  { id: 'pizarra', name: 'Pizarra', primary: '#7292a9', accent: '#6b7f93', background: '#05080b', surface: '#0d1318', text: '#e4e9ee' },
 ]
 
 /**
