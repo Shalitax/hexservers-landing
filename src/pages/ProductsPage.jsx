@@ -372,9 +372,9 @@ function ProductList({
       <div className="space-y-10">
         {featured.length > 0 && (
           <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
-            {featured.map((product) => (
+            {featured.map((product, index) => (
               <div key={product.id} className="lg:col-span-2">
-                <ProductTile {...common(product)} featured />
+                <ProductTile {...common(product)} featured index={index} />
               </div>
             ))}
           </div>
@@ -386,8 +386,8 @@ function ProductList({
               <h2 className="eyebrow mb-4">{restLabel}</h2>
             )}
             <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
-              {rest.map((product) => (
-                <ProductTile key={product.id} {...common(product)} />
+              {rest.map((product, index) => (
+                <ProductTile key={product.id} {...common(product)} index={index} />
               ))}
             </div>
           </section>

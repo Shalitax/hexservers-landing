@@ -2,6 +2,7 @@ import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { Activity, RefreshCw } from 'lucide-react'
 import { useSite } from '../store/useSite.js'
 import { cx } from '../lib/utils.js'
+import { stagger } from '../lib/reveal.js'
 import { measureLatency, latencyTone, pingTarget } from '../lib/latency.js'
 import SectionHeading from './SectionHeading.jsx'
 import Flag from './ui/Flag.jsx'
@@ -44,11 +45,13 @@ export default function Locations() {
         />
 
         <div className="mt-10 grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
-          {locations.items.map((location) => {
+          {locations.items.map((location, index) => {
             const online = location.status !== 'soon'
             return (
               <div
                 key={location.id}
+                data-reveal
+                style={stagger(index)}
                 className={cx(
                   'glass glass-hover flex items-center gap-3.5 p-4',
                   !online && 'opacity-60',

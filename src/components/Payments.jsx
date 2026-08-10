@@ -4,6 +4,7 @@ import { cx } from '../lib/utils.js'
 import SectionHeading from './SectionHeading.jsx'
 import Editable from './ui/Editable.jsx'
 import { Glyph } from './ui/icons.jsx'
+import { stagger } from '../lib/reveal.js'
 
 /**
  * Formas de pago aceptadas.
@@ -31,7 +32,8 @@ export default function Payments() {
             <article
               key={item.id}
               className="glass glass-hover group flex flex-col p-5"
-              style={{ animationDelay: `${index * 40}ms` }}
+              data-reveal
+              style={stagger(index)}
             >
               <div className="flex items-center gap-3">
                 {/* Con logo propio el hueco se deja neutro: un degradado de marca

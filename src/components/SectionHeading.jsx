@@ -12,7 +12,7 @@ export default function SectionHeading({ eyebrow, titlePath, subtitlePath, align
   const alignment = align === 'left' ? 'text-left' : 'mx-auto max-w-2xl text-center'
 
   return (
-    <div className={alignment}>
+    <div className={alignment} data-reveal>
       {eyebrow && <div className="eyebrow mb-3">{eyebrow}</div>}
       <Editable
         path={titlePath}

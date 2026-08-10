@@ -4,6 +4,7 @@ import { resolveStyle } from '../lib/theme.js'
 import { cx, safeUrl } from '../lib/utils.js'
 import Editable from './ui/Editable.jsx'
 import PixelSprite, { useSprites } from './ui/PixelSprite.jsx'
+import CountUp from './ui/CountUp.jsx'
 
 /**
  * Hero de la portada, en dos maquetaciones.
@@ -81,7 +82,7 @@ function HeroCentered() {
         <div className="anim-up mx-auto mt-16 grid max-w-4xl grid-cols-2 gap-3 [animation-delay:240ms] sm:mt-20 sm:grid-cols-4 sm:gap-4">
           {hero.stats.map((stat) => (
             <div key={stat.id} className="glass px-4 py-5 text-center">
-              <div className="pixel text-lg text-white sm:text-xl">{stat.value}</div>
+              <CountUp value={stat.value} className="pixel block text-lg text-white sm:text-xl" />
               <div className="mt-2.5 text-micro font-medium tracking-wide text-slate-500 uppercase">
                 {stat.label}
               </div>
@@ -181,7 +182,10 @@ function HeroSplit() {
                 index > 0 && 'sm:border-l sm:border-line-soft',
               )}
             >
-              <div className="display text-2xl font-bold text-white tabular-nums">{stat.value}</div>
+              <CountUp
+                value={stat.value}
+                className="display block text-2xl font-bold text-white"
+              />
               <div className="mt-1.5 text-micro font-medium tracking-wider text-slate-500 uppercase">
                 {stat.label}
               </div>

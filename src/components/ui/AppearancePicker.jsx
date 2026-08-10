@@ -48,9 +48,17 @@ export default function AppearancePicker({ variant = 'menu' }) {
 
   const activeStyle = viewer.style || siteTheme.style || 'sobrio'
   const activePixel = viewer.pixel || siteTheme.pixel || 'auto'
+  const activeAnimations =
+    typeof viewer.animations === 'boolean' ? viewer.animations : siteTheme.animations !== false
   const activePreset = viewer.preset || ''
   const activeBackground = viewer.background || ''
-  const touched = Boolean(viewer.preset || viewer.style || viewer.pixel || viewer.background)
+  const touched = Boolean(
+    viewer.preset ||
+      viewer.style ||
+      viewer.pixel ||
+      viewer.background ||
+      typeof viewer.animations === 'boolean',
+  )
 
   const panel = (
     <div className="space-y-4">
@@ -95,6 +103,32 @@ export default function AppearancePicker({ variant = 'menu' }) {
               )}
             >
               {option.id === 'auto' ? 'Auto' : option.name}
+            </button>
+          ))}
+        </div>
+      </section>
+
+      {/* Animaciones. Es un sí/no, pero se pinta como los demás grupos para que
+          la ficha no mezcle dos lenguajes de control. */}
+      <section>
+        <h3 className="label !mb-1.5">Animaciones</h3>
+        <div className="grid grid-cols-2 gap-1.5">
+          {[
+            { id: true, name: 'Sí' },
+            { id: false, name: 'No' },
+          ].map((option) => (
+            <button
+              key={String(option.id)}
+              onClick={() => setViewerTheme({ animations: option.id })}
+              aria-pressed={activeAnimations === option.id}
+              className={cx(
+                'rounded-lg border px-3 py-2 text-xs font-semibold transition',
+                activeAnimations === option.id
+                  ? 'border-hex-500/50 bg-hex-500/15 text-white'
+                  : 'border-line bg-surface-1 text-slate-500 hover:text-white',
+              )}
+            >
+              {option.name}
             </button>
           ))}
         </div>

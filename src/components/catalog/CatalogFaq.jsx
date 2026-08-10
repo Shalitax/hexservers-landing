@@ -3,6 +3,7 @@ import { Plus } from 'lucide-react'
 import { useSite } from '../../store/useSite.js'
 import { cx } from '../../lib/utils.js'
 import Editable from '../ui/Editable.jsx'
+import { stagger } from '../../lib/reveal.js'
 
 /**
  * Preguntas frecuentes al pie del catálogo.
@@ -39,7 +40,7 @@ export default function CatalogFaq() {
   return (
     <section className="section">
       <div className="mx-auto max-w-3xl">
-        <div className="text-center">
+        <div className="text-center" data-reveal>
           <Editable
             path="catalog.faqTitle"
             as="h2"
@@ -59,7 +60,12 @@ export default function CatalogFaq() {
           {items.map((item, index) => {
             const expanded = open.has(item.id)
             return (
-              <article key={item.id} className="glass overflow-hidden">
+              <article
+                key={item.id}
+                className="glass overflow-hidden"
+                data-reveal
+                style={stagger(index)}
+              >
                 <h3>
                   <button
                     onClick={() => toggle(item.id)}
@@ -80,16 +86,25 @@ export default function CatalogFaq() {
                   </button>
                 </h3>
 
-                {expanded && (
-                  <div className="anim-up border-t border-line-soft px-5 py-4">
-                    <Editable
-                      path={`catalog.faq.${index}.answer`}
-                      as="p"
-                      multiline
-                      className="text-sm leading-relaxed text-slate-400"
-                    />
+                {/**
+                 * El contenido está siempre en el DOM y lo que se anima es la altura
+                 * de la rejilla (`.collapse`, en index.css). Montarlo y desmontarlo
+                 * como antes hacía imposible animar el desplegado —no hay nada que
+                 * transicionar entre «no existe» y «existe»— y encima escondía la
+                 * respuesta del buscador del navegador.
+                 */}
+                <div className="collapse" data-open={expanded}>
+                  <div>
+                    <div className="border-t border-line-soft px-5 py-4">
+                      <Editable
+                        path={`catalog.faq.${index}.answer`}
+                        as="p"
+                        multiline
+                        className="text-sm leading-relaxed text-slate-400"
+                      />
+                    </div>
                   </div>
-                )}
+                </div>
               </article>
             )
           })}

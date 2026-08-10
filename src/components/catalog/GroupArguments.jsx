@@ -1,5 +1,6 @@
 import { cx } from '../../lib/utils.js'
 import { Glyph, glyphBox } from '../ui/icons.jsx'
+import { stagger } from '../../lib/reveal.js'
 
 /**
  * Argumentos de la familia, bajo la rejilla del catálogo.
@@ -26,8 +27,8 @@ export default function GroupArguments({ group }) {
           items.length >= 4 && 'sm:grid-cols-2 lg:grid-cols-4',
         )}
       >
-        {items.map((item) => (
-          <article key={item.id} className="glass p-5">
+        {items.map((item, index) => (
+          <article key={item.id} className="glass p-5" data-reveal style={stagger(index)}>
             <span
               className={cx(
                 'mb-4 grid size-11 place-items-center rounded-xl border border-line',

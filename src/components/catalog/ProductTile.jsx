@@ -3,6 +3,7 @@ import { useSite, useCatalogMoney } from '../../store/useSite.js'
 import { productSummary, tiersOf } from '../../lib/catalog.js'
 import { cx } from '../../lib/utils.js'
 import { productHref } from '../../lib/router.js'
+import { stagger } from '../../lib/reveal.js'
 import { Icon, Glyph } from '../ui/icons.jsx'
 import StatusPill from './StatusPill.jsx'
 
@@ -23,7 +24,15 @@ import StatusPill from './StatusPill.jsx'
  * una cuadrícula plana donde las ocho piezas pesaban igual y la mirada no tenía
  * dónde caer — que es medio motivo por el que una página de catálogo no vende.
  */
-export default function ProductTile({ product, group, plans, editMode, onEdit, featured = false }) {
+export default function ProductTile({
+  product,
+  group,
+  plans,
+  editMode,
+  onEdit,
+  featured = false,
+  index = 0,
+}) {
   const site = useSite((s) => s.site)
   const money = useCatalogMoney()
   const { open, price, period } = productSummary(product, plans)
@@ -34,6 +43,8 @@ export default function ProductTile({ product, group, plans, editMode, onEdit, f
 
   return (
     <article
+      data-reveal
+      style={stagger(index)}
       className={cx(
         'glass group relative flex flex-col overflow-hidden',
         open && 'transition duration-300 hover:-translate-y-1 hover:border-line-strong',

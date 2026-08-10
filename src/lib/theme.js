@@ -86,6 +86,12 @@ export const DEFAULT_THEME = {
   /* Sprites de pixel art animados. Sólo quedan dos: la píldora del hero y el sello
      del footer — repartirlos por todas las secciones los convertía en el estilo. */
   sprites: true,
+  /**
+   * Kit de animación: revelado por scroll, escalonado, acordeones y pulsación.
+   * Apagarlo no rompe nada — el contenido se ve igual, sin moverse. Ver el
+   * porqué en src/lib/reveal.js.
+   */
+  animations: true,
   primary: '#5b8def',
   accent: '#7a6ff0',
   background: '#07070a',
@@ -196,6 +202,7 @@ export function mergeTheme(theme = {}, viewer = {}) {
     ...(preset ? presetColors(preset) : null),
     ...(viewer.style ? { style: viewer.style } : null),
     ...(viewer.pixel ? { pixel: viewer.pixel } : null),
+    ...(typeof viewer.animations === 'boolean' ? { animations: viewer.animations } : null),
   }
 
   if (viewer.background) {
@@ -259,6 +266,9 @@ export function applyTheme(theme) {
   }
   root.dataset.style = resolveStyle(theme)
   root.dataset.pixel = resolvePixel(theme)
+  /* El kit de animación cuelga de este atributo: sin él, el CSS del revelado no
+     existe y todo se ve quieto pero visible. Nunca al revés. */
+  root.dataset.anim = theme?.animations === false ? 'off' : 'on'
 }
 
 /** Sólo los colores de un preset: `id` y `name` no son parte del tema. */

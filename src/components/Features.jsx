@@ -1,5 +1,6 @@
 import { useSite } from '../store/useSite.js'
 import { cx } from '../lib/utils.js'
+import { stagger } from '../lib/reveal.js'
 import SectionHeading from './SectionHeading.jsx'
 import Editable from './ui/Editable.jsx'
 import { Glyph } from './ui/icons.jsx'
@@ -22,7 +23,8 @@ export default function Features() {
             <article
               key={item.id}
               className="glass glass-hover group p-5"
-              style={{ animationDelay: `${index * 40}ms` }}
+              data-reveal
+              style={stagger(index)}
             >
               <span
                 className={cx(

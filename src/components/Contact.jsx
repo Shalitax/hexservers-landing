@@ -10,7 +10,7 @@ export default function Contact() {
   return (
     <section id="contacto" className="section">
       <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
-        <div className="glass relative overflow-hidden p-8 sm:p-12">
+        <div className="glass relative overflow-hidden p-8 sm:p-12" data-reveal>
           <div
             className="glow-blue pointer-events-none absolute -top-24 -right-24 size-96 opacity-50"
             aria-hidden="true"

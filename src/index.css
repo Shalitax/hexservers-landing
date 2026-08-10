@@ -625,6 +625,92 @@
     );
 }
 
+/* ------------------------- Kit de animación: entradas ----------------------- */
+
+/**
+ * Revelado por scroll. La lógica está en src/lib/reveal.js; aquí sólo el aspecto.
+ *
+ * Todo cuelga de `[data-anim='on']` a propósito: si el JS no llega a ejecutarse o
+ * el visitante ha apagado las animaciones, estas reglas no existen y el contenido
+ * se ve sin más. Ocultar por defecto y confiar en que el JS aparezca deja la web
+ * en blanco cuando algo falla, y eso no se arriesga por un adorno.
+ *
+ * Es una transición y no una animación porque así el escalonado se controla con
+ * `transition-delay` a partir de `--stagger`, sin escribir un retardo a mano en
+ * cada tarjeta — que es como estaba antes y por lo que había retardos sueltos
+ * apuntando a animaciones que ni existían.
+ */
+[data-anim='on'] {
+  [data-reveal] {
+    opacity: 0;
+    transform: translateY(14px);
+    will-change: opacity, transform;
+  }
+
+  [data-reveal='in'] {
+    opacity: 1;
+    transform: none;
+    transition:
+      opacity 0.55s cubic-bezier(0.22, 1, 0.36, 1),
+      transform 0.55s cubic-bezier(0.22, 1, 0.36, 1);
+    /* 55 ms por puesto: se nota la cascada sin que el último se haga esperar. */
+    transition-delay: calc(var(--stagger, 0) * 55ms);
+    will-change: auto;
+  }
+
+  /* Variantes, para bloques que piden otra dirección. */
+  [data-reveal='fade'],
+  [data-reveal='fade'][data-reveal] {
+    transform: none;
+  }
+}
+
+/* --------------------- Kit de animación: micro-interacción ------------------ */
+
+/**
+ * Pulsación. El hover ya lo cubre Tailwind clase a clase, pero el `:active` no
+ * lo tenía nadie: el botón no acusaba el click y en móvil —donde no hay hover—
+ * no había ninguna respuesta táctil.
+ */
+[data-anim='on'] {
+  .btn,
+  .btn-primary,
+  .btn-ghost {
+    transition:
+      background-color 0.2s,
+      border-color 0.2s,
+      color 0.2s,
+      transform 0.12s ease-out;
+  }
+  .btn:active:not(:disabled),
+  .btn-primary:active:not(:disabled),
+  .btn-ghost:active:not(:disabled) {
+    transform: scale(0.97);
+  }
+}
+
+/**
+ * Acordeón: el contenido crece en lugar de aparecer de golpe.
+ *
+ * `grid-template-rows: 0fr → 1fr` es el único modo de animar hasta la altura real
+ * sin medirla con JS. El hijo necesita `min-height: 0` o el navegador se niega a
+ * encogerlo por debajo de su contenido.
+ */
+.collapse {
+  display: grid;
+  grid-template-rows: 0fr;
+}
+.collapse > * {
+  min-height: 0;
+  overflow: hidden;
+}
+.collapse[data-open='true'] {
+  grid-template-rows: 1fr;
+}
+[data-anim='on'] .collapse {
+  transition: grid-template-rows 0.3s cubic-bezier(0.22, 1, 0.36, 1);
+}
+
 /* ------------------------------ Sprites pixel ------------------------------- */
 
 /**
@@ -722,6 +808,31 @@
   .sprite-b {
     display: none;
   }
+
+  /**
+   * El revelado se desactiva enseñando el contenido, no congelándolo a medias:
+   * con `animation: none` sobre algo que nace en `opacity: 0` la página se
+   * quedaría en blanco, que es el peor final posible para una preferencia de
+   * accesibilidad.
+   */
+  [data-anim='on'] [data-reveal] {
+    opacity: 1;
+    transform: none;
+    transition: none;
+  }
+
+  [data-anim='on'] .collapse,
+  [data-anim='on'] .btn,
+  [data-anim='on'] .btn-primary,
+  [data-anim='on'] .btn-ghost {
+    transition: none;
+  }
+  [data-anim='on'] .btn:active,
+  [data-anim='on'] .btn-primary:active,
+  [data-anim='on'] .btn-ghost:active {
+    transform: none;
+  }
+
   html {
     scroll-behavior: auto;
   }

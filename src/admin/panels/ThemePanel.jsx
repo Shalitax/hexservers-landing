@@ -49,7 +49,11 @@ export default function ThemePanel() {
   const active = matchPreset(theme)
   const vars = themeVars(theme)
   const viewerTouched = Boolean(
-    viewerTheme.preset || viewerTheme.style || viewerTheme.pixel || viewerTheme.background,
+    viewerTheme.preset ||
+      viewerTheme.style ||
+      viewerTheme.pixel ||
+      viewerTheme.background ||
+      typeof viewerTheme.animations === 'boolean',
   )
 
   /**
@@ -155,6 +159,18 @@ export default function ThemePanel() {
             <PixelSprite key={name} name={name} size={22} speed="1s" />
           ))}
         </div>
+      </PanelSection>
+
+      <PanelSection
+        title="Animaciones"
+        description="Las secciones entran al llegar a ellas, las rejillas escalonan, los acordeones se despliegan y los botones acusan la pulsación."
+      >
+        <Toggle
+          label="Animar la página"
+          hint="Apagarlo no cambia el diseño: el contenido se ve igual, quieto. Quien tenga «reducir movimiento» en su sistema las tiene apagadas ya, sin tocar nada."
+          checked={theme.animations !== false}
+          onChange={(value) => setField('theme.animations', value)}
+        />
       </PanelSection>
 
       <PanelSection title="Combinaciones" description="Un punto de partida decente.">

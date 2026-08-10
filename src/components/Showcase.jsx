@@ -5,6 +5,7 @@ import { href, groupHref } from '../lib/router.js'
 import { cx } from '../lib/utils.js'
 import SectionHeading from './SectionHeading.jsx'
 import { Icon, Glyph } from './ui/icons.jsx'
+import { stagger } from '../lib/reveal.js'
 
 /**
  * Bloque de portada que presenta las subcategorías del catálogo. No vende planes:
@@ -46,10 +47,12 @@ export default function Showcase() {
             cards.length >= 4 && 'lg:grid-cols-4',
           )}
         >
-          {cards.map(({ group, products, from }) => (
+          {cards.map(({ group, products, from }, index) => (
             <a
               key={group.id}
               href={groupHref(group)}
+              data-reveal
+              style={stagger(index)}
               className="glass glass-hover group relative flex flex-col overflow-hidden p-6"
             >
               <div
