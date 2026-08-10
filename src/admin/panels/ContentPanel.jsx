@@ -22,7 +22,7 @@ export default function ContentPanel() {
 
   return (
     <div className="space-y-8">
-      <p className="rounded-xl border border-hex-500/20 bg-hex-500/[0.06] p-3 text-[11px] leading-relaxed text-hex-200/90">
+      <p className="rounded-xl border border-hex-500/20 bg-hex-500/[0.06] p-3 text-micro leading-relaxed text-hex-200/90">
         Los títulos y descripciones también se editan haciendo click directamente sobre ellos en la
         página (recuadro punteado). Aquí están los campos que no tienen edición inline.
       </p>
@@ -137,7 +137,7 @@ export default function ContentPanel() {
         </Row>
 
         <div>
-          <p className="mb-2 text-[11px] leading-relaxed text-slate-500">
+          <p className="mb-2 text-micro leading-relaxed text-slate-500">
             Bloques del configurador de la ficha de producto. Los de ubicación y CPU sólo aparecen
             en los productos cuyos planes tienen más de una opción; el de planes puede llevar su
             propio título por producto (editor del producto).
@@ -217,7 +217,7 @@ export default function ContentPanel() {
       >
         <div className="space-y-2">
           {site.features.items.map((item, index) => (
-            <div key={item.id} className="rounded-xl border border-white/10 bg-white/[0.025] p-3">
+            <div key={item.id} className="rounded-xl border border-line bg-surface-1 p-3">
               <div className="mb-2 flex items-center gap-2">
                 <span className="min-w-0 flex-1 truncate text-sm font-medium text-slate-200">
                   {item.title}
@@ -273,11 +273,11 @@ export default function ContentPanel() {
 
         <div className="space-y-2">
           {site.locations.items.map((item, index) => (
-            <div key={item.id} className="space-y-2 rounded-xl border border-white/10 bg-white/[0.025] p-3">
+            <div key={item.id} className="space-y-2 rounded-xl border border-line bg-surface-1 p-3">
               <div className="flex gap-2">
                 {/* Vista previa: así se ve qué bandera va a dibujar la web. */}
                 <span
-                  className="grid size-9 shrink-0 place-items-center rounded-lg border border-white/10 bg-black/40"
+                  className="grid size-11 shrink-0 place-items-center rounded-lg border border-line bg-black/40"
                   title="Bandera que se mostrará"
                 >
                   <Flag flag={item.flag} size={22} />
@@ -356,7 +356,7 @@ export default function ContentPanel() {
           onChange={(v) => setField('locations.latencyNote', v)}
         />
 
-        <p className="rounded-xl border border-amber-400/25 bg-amber-400/[0.07] p-3 text-[11px] leading-relaxed text-amber-200">
+        <p className="rounded-xl border border-amber-400/25 bg-amber-400/[0.07] p-3 text-micro leading-relaxed text-amber-200">
           El endpoint debe ser un archivo diminuto servido por HTTPS desde{' '}
           <strong>esa</strong> ubicación (por ejemplo un <code>204 No Content</code> en{' '}
           <code>/ping</code>). No apuntes a servicios ajenos: estarías mostrando la latencia de
@@ -389,7 +389,7 @@ export default function ContentPanel() {
       >
         <div className="space-y-2">
           {site.payments.items.map((item, index) => (
-            <div key={item.id} className="space-y-2 rounded-xl border border-white/10 bg-white/[0.025] p-3">
+            <div key={item.id} className="space-y-2 rounded-xl border border-line bg-surface-1 p-3">
               <div className="flex items-center gap-2">
                 <span className="min-w-0 flex-1 truncate text-sm font-medium text-slate-200">
                   {item.name || 'Sin nombre'}
@@ -442,9 +442,28 @@ export default function ContentPanel() {
       </PanelSection>
 
       {/* -------------------------------- Accesos -------------------------------- */}
-      <PanelSection title="Accesos del navbar" description="Portal de clientes y panel de juegos.">
-        {site.nav.logins.map((login) => (
-          <div key={login.id} className="space-y-2 rounded-xl border border-white/10 bg-white/[0.025] p-3">
+      <PanelSection
+        title="Accesos del navbar"
+        description="El desplegable «Acceder». Portal de clientes, panel de juegos y los que quieras añadir."
+        action={
+          <button
+            onClick={() =>
+              addListItem('nav.logins', {
+                label: 'Nuevo acceso',
+                hint: '',
+                url: 'https://',
+                icon: 'globe',
+              })
+            }
+            className="btn-ghost btn-sm"
+          >
+            <Plus size={13} />
+            Añadir
+          </button>
+        }
+      >
+        {site.nav.logins.map((login, index) => (
+          <div key={login.id} className="space-y-2 rounded-xl border border-line bg-surface-1 p-3">
             <div className="flex items-center gap-2">
               <CompactGlyphPicker
                 icon={login.icon}
@@ -453,8 +472,15 @@ export default function ContentPanel() {
                 onImage={(v) => updateListItem('nav.logins', login.id, { image: v })}
               />
               <span className="min-w-0 flex-1 truncate text-sm font-medium text-slate-200">
-                {login.label}
+                {login.label || 'Sin nombre'}
               </span>
+              <MoveButtons
+                onUp={() => moveListItem('nav.logins', login.id, -1)}
+                onDown={() => moveListItem('nav.logins', login.id, 1)}
+                disableUp={index === 0}
+                disableDown={index === site.nav.logins.length - 1}
+                onRemove={() => removeListItem('nav.logins', login.id)}
+              />
             </div>
             <Row>
               <TextField
@@ -475,6 +501,11 @@ export default function ContentPanel() {
             />
           </div>
         ))}
+        {site.nav.logins.length === 0 && (
+          <p className="text-xs text-slate-600">
+            Sin accesos: el botón «Acceder» desaparece del navbar.
+          </p>
+        )}
       </PanelSection>
 
       {/* ---------------------------- Enlaces del navbar -------------------------- */}
@@ -535,7 +566,7 @@ export default function ContentPanel() {
         {/* Historia */}
         <div className="space-y-2">
           <header className="flex items-center justify-between gap-3">
-            <h4 className="text-[10px] font-semibold tracking-wider text-slate-500 uppercase">
+            <h4 className="text-micro font-semibold tracking-wider text-slate-500 uppercase">
               Historia — {site.about.story.length} párrafos
             </h4>
             <button
@@ -570,7 +601,7 @@ export default function ContentPanel() {
         {/* Pilares */}
         <div className="space-y-2">
           <header className="flex items-center justify-between gap-3">
-            <h4 className="text-[10px] font-semibold tracking-wider text-slate-500 uppercase">
+            <h4 className="text-micro font-semibold tracking-wider text-slate-500 uppercase">
               Cómo trabajamos — {site.about.pillars.length} pilares
             </h4>
             <button
@@ -588,7 +619,7 @@ export default function ContentPanel() {
             </button>
           </header>
           {site.about.pillars.map((pillar, index) => (
-            <div key={pillar.id} className="rounded-xl border border-white/10 bg-white/[0.025] p-3">
+            <div key={pillar.id} className="rounded-xl border border-line bg-surface-1 p-3">
               <div className="mb-2 flex items-center gap-2">
                 <span className="min-w-0 flex-1 truncate text-sm font-medium text-slate-200">
                   {pillar.title}
@@ -648,7 +679,7 @@ export default function ContentPanel() {
         />
 
         {site.footer.columns.map((column, columnIndex) => (
-          <div key={column.id} className="space-y-2 rounded-xl border border-white/10 bg-white/[0.025] p-3">
+          <div key={column.id} className="space-y-2 rounded-xl border border-line bg-surface-1 p-3">
             <TextField
               label={`Columna ${columnIndex + 1} — título`}
               value={column.title}
@@ -788,7 +819,7 @@ function ListEditor({
 
 function MoveButtons({ onUp, onDown, disableUp, disableDown, onRemove }) {
   const base =
-    'rounded-md p-1 text-slate-500 transition hover:bg-white/10 hover:text-white disabled:opacity-25'
+    'rounded-md p-1 text-slate-500 transition hover:bg-surface-3 hover:text-white disabled:opacity-25'
   return (
     <div className="flex shrink-0 items-center">
       <button onClick={onUp} disabled={disableUp} aria-label="Subir" className={base}>
