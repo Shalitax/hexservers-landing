@@ -19,16 +19,17 @@ técnica (estructura de carpetas, stack, build), está en [README.md](README.md)
 7. [Gestionar productos](#7-gestionar-productos)
 8. [Gestionar planes](#8-gestionar-planes)
 9. [Opciones configurables](#9-opciones-configurables)
-10. [Ubicación y CPU: vender por grupos de WHMCS](#10-ubicación-y-cpu-vender-por-grupos-de-whmcs)
-11. [Divisas y precios](#11-divisas-y-precios)
-12. [La paleta de colores](#12-la-paleta-de-colores)
-13. [Latencia real en las ubicaciones](#13-latencia-real-en-las-ubicaciones)
-14. [Conectar con WHMCS](#14-conectar-con-whmcs)
-15. [El popup de código promocional](#15-el-popup-de-código-promocional)
-16. [Copias de seguridad](#16-copias-de-seguridad)
-17. [Seguridad: lo que debes saber](#17-seguridad-lo-que-debes-saber)
-18. [Problemas frecuentes](#18-problemas-frecuentes)
-19. [Chuleta rápida](#19-chuleta-rápida)
+10. [Gama, ubicación y CPU: los ejes del catálogo](#10-gama-ubicación-y-cpu-los-ejes-del-catálogo)
+11. [Ciclos de facturación](#11-ciclos-de-facturación)
+12. [Divisas y precios](#12-divisas-y-precios)
+13. [La paleta de colores](#13-la-paleta-de-colores)
+14. [Latencia real en las ubicaciones](#14-latencia-real-en-las-ubicaciones)
+15. [Conectar con WHMCS](#15-conectar-con-whmcs)
+16. [El popup de código promocional](#16-el-popup-de-código-promocional)
+17. [Copias de seguridad](#17-copias-de-seguridad)
+18. [Seguridad: lo que debes saber](#18-seguridad-lo-que-debes-saber)
+19. [Problemas frecuentes](#19-problemas-frecuentes)
+20. [Chuleta rápida](#20-chuleta-rápida)
 
 ---
 
@@ -157,13 +158,15 @@ subcategoría            producto              plan
 Servidores VPS     →    VPS Linux        →    Starter / Pro / Elite / Titan
 Serv. de Juegos    →    Minecraft        →    MC Iron / Diamond / Netherite
                         Unturned         →    Basic / Plus / Server Pack
-Económicos         →    Minecraft Eco    →    MC Eco 4 / 8 / 12 GB
-                        Unturned Eco     →    Eco 24 / Eco 48
 Hosting Web        →    Hosting cPanel   →    Web Start / Pro / Business
 ```
 
-- **Subcategoría** — una pestaña del catálogo. Vienen cuatro de fábrica: *Servidores VPS*,
-  *Servidores de Juegos*, *Económicos* y *Hosting Web*.
+Y cruzando esos niveles hay un **segundo eje**, la *gama*: el mismo producto en distintas
+ligas de hardware (estándar, económica…). No es una subcategoría más — vive en el plan.
+Ver *Las gamas* más abajo.
+
+- **Subcategoría** — una pestaña del catálogo. Vienen tres de fábrica: *Servidores VPS*,
+  *Servidores de Juegos* y *Hosting Web*.
 - **Producto** — la box grande: Minecraft, Unturned, VPS Linux… No tiene precio propio;
   muestra el "desde" del plan más barato.
 - **Plan** — lo que el cliente contrata de verdad. Tiene precio y URL de WHMCS.
@@ -397,7 +400,7 @@ de cada valor.
 
 ---
 
-## 10. Ubicación y CPU: vender por grupos de WHMCS
+## 10. Gama, ubicación y CPU: los ejes del catálogo
 
 En WHMCS un **grupo de productos** suele ser una CPU en una ubicación: *Minecraft ·
 Santiago · Ryzen 7950X* es un grupo, y *Minecraft · Miami · Ryzen 5950X* es otro, cada
@@ -451,36 +454,66 @@ y por eso siguen funcionando igual que antes.
 - Los enlaces del recorrido antiguo por pasos (`…/ubicacion`, `…/planes/…`) siguen
   funcionando: llevan al configurador con lo que ya trajera elegido.
 
-### La gama económica
+### Las gamas: el segundo eje
 
-Los planes baratos están montados como una **subcategoría propia**: la pestaña
-*Económicos*, con *Minecraft Económico* y *Unturned Económico* dentro. Cada uno es un
-producto normal y corriente, con su ficha, sus argumentos y sus planes.
+La subcategoría dice **qué** vendes (VPS, juegos, web). La gama dice **en qué liga juega**
+ese mismo producto: estándar, económica, premium… Son dos preguntas distintas y conviene no
+mezclarlas.
 
-Lo que los hace económicos es **una sola cosa**: sus planes usan la CPU *Ryzen 5 3600*
-(compartida) en lugar de las dos de rendimiento. Panel, anti-DDoS, backups, soporte y las
-cuatro ubicaciones son exactamente los mismos, y los textos de fábrica lo dicen tal cual:
-si algún día recortas algo más (backups, prioridad de soporte), cámbialos, porque prometer
-de menos es fácil de sostener y prometer de más se paga en tickets.
+Antes esto estaba montado al revés: una subcategoría *Económicos* con *Minecraft Económico*
+y *Unturned Económico* dentro, como si fueran productos distintos. El problema era de
+venta, no de orden: **el mismo juego quedaba partido en dos pestañas**, y quien entraba
+buscando Minecraft no llegaba a ver que había una versión más barata.
 
-Como cada producto económico usa una sola CPU, su configurador no llega a pintar el bloque
-de procesador: el cliente elige ubicación y plan, y listo.
+Ahora la gama cuelga del **plan**, igual que la ubicación y la CPU. Minecraft es un solo
+producto con 24 planes en gama estándar y 12 en económica, y el cliente los ve juntos.
 
-**Para añadir otro juego a la gama económica:**
+**Gestionarlas:** panel → Catálogo → *Gamas*. Vienen dos de fábrica (Estándar y Económica)
+y puedes crear, renombrar, reordenar y borrar. El orden es el que ve el cliente, así que la
+gama buena va primero. Borrar una gama no borra planes: los deja «sin gama», que equivale a
+válidos para cualquiera.
 
-1. Panel → **Catálogo** → despliega *Económicos* → *Añadir producto a Económicos*.
-2. Rellena ficha y argumentos dejando claro qué recorta y qué no.
-3. Crea el primer plan, ponle la CPU compartida y su ubicación, y **duplícalo** para el
-   resto de ubicaciones cambiando precio y PID.
+**Asignarlas:** en el editor de cada plan, campo *Gama*.
 
-**Si algún día quieres cambiar de enfoque** —por ejemplo ofrecer económico y rendimiento
-dentro del mismo producto— basta con mover esos planes al producto normal y darles la CPU
-económica: el bloque *Elige el procesador* aparecerá solo con las dos opciones. No hace
-falta tocar código.
+**El bloque sólo aparece si hay algo que elegir.** Si todos los planes de un producto están
+en la misma gama, el cliente no ve ningún paso extra.
+
+#### Juntar dos productos duplicados
+
+Si tu catálogo ya está partido, no hace falta mover los planes a mano. Panel → Catálogo →
+**Fusionar productos como gamas**:
+
+1. Elige el producto **que se disuelve** y el **que se queda**.
+2. Elige la gama que reciben los planes que llegan, y la de los que ya había.
+3. Antes de ejecutar te enseña con números qué va a pasar («12 planes → Minecraft como
+   Económica»). Pide confirmación porque **borra el producto absorbido y no se deshace**.
+
+Después la subcategoría vieja se queda vacía y la borras a mano. Revisa los enlaces del pie
+y del navbar por si alguno apuntaba a ella.
 
 ---
 
-## 11. Divisas y precios
+## 11. Ciclos de facturación
+
+Opcional y **apagado de fábrica**. Panel → Catálogo → *Ciclos de facturación*.
+
+Añade sobre el catálogo un selector mensual / trimestral / semestral / anual con el
+descuento que tú pongas a cada uno. El panel enseña en vivo cómo queda un plan de 10 €.
+
+El precio que se anuncia es **siempre el equivalente mensual ya rebajado** (5,99 € pasa a
+5,09 €/mes con un 15 %), y debajo se aclara el cargo real: «61,08 € cada 12 meses». Se hace
+así para que los planes sigan siendo comparables entre sí, que es lo que se rompe cuando
+unos precios son mensuales y otros anuales.
+
+> **Importante.** Estos porcentajes son una promesa de precio que la web no puede
+> comprobar. Tienen que ser los que WHMCS cobra de verdad en cada ciclo: si aquí pones un
+> 15 % anual que allí no existe, el cliente llega al carrito con otro número. El ciclo
+> elegido sí viaja al carrito; la otra mitad del trato es configurarlo en WHMCS.
+
+Un ciclo al 0 % no aparece en el selector: serían botones que no cambian nada.
+
+---
+## 12. Divisas y precios
 
 Panel → **Catálogo** → *Divisas*. El visitante cambia de moneda desde el selector del
 navbar y los precios se recalculan al instante.
@@ -512,35 +545,46 @@ navbar.
 
 ---
 
-## 12. La paleta de colores
+## 13. La paleta de colores
 
 Panel → pestaña **Diseño**. Cambia el aspecto de toda la web sin tocar código, y se ve
 al momento en la página que hay detrás del panel.
 
-### Estilo: sobrio o vivo
+### Estilo: nítido, sobrio o vivo
 
-Lo primero de la pestaña. Son dos modos del mismo diseño, no dos diseños:
+Lo primero de la pestaña. Son tres modos del mismo diseño, no tres diseños:
 
 | Estilo | Qué hace |
 | --- | --- |
-| **Sobrio** (de fábrica) | Fondo casi negro, tarjetas planas, halos apenas insinuados, nada que se mueva de fondo y tipografía pixel sólo en el logo. Los precios y las etiquetas pasan a la tipografía normal, que se lee mejor. |
+| **Nítido** (de fábrica) | El lenguaje de los hosts modernos: nada de cristal translúcido, sino tarjetas opacas de borde fino, esquinas más cerradas, rejilla reglada de fondo en vez de halos, y el hero partido en dos columnas con una consola al lado del titular. |
+| **Sobrio** | Fondo casi negro, tarjetas planas, halos apenas insinuados y nada que se mueva de fondo. |
 | **Vivo** | El aspecto original: halos grandes de color a la deriva, degradados en el titular y en los botones, precios en pixel. |
 
 Se cambia en un click y se vuelve igual de rápido: **nada se pierde al alternar**. Abajo
-del todo, en *Restablecer*, hay dos vueltas atrás:
+del todo, en *Restablecer*:
 
-- **Valores de fábrica (Noche · Sobrio)** — el aspecto actual recién instalado.
-- **Recuperar el aspecto original (Hex · Vivo)** — deja la web exactamente como estaba
-  antes del rediseño: azul eléctrico, halos, degradados y pixel.
+- **El diseño de HexServers (Noche · Nítido)** — la combinación declarada, la que se cuida
+  y contra la que se prueba todo. Si trasteando se te descuadra algo, este botón vuelve a
+  terreno conocido.
+- **Recuperar el aspecto original (Hex · Vivo)** — deja la web como estaba antes del
+  rediseño: azul eléctrico, halos, degradados y pixel.
 
-**Combinaciones** — seis paletas listas. *Noche* (la de fábrica), *Grafito* (casi negro,
-sin color de marca), *Bosque*, *Brasa*, *Arctic* y *Hex (original)*. Un click y el sitio
-entero se repinta.
+**Combinaciones** — ocho paletas listas. *Noche* (la de fábrica), *Grafito*, *Bosque*,
+*Brasa*, *Arctic*, *Hex (original)*, *Violeta* y *Acero*. Un click y el sitio se repinta.
+
+### Iconos pixel animados
+
+Sprites de 8 bits en dos sitios contados: la píldora del hero y el sello del pie. Se
+encienden y apagan con un interruptor, y hay una tira de vista previa al lado.
+
+Estaban también en el antetítulo de cada sección y se quitaron a propósito: **un guiño que
+sale seis veces al bajar deja de ser un guiño y pasa a ser el estilo de la web**. Si el
+visitante tiene activado «reducir movimiento» en su sistema, se quedan quietos.
 
 ### El selector del visitante
 
 En el navbar, junto al de divisa, hay un icono de paleta: desde ahí **quien visita la web
-puede ajustarla a su gusto** — estilo (sobrio o vivo), color y fondo, incluido un color de
+puede ajustarla a su gusto** — estilo (nítido, sobrio o vivo), color y fondo, incluido un color de
 fondo elegido por él.
 
 Lo importante de cómo está montado:
@@ -587,7 +631,7 @@ La paleta se guarda con el resto del contenido, así que viaja en las copias de 
 
 ---
 
-## 13. Latencia real en las ubicaciones
+## 14. Latencia real en las ubicaciones
 
 Las píldoras de milisegundos de *Ubicaciones disponibles* no son texto decorativo: se
 miden de verdad, desde el navegador de cada visitante, en el momento en que la sección
@@ -664,7 +708,7 @@ cambias en el mismo sitio del panel.
 
 ---
 
-## 14. Conectar con WHMCS
+## 15. Conectar con WHMCS
 
 ### Lo mínimo para vender
 
@@ -718,7 +762,7 @@ lo que estás editando en el panel.
 
 ---
 
-## 15. El popup de código promocional
+## 16. El popup de código promocional
 
 Panel → pestaña **Promo**.
 
@@ -753,7 +797,7 @@ nombre exacto. Si no existe, WHMCS lo ignora sin avisar.
 
 ---
 
-## 16. Copias de seguridad
+## 17. Copias de seguridad
 
 Los datos viven **en el navegador de este ordenador**. No hay servidor. Eso
 significa que se pierden si limpias los datos del navegador, si usas modo
@@ -775,7 +819,7 @@ la nube sin regalar accesos. Al importar, tus credenciales actuales se mantienen
 
 ---
 
-## 17. Seguridad: lo que debes saber
+## 18. Seguridad: lo que debes saber
 
 Dicho sin rodeos, para que no te lleves sorpresas:
 
@@ -799,7 +843,7 @@ contraseña debe moverse al servidor.
 
 ---
 
-## 18. Problemas frecuentes
+## 19. Problemas frecuentes
 
 **He editado algo y al recargar volvió atrás.**
 Comprueba que en la barra inferior pone `INDEXEDDB`. Si pone `localStorage
@@ -876,7 +920,7 @@ restablecen las credenciales por defecto.
 
 ---
 
-## 19. Chuleta rápida
+## 20. Chuleta rápida
 
 | Acción | Dónde |
 | --- | --- |
