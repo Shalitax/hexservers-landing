@@ -1,4 +1,4 @@
-import { Check, Palette, RotateCcw } from 'lucide-react'
+import { Check, Palette, RotateCcw, Wand2 } from 'lucide-react'
 import { useSite } from '../../store/useSite.js'
 import { cx } from '../../lib/utils.js'
 import {
@@ -11,6 +11,7 @@ import {
   resolvePixel,
   themeVars,
 } from '../../lib/theme.js'
+import PixelSprite, { SPRITE_NAMES } from '../../components/ui/PixelSprite.jsx'
 import { ColorField, PanelSection, Toggle } from '../controls.jsx'
 
 const FIELDS = [
@@ -75,7 +76,7 @@ export default function ThemePanel() {
 
   return (
     <div className="space-y-8">
-      <p className="rounded-xl border border-hex-500/20 bg-hex-500/[0.06] p-3 text-[11px] leading-relaxed text-hex-200/90">
+      <p className="rounded-xl border border-hex-500/20 bg-hex-500/[0.06] p-3 text-micro leading-relaxed text-hex-200/90">
         Los cambios se ven al momento en la página de detrás. De cada color base sale una rampa
         completa (claros y oscuros), así que con dos colores ya tienes el sitio entero repintado.
       </p>
@@ -84,7 +85,7 @@ export default function ThemePanel() {
         title="Estilo"
         description="Cuánto adorno lleva la interfaz. Se cambia en un click y se vuelve igual de rápido."
       >
-        <div className="grid gap-2 sm:grid-cols-2">
+        <div className="grid gap-2 sm:grid-cols-3">
           {THEME_STYLES.map((option) => (
             <ModeButton
               key={option.id}
@@ -94,6 +95,21 @@ export default function ThemePanel() {
             />
           ))}
         </div>
+
+        {/**
+         * «Nítido» está pensado con su propia paleta y sin tipografía pixel: los
+         * botones de arriba cambian sólo el estilo, y este deja el conjunto tal y
+         * como se diseñó, de una vez.
+         */}
+        <button
+          onClick={() =>
+            applyPreset(THEME_PRESETS.find((preset) => preset.id === 'violeta'), 'nitido', 'off')
+          }
+          className="btn-ghost btn-sm w-full py-2.5"
+        >
+          <Wand2 size={13} />
+          Montar el template nítido entero (Violeta · Nítido)
+        </button>
       </PanelSection>
 
       <PanelSection
@@ -112,15 +128,33 @@ export default function ThemePanel() {
         </div>
 
         <p className="glass-soft flex items-center justify-between gap-3 p-3">
-          <span className="text-[11px] text-slate-500">
+          <span className="text-micro text-slate-500">
             Ahora mismo está{' '}
-            <strong className="text-slate-300">
+            <strong className="text-slate-400">
               {resolvePixel(theme) === 'on' ? 'encendida' : 'apagada'}
             </strong>
             .
           </span>
           <span className="pixel shrink-0 text-sm text-hex-300">19,99 US$</span>
         </p>
+      </PanelSection>
+
+      <PanelSection
+        title="Iconos pixel animados"
+        description="El guiño retro, en dos sitios contados: la píldora del hero y el sello del footer."
+      >
+        <Toggle
+          label="Pintar los sprites"
+          hint="Estaban también en el antetítulo de cada sección y se quitaron: un guiño que sale seis veces al bajar deja de ser un guiño y pasa a ser el estilo de la web. Se quedan quietos si el visitante tiene activado «reducir movimiento» en su sistema."
+          checked={theme.sprites === true}
+          onChange={(value) => setField('theme.sprites', value)}
+        />
+
+        <div className="glass-soft flex flex-wrap items-center gap-3 p-3 text-hex-300">
+          {SPRITE_NAMES.map((name) => (
+            <PixelSprite key={name} name={name} size={22} speed="1s" />
+          ))}
+        </div>
       </PanelSection>
 
       <PanelSection title="Combinaciones" description="Un punto de partida decente.">
@@ -134,11 +168,11 @@ export default function ThemePanel() {
                 'flex items-center gap-2.5 rounded-xl border p-2.5 text-left transition',
                 active === preset.id
                   ? 'border-hex-500/60 bg-hex-500/12'
-                  : 'border-white/10 bg-white/[0.03] hover:border-white/25 hover:bg-white/[0.06]',
+                  : 'border-line bg-surface-1 hover:border-line-strong hover:bg-surface-2',
               )}
             >
               <span
-                className="grid size-9 shrink-0 place-items-center rounded-lg border border-white/10"
+                className="grid size-11 shrink-0 place-items-center rounded-lg border border-line"
                 style={{
                   background: `linear-gradient(135deg, ${preset.primary}, ${preset.accent})`,
                 }}
@@ -149,7 +183,7 @@ export default function ThemePanel() {
                 <span className="block truncate text-sm font-medium text-slate-200">
                   {preset.name}
                 </span>
-                <span className="block truncate font-mono text-[10px] text-slate-500">
+                <span className="block truncate font-mono text-micro text-slate-500">
                   {preset.primary}
                 </span>
               </span>
@@ -158,7 +192,7 @@ export default function ThemePanel() {
         </div>
 
         {active === 'custom' && (
-          <p className="flex items-center gap-2 text-[11px] text-slate-500">
+          <p className="flex items-center gap-2 text-micro text-slate-500">
             <Palette size={12} className="text-hex-400" />
             Paleta personalizada.
           </p>
@@ -179,7 +213,7 @@ export default function ThemePanel() {
         </div>
 
         {FIELDS.some((field) => !parseHex(theme[field.key])) && (
-          <p className="rounded-xl border border-amber-400/25 bg-amber-400/[0.07] p-3 text-[11px] text-amber-200">
+          <p className="rounded-xl border border-amber-400/25 bg-amber-400/[0.07] p-3 text-micro text-amber-200">
             Hay algún color con un valor que no es hexadecimal (#rrggbb). Mientras tanto se usa el
             de fábrica para ese hueco.
           </p>
@@ -190,7 +224,7 @@ export default function ThemePanel() {
         title="Rampa generada"
         description="Los tonos que salen de tus colores base y que usa toda la web."
       >
-        <div className="flex overflow-hidden rounded-xl border border-white/10">
+        <div className="flex overflow-hidden rounded-xl border border-line">
           {RAMP_PREVIEW.map((name) => (
             <div
               key={name}
@@ -232,18 +266,23 @@ export default function ThemePanel() {
 
       <PanelSection title="Restablecer" description="Dos vueltas atrás, según lo que quieras deshacer.">
         <button
-          onClick={() =>
+          onClick={() => {
             applyPreset(
               { ...DEFAULT_THEME, id: DEFAULT_THEME.preset },
               DEFAULT_THEME.style,
               DEFAULT_THEME.pixel,
             )
-          }
-          className="btn-ghost btn-sm w-full py-2.5"
+            setField('theme.sprites', DEFAULT_THEME.sprites)
+          }}
+          className="btn-primary btn-sm w-full py-2.5"
         >
           <RotateCcw size={13} />
-          Valores de fábrica (Noche · Sobrio)
+          El diseño de HexServers (Noche · Nítido)
         </button>
+        <p className="text-micro leading-relaxed text-slate-600">
+          La combinación declarada: la que se cuida y contra la que se prueba todo. Lo de arriba se
+          puede cambiar entero, pero si algo se te descuadra, este botón vuelve a terreno conocido.
+        </p>
 
         <button
           onClick={() =>
@@ -254,7 +293,7 @@ export default function ThemePanel() {
           <RotateCcw size={13} />
           Recuperar el aspecto original (Hex · Vivo)
         </button>
-        <p className="text-[11px] leading-relaxed text-slate-600">
+        <p className="text-micro leading-relaxed text-slate-600">
           El segundo botón deja la web exactamente como estaba antes del rediseño: paleta azul
           eléctrica, halos grandes, degradados y precios en tipografía pixel.
         </p>
@@ -273,21 +312,21 @@ function ModeButton({ option, active, onClick }) {
         'rounded-xl border p-3 text-left transition',
         active
           ? 'border-hex-500/60 bg-hex-500/12'
-          : 'border-white/10 bg-white/[0.03] hover:border-white/25 hover:bg-white/[0.06]',
+          : 'border-line bg-surface-1 hover:border-line-strong hover:bg-surface-2',
       )}
     >
       <span className="flex items-center gap-2">
         <span
           className={cx(
             'grid size-4 shrink-0 place-items-center rounded-full border transition',
-            active ? 'border-hex-400 bg-hex-500' : 'border-white/25',
+            active ? 'border-hex-400 bg-hex-500' : 'border-line-strong',
           )}
         >
           {active && <Check size={10} className="text-white" strokeWidth={3.5} />}
         </span>
         <span className="text-sm font-medium text-slate-200">{option.name}</span>
       </span>
-      <span className="mt-1.5 block text-[11px] leading-snug text-slate-500">
+      <span className="mt-1.5 block text-micro leading-snug text-slate-500">
         {option.description}
       </span>
     </button>

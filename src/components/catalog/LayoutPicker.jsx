@@ -22,7 +22,7 @@ export default function LayoutPicker() {
 
   return (
     <div className="flex flex-wrap items-center justify-center gap-2">
-      <span className="text-[11px] font-semibold tracking-wider text-slate-500 uppercase">
+      <span className="text-micro font-semibold tracking-wider text-slate-500 uppercase">
         Ver como
       </span>
 
@@ -41,7 +41,7 @@ export default function LayoutPicker() {
               'inline-flex items-center gap-1.5 rounded-lg px-2.5 py-1.5 text-xs font-semibold transition',
               active === layout.id
                 ? 'bg-hex-500/20 text-white ring-1 ring-hex-500/40'
-                : 'text-slate-500 hover:bg-white/[0.06] hover:text-white',
+                : 'text-slate-500 hover:bg-surface-2 hover:text-white',
             )}
           >
             <Icon name={layout.icon} size={13} />
@@ -54,7 +54,7 @@ export default function LayoutPicker() {
         <button
           onClick={() => setViewerLayout('')}
           title="Volver a la vista por defecto de la web"
-          className="btn-ghost btn-sm py-1.5 text-[11px]"
+          className="btn-ghost btn-sm py-1.5 text-micro"
         >
           <RotateCcw size={11} />
           Por defecto

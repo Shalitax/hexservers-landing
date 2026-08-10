@@ -8,7 +8,7 @@ export function Field({ label, hint, children, className = '' }) {
     <div className={className}>
       <label className="label">{label}</label>
       {children}
-      {hint && <p className="mt-1 text-[11px] leading-snug text-slate-600">{hint}</p>}
+      {hint && <p className="mt-1 text-micro leading-snug text-slate-600">{hint}</p>}
     </div>
   )
 }
@@ -72,7 +72,7 @@ export function ColorField({ label, hint, value, onChange }) {
           value={safe}
           onChange={(event) => onChange(event.target.value)}
           aria-label={label}
-          className="size-9 shrink-0 cursor-pointer rounded-lg border border-white/10 bg-transparent p-0.5"
+          className="size-11 shrink-0 cursor-pointer rounded-lg border border-line bg-transparent p-0.5"
         />
         <input
           className="input font-mono"
@@ -88,16 +88,16 @@ export function ColorField({ label, hint, value, onChange }) {
 
 export function Toggle({ label, hint, checked, onChange }) {
   return (
-    <label className="flex cursor-pointer items-start gap-3 rounded-xl border border-white/10 bg-white/[0.03] p-3 transition hover:border-white/20">
+    <label className="flex cursor-pointer items-start gap-3 rounded-xl border border-line bg-surface-1 p-3 transition hover:border-line-strong">
       <input
         type="checkbox"
         checked={Boolean(checked)}
         onChange={(event) => onChange(event.target.checked)}
-        className="mt-0.5 size-4 shrink-0 rounded border-white/20 bg-transparent accent-hex-500"
+        className="mt-0.5 size-4 shrink-0 rounded border-line-strong bg-transparent accent-hex-500"
       />
       <span className="min-w-0">
         <span className="block text-sm font-medium text-slate-200">{label}</span>
-        {hint && <span className="mt-0.5 block text-[11px] leading-snug text-slate-500">{hint}</span>}
+        {hint && <span className="mt-0.5 block text-micro leading-snug text-slate-500">{hint}</span>}
       </span>
     </label>
   )
@@ -106,7 +106,7 @@ export function Toggle({ label, hint, checked, onChange }) {
 export function IconPicker({ label, value, onChange }) {
   return (
     <Field label={label}>
-      <div className="grid max-h-32 grid-cols-8 gap-1 overflow-y-auto rounded-lg border border-white/10 bg-black/40 p-2">
+      <div className="grid max-h-32 grid-cols-8 gap-1 overflow-y-auto rounded-lg border border-line bg-black/40 p-2">
         {ICON_NAMES.map((name) => (
           <button
             key={name}
@@ -117,7 +117,7 @@ export function IconPicker({ label, value, onChange }) {
               'grid aspect-square place-items-center rounded-md transition',
               value === name
                 ? 'bg-hex-500/25 text-hex-200 ring-1 ring-hex-500/60'
-                : 'text-slate-500 hover:bg-white/[0.07] hover:text-white',
+                : 'text-slate-500 hover:bg-surface-3 hover:text-white',
             )}
           >
             <Icon name={name} size={15} />
@@ -161,7 +161,7 @@ export function GlyphField({
     <div className="space-y-2">
       <div className="flex items-start gap-3">
         <div
-          className="grid size-12 shrink-0 place-items-center overflow-hidden rounded-xl border border-white/10 bg-black/40 text-hex-300"
+          className="grid size-11 shrink-0 place-items-center overflow-hidden rounded-xl border border-line bg-black/40 text-hex-300"
           title={image ? 'Se usará esta imagen' : 'Se usará este icono'}
         >
           <Glyph name={icon} image={image} size={image ? 30 : 20} />
@@ -197,7 +197,7 @@ export function GlyphField({
               }}
             />
           </div>
-          {error && <p className="text-[11px] text-rose-400">{error}</p>}
+          {error && <p className="text-micro text-rose-400">{error}</p>}
         </div>
       </div>
 
@@ -227,7 +227,7 @@ export function ImageField({ label = 'URL de la imagen', value, onChange, hint }
 
   return (
     <div className="flex items-start gap-4">
-      <div className="grid size-20 shrink-0 place-items-center overflow-hidden rounded-xl border border-white/10 bg-black/40">
+      <div className="grid size-16 shrink-0 place-items-center overflow-hidden rounded-xl border border-line bg-black/40">
         {value ? (
           <img src={value} alt="" className="size-full object-cover" />
         ) : (
@@ -265,7 +265,7 @@ export function ImageField({ label = 'URL de la imagen', value, onChange, hint }
             }}
           />
         </div>
-        {error && <p className="text-[11px] text-rose-400">{error}</p>}
+        {error && <p className="text-micro text-rose-400">{error}</p>}
       </div>
     </div>
   )
@@ -317,17 +317,17 @@ export function CompactGlyphPicker({ icon, image, onIcon, onImage, label = 'Icon
         title={image ? 'Usando una imagen propia' : label}
         aria-label={label}
         aria-expanded={open}
-        className="grid size-9 place-items-center overflow-hidden rounded-lg border border-white/10 bg-white/[0.04] text-hex-300 transition hover:border-white/25 hover:text-hex-200"
+        className="grid size-11 place-items-center overflow-hidden rounded-lg border border-line bg-surface-2 text-hex-300 transition hover:border-line-strong hover:text-hex-200"
       >
         <Glyph name={icon} image={image} size={image ? 24 : 16} />
       </button>
 
       {open && (
-        <div className="absolute left-0 z-30 mt-1 w-60 space-y-2 rounded-xl border border-white/10 bg-void-2 p-2 shadow-2xl">
+        <div className="absolute left-0 z-30 mt-1 w-60 space-y-2 rounded-xl border border-line bg-void-2 p-2 shadow-2xl">
           {/* Imagen propia: arriba porque es lo que manda si está puesta. */}
           <div className="space-y-1.5">
             <input
-              className="input !py-1.5 text-[11px]"
+              className="input !py-1.5 text-micro"
               placeholder="URL de una imagen (opcional)"
               value={image?.startsWith('data:') ? '' : (image ?? '')}
               onChange={(event) => onImage(event.target.value)}
@@ -336,7 +336,7 @@ export function CompactGlyphPicker({ icon, image, onIcon, onImage, label = 'Icon
               <button
                 type="button"
                 onClick={() => fileInput.current?.click()}
-                className="btn-ghost btn-sm flex-1 justify-center py-1 text-[11px]"
+                className="btn-ghost btn-sm flex-1 justify-center py-1 text-micro"
               >
                 <Upload size={11} />
                 Subir
@@ -345,7 +345,7 @@ export function CompactGlyphPicker({ icon, image, onIcon, onImage, label = 'Icon
                 <button
                   type="button"
                   onClick={() => onImage('')}
-                  className="btn-ghost btn-sm flex-1 justify-center py-1 text-[11px] text-rose-400"
+                  className="btn-ghost btn-sm flex-1 justify-center py-1 text-micro text-rose-400"
                 >
                   Quitar
                 </button>
@@ -362,10 +362,10 @@ export function CompactGlyphPicker({ icon, image, onIcon, onImage, label = 'Icon
                 event.target.value = ''
               }}
             />
-            {error && <p className="text-[10px] text-rose-400">{error}</p>}
+            {error && <p className="text-micro text-rose-400">{error}</p>}
           </div>
 
-          <div className={cx('grid grid-cols-8 gap-1 border-t border-white/8 pt-2', image && 'opacity-40')}>
+          <div className={cx('grid grid-cols-8 gap-1 border-t border-line-soft pt-2', image && 'opacity-40')}>
             {ICON_NAMES.map((name) => (
               <button
                 key={name}
@@ -379,7 +379,7 @@ export function CompactGlyphPicker({ icon, image, onIcon, onImage, label = 'Icon
                   'grid aspect-square place-items-center rounded-md transition',
                   icon === name
                     ? 'bg-hex-500/25 text-hex-200 ring-1 ring-hex-500/60'
-                    : 'text-slate-500 hover:bg-white/[0.07] hover:text-white',
+                    : 'text-slate-500 hover:bg-surface-3 hover:text-white',
                 )}
               >
                 <Icon name={name} size={14} />

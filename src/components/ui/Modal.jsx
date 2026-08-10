@@ -48,7 +48,7 @@ export default function Modal({ open, onClose, title, subtitle, children, footer
         )}
       >
         {(title || subtitle) && (
-          <header className="flex items-start justify-between gap-4 border-b border-white/8 px-6 py-5">
+          <header className="flex items-start justify-between gap-4 border-b border-line-soft px-6 py-5">
             <div className="min-w-0">
               {title && <h2 className="display text-lg font-bold text-white">{title}</h2>}
               {subtitle && <p className="mt-1 text-sm text-slate-400">{subtitle}</p>}
@@ -56,7 +56,7 @@ export default function Modal({ open, onClose, title, subtitle, children, footer
             <button
               onClick={onClose}
               aria-label="Cerrar"
-              className="-mr-1 -mt-1 rounded-lg p-2 text-slate-400 transition hover:bg-white/10 hover:text-white"
+              className="-mr-1 -mt-1 rounded-lg p-2 text-slate-400 transition hover:bg-surface-3 hover:text-white"
             >
               <X size={18} />
             </button>
@@ -66,7 +66,7 @@ export default function Modal({ open, onClose, title, subtitle, children, footer
         <div className="max-h-[70vh] overflow-y-auto px-6 py-5">{children}</div>
 
         {footer && (
-          <footer className="border-t border-white/8 bg-black/25 px-6 py-4">{footer}</footer>
+          <footer className="border-t border-line-soft bg-black/25 px-6 py-4">{footer}</footer>
         )}
       </div>
     </div>,

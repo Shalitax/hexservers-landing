@@ -84,13 +84,13 @@ export default function AdminLogin() {
         </button>
 
         {usingDefault && (
-          <p className="rounded-lg border border-amber-400/20 bg-amber-400/[0.07] px-3 py-2.5 text-[11px] leading-relaxed text-amber-200/90">
+          <p className="rounded-lg border border-amber-400/20 bg-amber-400/[0.07] px-3 py-2.5 text-micro leading-relaxed text-amber-200/90">
             Credenciales por defecto: <strong>admin</strong> / <strong>hexadmin</strong>. Cámbialas
             desde el panel (pestaña Seguridad) en cuanto entres.
           </p>
         )}
 
-        <p className="text-center text-[11px] leading-relaxed text-slate-600">
+        <p className="text-center text-micro leading-relaxed text-slate-600">
           {serverMode
             ? 'La contraseña la valida el servidor (HEX_ADMIN_PASSWORD). Lo que guardes lo verán todos los visitantes.'
             : 'No hay servidor detrás: este login sólo protege el modo edición en este navegador, y lo que edites no lo verán los visitantes.'}

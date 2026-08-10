@@ -45,7 +45,7 @@ export default function HubPanel() {
 
   return (
     <div className="space-y-8">
-      <p className="rounded-xl border border-hex-500/20 bg-hex-500/[0.06] p-3 text-[11px] leading-relaxed text-hex-200/90">
+      <p className="rounded-xl border border-hex-500/20 bg-hex-500/[0.06] p-3 text-micro leading-relaxed text-hex-200/90">
         Los titulares y las descripciones de estas dos páginas se editan haciendo click sobre ellos
         en <code>#/hub</code> y <code>#/soporte</code>. Aquí están las listas y los ajustes.
       </p>
@@ -77,7 +77,7 @@ export default function HubPanel() {
       >
         <div className="space-y-2">
           {hub.nodes.map((node, index) => (
-            <div key={node.id} className="space-y-2 rounded-xl border border-white/10 bg-white/[0.025] p-3">
+            <div key={node.id} className="space-y-2 rounded-xl border border-line bg-surface-1 p-3">
               <div className="flex items-center gap-2">
                 <span className="min-w-0 flex-1 truncate text-sm font-medium text-slate-200">
                   {node.name || 'Nodo sin nombre'}
@@ -172,7 +172,7 @@ export default function HubPanel() {
       >
         <div className="space-y-2">
           {hub.team.map((member, index) => (
-            <div key={member.id} className="space-y-2 rounded-xl border border-white/10 bg-white/[0.025] p-3">
+            <div key={member.id} className="space-y-2 rounded-xl border border-line bg-surface-1 p-3">
               <div className="flex items-center gap-2">
                 <span className="min-w-0 flex-1 truncate text-sm font-medium text-slate-200">
                   {member.name || 'Sin nombre'}
@@ -255,7 +255,7 @@ export default function HubPanel() {
       >
         <div className="space-y-2">
           {hub.changes.map((change, index) => (
-            <div key={change.id} className="space-y-2 rounded-xl border border-white/10 bg-white/[0.025] p-3">
+            <div key={change.id} className="space-y-2 rounded-xl border border-line bg-surface-1 p-3">
               <div className="flex items-center gap-2">
                 <span className="min-w-0 flex-1 truncate text-sm font-medium text-slate-200">
                   {change.title || 'Sin título'}
@@ -335,8 +335,8 @@ export default function HubPanel() {
         <p
           className={
             resolvedTicketUrl
-              ? 'rounded-xl border border-white/10 bg-white/[0.03] p-3 text-[11px] break-all text-slate-400'
-              : 'rounded-xl border border-amber-400/25 bg-amber-400/[0.07] p-3 text-[11px] leading-relaxed text-amber-200'
+              ? 'rounded-xl border border-line bg-surface-1 p-3 text-micro break-all text-slate-400'
+              : 'rounded-xl border border-amber-400/25 bg-amber-400/[0.07] p-3 text-micro leading-relaxed text-amber-200'
           }
         >
           {resolvedTicketUrl ? (
@@ -394,7 +394,7 @@ export default function HubPanel() {
 
 function MoveButtons({ onUp, onDown, disableUp, disableDown, onRemove }) {
   const base =
-    'rounded-md p-1 text-slate-500 transition hover:bg-white/10 hover:text-white disabled:opacity-25'
+    'rounded-md p-1 text-slate-500 transition hover:bg-surface-3 hover:text-white disabled:opacity-25'
   return (
     <div className="flex shrink-0 items-center">
       <button onClick={onUp} disabled={disableUp} aria-label="Subir" className={base}>

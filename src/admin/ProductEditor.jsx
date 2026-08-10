@@ -238,9 +238,9 @@ function PlanList({ product, plans, onEditPlan }) {
         <div>
           <h4 className="display text-sm font-bold text-white">
             Planes
-            <span className="chip ml-2 !text-[10px]">{plans.length}</span>
+            <span className="chip ml-2 !text-micro">{plans.length}</span>
           </h4>
-          <p className="mt-0.5 text-[11px] text-slate-500">
+          <p className="mt-0.5 text-micro text-slate-500">
             Lo que el cliente acaba contratando. Cada plan tiene su URL de WHMCS y, si quieres el
             recorrido con filtros, su ubicación y su CPU.
           </p>
@@ -255,7 +255,7 @@ function PlanList({ product, plans, onEditPlan }) {
         {plans.map((plan, index) => (
           <div
             key={plan.id}
-            className="flex items-center gap-2 rounded-lg border border-white/8 bg-black/25 p-2"
+            className="flex items-center gap-2 rounded-lg border border-line-soft bg-black/25 p-2"
           >
             <div className="flex shrink-0 flex-col">
               <IconButton
@@ -282,14 +282,14 @@ function PlanList({ product, plans, onEditPlan }) {
               <span className="flex flex-wrap items-center gap-2">
                 <span className="truncate text-sm font-medium text-slate-200">{plan.name}</span>
                 <StatusDot status={plan.status} />
-                {plan.featured && <span className="chip !text-[9px] !text-hex-300">popular</span>}
+                {plan.featured && <span className="chip !text-micro !text-hex-300">popular</span>}
                 {plan.hasConfigurableOptions && (
-                  <span className="chip !text-[9px] !text-slate-400">
+                  <span className="chip !text-micro !text-slate-400">
                     {plan.configurableOptions.length} opts
                   </span>
                 )}
               </span>
-              <span className="mt-0.5 block text-[11px] text-slate-500">
+              <span className="mt-0.5 block text-micro text-slate-500">
                 {formatPrice(plan.price, site.currency.base)}
                 {plan.period}
                 {groupLabel(site, plan) && (
@@ -320,7 +320,7 @@ function PlanList({ product, plans, onEditPlan }) {
         ))}
 
         {plans.length === 0 && (
-          <p className="rounded-lg border border-dashed border-white/10 p-4 text-center text-[11px] text-slate-600">
+          <p className="rounded-lg border border-dashed border-line p-4 text-center text-micro text-slate-600">
             Este producto no tiene planes: en la web aparecerá como no disponible.
           </p>
         )}
@@ -357,7 +357,7 @@ function IconButton({ icon: IconComponent, label, onClick, disabled, danger, tin
       className={cx(
         'rounded-md text-slate-500 transition disabled:opacity-25',
         tiny ? 'p-0.5' : 'p-1.5',
-        danger ? 'hover:bg-rose-500/15 hover:text-rose-400' : 'hover:bg-white/10 hover:text-white',
+        danger ? 'hover:bg-rose-500/15 hover:text-rose-400' : 'hover:bg-surface-3 hover:text-white',
       )}
     >
       <IconComponent size={tiny ? 12 : 14} />

@@ -154,8 +154,8 @@ export function Glyph({ name, image, size = 20, className = '', alt = '' }) {
  * `flat` para los huecos que ya eran planos y nunca llevaron degradado.
  */
 export function glyphBox(image, { flat = false } = {}) {
-  if (image) return 'bg-white/[0.06] p-1'
+  if (image) return 'bg-surface-2 p-1'
   return flat
-    ? 'bg-white/[0.04] text-hex-300'
+    ? 'bg-surface-2 text-hex-300'
     : 'bg-gradient-to-br from-hex-500/20 to-plasma-500/15 text-hex-300'
 }

@@ -60,7 +60,7 @@ export default function HubPage() {
           <div className="mt-8 space-y-6">
             {groups.map((group) => (
               <article key={group.id} className="glass overflow-hidden">
-                <header className="flex items-center gap-3 border-b border-white/8 px-5 py-4">
+                <header className="flex items-center gap-3 border-b border-line-soft px-5 py-4">
                   {group.location ? (
                     <Flag flag={group.location.flag} size={26} />
                   ) : (
@@ -79,7 +79,7 @@ export default function HubPage() {
                   </span>
                 </header>
 
-                <div className="divide-y divide-white/[0.06]">
+                <div className="divide-y divide-line-soft">
                   {group.nodes.map((node) => (
                     <NodeRow key={node.id} node={node} />
                   ))}
@@ -120,10 +120,10 @@ export default function HubPage() {
                     src={member.image}
                     alt=""
                     loading="lazy"
-                    className="size-11 shrink-0 rounded-xl border border-white/10 object-cover"
+                    className="size-11 shrink-0 rounded-xl border border-line object-cover"
                   />
                 ) : (
-                  <span className="grid size-11 shrink-0 place-items-center rounded-xl border border-white/10 bg-gradient-to-br from-hex-500/20 to-plasma-500/15 text-hex-300">
+                  <span className="grid size-11 shrink-0 place-items-center rounded-xl border border-line bg-gradient-to-br from-hex-500/20 to-plasma-500/15 text-hex-300">
                     <Icon name={member.icon} size={19} />
                   </span>
                 )}
@@ -136,10 +136,10 @@ export default function HubPage() {
                   </div>
                   <p className="mt-0.5 text-sm leading-snug text-slate-400">{member.role}</p>
                   {member.handle && (
-                    <p className="mt-2 font-mono text-[11px] text-hex-300">{member.handle}</p>
+                    <p className="mt-2 font-mono text-micro text-hex-300">{member.handle}</p>
                   )}
                   {member.schedule && (
-                    <p className="mt-1 inline-flex items-center gap-1.5 text-[11px] text-slate-500">
+                    <p className="mt-1 inline-flex items-center gap-1.5 text-micro text-slate-500">
                       <Clock size={11} />
                       {member.schedule}
                     </p>
@@ -192,7 +192,7 @@ export default function HubPage() {
 const NODE_STATUS = {
   online: { label: 'Operativo', chip: 'border-emerald-400/20 bg-emerald-400/10 !text-emerald-300' },
   maintenance: { label: 'En mantenimiento', chip: 'border-amber-400/20 bg-amber-400/10 !text-amber-300' },
-  soon: { label: 'Próximamente', chip: 'border-white/10 bg-white/[0.05] !text-slate-400' },
+  soon: { label: 'Próximamente', chip: 'border-line bg-surface-2 !text-slate-400' },
 }
 
 /** Una fila de hardware: qué máquina es y qué lleva dentro. */
@@ -210,7 +210,7 @@ function NodeRow({ node }) {
       <div className="min-w-0 sm:w-52 sm:shrink-0">
         <div className="flex items-center gap-2">
           <span className="pixel text-xs text-hex-300">{node.name}</span>
-          <span className={cx('chip shrink-0 !px-2 !py-0.5 !text-[10px]', status.chip)}>
+          <span className={cx('chip shrink-0 !px-2 !py-0.5 !text-micro', status.chip)}>
             {status.label}
           </span>
         </div>
@@ -253,10 +253,10 @@ function groupNodes(nodes = [], locations = []) {
 
 function MemberStatus({ status }) {
   if (status === 'away') {
-    return <span className="chip shrink-0 !px-2 !py-0.5 !text-[10px] !text-amber-300">Ausente</span>
+    return <span className="chip shrink-0 !px-2 !py-0.5 !text-micro !text-amber-300">Ausente</span>
   }
   return (
-    <span className="inline-flex shrink-0 items-center gap-1 text-[10px] font-medium text-emerald-400">
+    <span className="inline-flex shrink-0 items-center gap-1 text-micro font-medium text-emerald-400">
       <span className="size-1.5 rounded-full bg-emerald-400" />
       Activo
     </span>
@@ -266,7 +266,7 @@ function MemberStatus({ status }) {
 /* --------------------------------- cambios --------------------------------- */
 
 const CHANGE_STATUS = {
-  planned: { label: 'Planificado', icon: CircleDot, tone: 'text-slate-400', ring: 'border-white/12 bg-white/[0.04]' },
+  planned: { label: 'Planificado', icon: CircleDot, tone: 'text-slate-400', ring: 'border-line bg-surface-2' },
   progress: { label: 'En curso', icon: Clock, tone: 'text-hex-300', ring: 'border-hex-500/35 bg-hex-500/12' },
   done: { label: 'Hecho', icon: Check, tone: 'text-emerald-300', ring: 'border-emerald-400/30 bg-emerald-400/10' },
 }
@@ -280,7 +280,7 @@ function ChangeRow({ change }) {
     <li className={cx('glass glass-hover flex gap-4 p-5', change.status === 'done' && 'opacity-75')}>
       <span
         className={cx(
-          'grid size-9 shrink-0 place-items-center rounded-xl border',
+          'grid size-11 shrink-0 place-items-center rounded-xl border',
           status.ring,
           status.tone,
         )}
@@ -292,8 +292,8 @@ function ChangeRow({ change }) {
       <div className="min-w-0 flex-1">
         <div className="flex flex-wrap items-center gap-x-2.5 gap-y-1">
           <h3 className="display text-base font-bold text-white">{change.title}</h3>
-          <span className={cx('text-[11px] font-semibold', status.tone)}>{status.label}</span>
-          {change.tag && <span className="chip !py-0.5 !text-[10px]">{change.tag}</span>}
+          <span className={cx('text-micro font-semibold', status.tone)}>{status.label}</span>
+          {change.tag && <span className="chip !py-0.5 !text-micro">{change.tag}</span>}
         </div>
         {change.description && (
           <p className="mt-1.5 text-sm leading-relaxed text-slate-400">{change.description}</p>
@@ -301,7 +301,7 @@ function ChangeRow({ change }) {
       </div>
 
       {change.date && (
-        <span className="hidden shrink-0 self-start text-[11px] whitespace-nowrap text-slate-500 sm:block">
+        <span className="hidden shrink-0 self-start text-micro whitespace-nowrap text-slate-500 sm:block">
           {change.date}
         </span>
       )}

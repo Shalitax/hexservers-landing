@@ -17,6 +17,9 @@
  *   animaciones de fondo y tipografía pixel reservada al logo.
  * - `vivo`: el aspecto anterior — degradados, halos grandes a la deriva y precios
  *   en tipografía pixel.
+ * - `nitido`: el lenguaje de los hosts modernos — nada de cristal translúcido, sino
+ *   tarjetas opacas de borde capilar, esquinas más cerradas, fondo reglado en lugar
+ *   de halos y un hero partido con una consola al lado del titular.
  */
 export const THEME_STYLES = [
   {
@@ -30,6 +33,12 @@ export const THEME_STYLES = [
     name: 'Vivo',
     description: 'Halos de color, degradados y halos grandes. El aspecto original.',
   },
+  {
+    id: 'nitido',
+    name: 'Nítido',
+    description:
+      'Tarjetas opacas de borde fino, fondo de rejilla y hero partido con consola. Estilo host moderno.',
+  },
 ]
 
 /**
@@ -39,22 +48,44 @@ export const THEME_STYLES = [
  * porque son dos gustos distintos: hay quien quiere los halos pero no los precios
  * en pixel, y quien quiere la web sobria conservando el guiño retro.
  *
- * - `auto`: como siempre — encendida en «vivo», apagada en «sobrio».
+ * - `auto`: como siempre — encendida en «vivo», apagada en los demás estilos.
  * - `on`:   precios, cifras y etiquetas en pixel, vaya el estilo que vaya.
  * - `off`:  pixel sólo en el logo; todo lo demás en la tipografía de titulares.
  */
 export const PIXEL_MODES = [
-  { id: 'auto', name: 'Según el estilo', description: 'Encendida en «Vivo», apagada en «Sobrio».' },
+  { id: 'auto', name: 'Según el estilo', description: 'Encendida sólo en «Vivo».' },
   { id: 'on', name: 'Siempre', description: 'Precios, cifras y etiquetas en tipografía pixel.' },
   { id: 'off', name: 'Nunca', description: 'Pixel sólo en el logo. Lo demás, legible.' },
 ]
 
-/** Colores, estilo y tipografía de fábrica. */
+/**
+ * El diseño de HexServers.
+ *
+ * Esto no es «una configuración por defecto» entre muchas: es la combinación
+ * declarada, la que se cuida y contra la que se prueba todo. Entre estilos, paletas,
+ * tipografía pixel, sprites y vistas de catálogo hay más de ochocientas maneras de
+ * ver esta web, y una web que puede verse de ochocientas maneras no tiene un
+ * aspecto: tiene un configurador. Las demás combinaciones siguen ahí y funcionan,
+ * pero son accesorios — ésta es la casa.
+ *
+ * Las tres decisiones que la definen:
+ *
+ *   `nitido`      superficies planas de borde fino en lugar de cristal y halos. Es
+ *                 el lenguaje de los hosts con los que compites.
+ *   `pixel: off`  ningún dato en tipografía de 8 bits. Un precio o una cifra de RAM
+ *                 se leen para decidir una compra, y ahí el pixel resta. Sobrevive
+ *                 en el logo y en el sello del pie, que no son datos.
+ *   `sprites: on` el guiño retro, en dos sitios contados. Ver el punto anterior:
+ *                 es lo mismo dicho de otra forma.
+ */
 export const DEFAULT_THEME = {
   preset: 'noche',
-  style: 'sobrio',
+  style: 'nitido',
   /* Ver PIXEL_MODES: 'auto' | 'on' | 'off'. */
-  pixel: 'auto',
+  pixel: 'off',
+  /* Sprites de pixel art animados. Sólo quedan dos: la píldora del hero y el sello
+     del footer — repartirlos por todas las secciones los convertía en el estilo. */
+  sprites: true,
   primary: '#5b8def',
   accent: '#7a6ff0',
   background: '#07070a',
@@ -81,6 +112,10 @@ export const THEME_PRESETS = [
   { id: 'brasa', name: 'Brasa', primary: '#d97642', accent: '#b8453a', background: '#0a0705', surface: '#140f0b', text: '#f0e7e1' },
   { id: 'arctic', name: 'Arctic', primary: '#06b6d4', accent: '#6366f1', background: '#060f14', surface: '#0a161c', text: '#e2f0f5' },
   { id: 'hex', name: 'Hex (original)', primary: '#4f7cff', accent: '#a855f7', background: '#0a0a0f', surface: '#0d0d12', text: '#e7e9f0' },
+  /* Las dos siguientes están pensadas para el estilo «Nítido»: son las paletas que
+     usan los hosts en los que se inspira. Funcionan igual en los otros estilos. */
+  { id: 'violeta', name: 'Violeta', primary: '#8c32ff', accent: '#a762ff', background: '#07051b', surface: '#14112f', text: '#f0f0ff' },
+  { id: 'acero', name: 'Acero', primary: '#3b82f6', accent: '#6366f1', background: '#0a0b10', surface: '#151a24', text: '#e8eaf2' },
 ]
 
 /**
@@ -194,8 +229,10 @@ export function themeVars(theme = {}) {
   return vars
 }
 
+const STYLE_IDS = new Set(THEME_STYLES.map((option) => option.id))
+
 /** Estilo normalizado: cualquier valor raro cae en el de fábrica. */
-export const resolveStyle = (theme) => (theme?.style === 'vivo' ? 'vivo' : 'sobrio')
+export const resolveStyle = (theme) => (STYLE_IDS.has(theme?.style) ? theme.style : 'sobrio')
 
 /**
  * ¿Se pinta la tipografía pixel? Traduce el ajuste de tres estados a un sí/no,

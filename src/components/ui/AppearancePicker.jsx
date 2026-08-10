@@ -57,17 +57,18 @@ export default function AppearancePicker({ variant = 'menu' }) {
       {/* Estilo */}
       <section>
         <h3 className="label !mb-1.5">Estilo</h3>
-        <div className="grid grid-cols-2 gap-1.5">
+        <div className="grid grid-cols-3 gap-1.5">
           {THEME_STYLES.map((option) => (
             <button
               key={option.id}
               onClick={() => setViewerTheme({ style: option.id })}
               aria-pressed={activeStyle === option.id}
+              title={option.description}
               className={cx(
-                'rounded-lg border px-3 py-2 text-xs font-semibold transition',
+                'rounded-lg border px-2 py-2 text-micro font-semibold transition',
                 activeStyle === option.id
                   ? 'border-hex-500/50 bg-hex-500/15 text-white'
-                  : 'border-white/10 bg-white/[0.03] text-slate-400 hover:text-white',
+                  : 'border-line bg-surface-1 text-slate-400 hover:text-white',
               )}
             >
               {option.name}
@@ -87,10 +88,10 @@ export default function AppearancePicker({ variant = 'menu' }) {
               aria-pressed={activePixel === option.id}
               title={option.description}
               className={cx(
-                'rounded-lg border px-2 py-2 text-[11px] font-semibold transition',
+                'rounded-lg border px-2 py-2 text-micro font-semibold transition',
                 activePixel === option.id
                   ? 'border-hex-500/50 bg-hex-500/15 text-white'
-                  : 'border-white/10 bg-white/[0.03] text-slate-400 hover:text-white',
+                  : 'border-line bg-surface-1 text-slate-400 hover:text-white',
               )}
             >
               {option.id === 'auto' ? 'Auto' : option.name}
@@ -111,10 +112,10 @@ export default function AppearancePicker({ variant = 'menu' }) {
               aria-label={`Color ${preset.name}`}
               aria-pressed={activePreset === preset.id}
               className={cx(
-                'grid size-7 place-items-center rounded-full border transition',
+                'grid size-8 place-items-center rounded-full border transition',
                 activePreset === preset.id
                   ? 'border-white/70 scale-110'
-                  : 'border-white/15 hover:border-white/40',
+                  : 'border-line-strong hover:border-white/40',
               )}
               style={{ background: `linear-gradient(135deg, ${preset.primary}, ${preset.accent})` }}
             >
@@ -138,10 +139,10 @@ export default function AppearancePicker({ variant = 'menu' }) {
               aria-label={`Fondo ${option.name}`}
               aria-pressed={activeBackground === option.value}
               className={cx(
-                'grid size-7 place-items-center rounded-lg border transition',
+                'grid size-8 place-items-center rounded-lg border transition',
                 activeBackground === option.value
                   ? 'border-white/70'
-                  : 'border-white/15 hover:border-white/40',
+                  : 'border-line-strong hover:border-white/40',
               )}
               style={{ background: option.value }}
             >
@@ -154,7 +155,7 @@ export default function AppearancePicker({ variant = 'menu' }) {
           {/* Cualquier otro color: se oscurece al aplicarlo. */}
           <label
             title="Elegir otro color de fondo"
-            className="grid size-7 cursor-pointer place-items-center rounded-lg border border-dashed border-white/25 text-slate-400 transition hover:border-white/50 hover:text-white"
+            className="grid size-8 cursor-pointer place-items-center rounded-lg border border-dashed border-line-strong text-slate-400 transition hover:border-white/50 hover:text-white"
           >
             <Palette size={13} />
             <input
@@ -165,7 +166,7 @@ export default function AppearancePicker({ variant = 'menu' }) {
             />
           </label>
         </div>
-        <p className="mt-1.5 text-[10px] leading-snug text-slate-600">
+        <p className="mt-1.5 text-micro leading-snug text-slate-600">
           Se ajusta a un tono oscuro para que el texto se siga leyendo.
         </p>
       </section>
@@ -173,7 +174,7 @@ export default function AppearancePicker({ variant = 'menu' }) {
       {touched && (
         <button
           onClick={resetViewerTheme}
-          className="btn-ghost btn-sm w-full justify-center py-2 text-[11px]"
+          className="btn-ghost btn-sm w-full justify-center py-2 text-micro"
         >
           <RotateCcw size={12} />
           Volver a los colores del sitio

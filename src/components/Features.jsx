@@ -26,9 +26,9 @@ export default function Features() {
             >
               <span
                 className={cx(
-                  'mb-4 grid size-11 place-items-center rounded-xl border border-white/10 transition',
+                  'mb-4 grid size-11 place-items-center rounded-xl border border-line transition',
                   item.image
-                    ? 'bg-white/[0.06] p-1.5'
+                    ? 'bg-surface-2 p-1.5'
                     : 'bg-gradient-to-br from-hex-500/20 to-plasma-500/15 text-hex-300 group-hover:from-hex-500/30 group-hover:text-hex-200',
                 )}
               >

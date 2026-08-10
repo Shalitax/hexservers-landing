@@ -46,7 +46,7 @@ export default function CurrencyPicker({ variant = 'menu' }) {
               'rounded-lg border px-3 py-2 text-xs font-semibold transition',
               item.code === active.code
                 ? 'border-hex-500/50 bg-hex-500/15 text-white'
-                : 'border-white/10 bg-white/[0.03] text-slate-400 hover:text-white',
+                : 'border-line bg-surface-1 text-slate-400 hover:text-white',
             )}
           >
             {item.code}
@@ -87,10 +87,10 @@ export default function CurrencyPicker({ variant = 'menu' }) {
                 setCurrency(item.code)
                 setOpen(false)
               }}
-              className="flex w-full items-center gap-3 rounded-xl p-2.5 text-left transition hover:bg-white/[0.07]"
+              className="flex w-full items-center gap-3 rounded-xl p-2.5 text-left transition hover:bg-surface-3"
             >
-              <span className="pixel w-10 shrink-0 text-[10px] text-hex-300">{item.code}</span>
-              <span className="min-w-0 flex-1 truncate text-sm text-slate-300">{item.label}</span>
+              <span className="pixel w-10 shrink-0 text-micro text-hex-300">{item.code}</span>
+              <span className="min-w-0 flex-1 truncate text-sm text-slate-400">{item.label}</span>
               {item.code === active.code && <Check size={14} className="shrink-0 text-hex-300" />}
             </button>
           ))}

@@ -167,7 +167,7 @@ export default function Flag({ flag, code, size = 24, className = '', title }) {
       role={title ? 'img' : 'presentation'}
       aria-label={title}
       aria-hidden={title ? undefined : 'true'}
-      className={cx('shrink-0 rounded-[3px] ring-1 ring-white/15', className)}
+      className={cx('shrink-0 rounded-[3px] ring-1 ring-line-strong', className)}
     >
       {drawing}
     </svg>

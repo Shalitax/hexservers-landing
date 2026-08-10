@@ -46,26 +46,26 @@ export default function AdminPanel({ onEditProduct, onEditPlan }) {
       />
 
       <aside
-        className="fixed inset-y-0 right-0 z-[86] flex w-full max-w-xl flex-col border-l border-white/10 bg-void-2/95 shadow-2xl backdrop-blur-2xl"
+        className="fixed inset-y-0 right-0 z-[86] flex w-full max-w-xl flex-col border-l border-line bg-void-2/95 shadow-2xl backdrop-blur-2xl"
         aria-label="Panel de administración"
       >
-        <header className="flex items-center justify-between gap-3 border-b border-white/8 px-5 py-4">
+        <header className="flex items-center justify-between gap-3 border-b border-line-soft px-5 py-4">
           <div>
             <h2 className="display text-base font-bold text-white">Panel de administración</h2>
-            <p className="text-[11px] text-slate-500">
+            <p className="text-micro text-slate-500">
               Cambios guardados automáticamente en la base de datos local
             </p>
           </div>
           <button
             onClick={() => setPanelOpen(false)}
             aria-label="Cerrar panel"
-            className="rounded-lg p-2 text-slate-400 transition hover:bg-white/10 hover:text-white"
+            className="rounded-lg p-2 text-slate-400 transition hover:bg-surface-3 hover:text-white"
           >
             <X size={18} />
           </button>
         </header>
 
-        <nav className="no-scrollbar flex gap-1 overflow-x-auto border-b border-white/8 px-3 py-2">
+        <nav className="no-scrollbar flex gap-1 overflow-x-auto border-b border-line-soft px-3 py-2">
           {TABS.map((item) => (
             <button
               key={item.id}
@@ -75,7 +75,7 @@ export default function AdminPanel({ onEditProduct, onEditPlan }) {
                 'inline-flex shrink-0 items-center gap-1.5 rounded-lg px-3 py-2 text-xs font-semibold transition',
                 tab === item.id
                   ? 'bg-hex-500/18 text-hex-200 ring-1 ring-hex-500/35'
-                  : 'text-slate-500 hover:bg-white/[0.06] hover:text-white',
+                  : 'text-slate-500 hover:bg-surface-2 hover:text-white',
               )}
             >
               <item.icon size={14} />
