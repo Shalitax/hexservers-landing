@@ -17,6 +17,10 @@
  * Arranque:
  *   HEX_ADMIN_PASSWORD='...' node server/index.js
  *
+ * O, para no tener que escribirla cada vez en local, un archivo `.env` en la raíz
+ * del proyecto con `HEX_ADMIN_PASSWORD=...`. Lo lee este mismo archivo, sin
+ * banderas ni dependencias, y lo que ya venga en el entorno tiene prioridad.
+ *
  * No hay contraseña por defecto: el servidor se niega a arrancar sin ella. Una
  * contraseña de fábrica en un servicio que escribe en disco es una puerta abierta
  * con un cartel que dice dónde está.
@@ -24,7 +28,7 @@
 
 import { createServer } from 'node:http'
 import { readFile, writeFile, rename, mkdir, stat } from 'node:fs/promises'
-import { createReadStream } from 'node:fs'
+import { createReadStream, readFileSync } from 'node:fs'
 import { randomBytes, timingSafeEqual, scrypt as scryptCb } from 'node:crypto'
 import { promisify } from 'node:util'
 import { join, extname, normalize, dirname, resolve } from 'node:path'
@@ -33,6 +37,53 @@ import { fileURLToPath } from 'node:url'
 const scrypt = promisify(scryptCb)
 
 const ROOT = join(dirname(fileURLToPath(import.meta.url)), '..')
+
+/**
+ * Carga del `.env`, a mano.
+ *
+ * Node sabe hacer esto solo con `--env-file-if-exists`, pero esa bandera no
+ * existe hasta la 20.12. En una Node 18 el proceso no llega ni a ejecutarse
+ * —«bad option», código de salida 9— y desde fuera eso no se ve como un error de
+ * versión: se ve como una web servida sin servidor detrás, con el panel diciendo
+ * que sólo puede guardar en el navegador. Quince líneas aquí funcionan en
+ * cualquier versión y devuelven el arranque a `node server/index.js` a secas.
+ *
+ * Lo que ya viene en el entorno manda sobre el archivo. En un PaaS las variables
+ * las inyecta el panel, y un `.env` que se colara en la imagen no debe pisarlas.
+ */
+function loadEnvFile(file) {
+  let raw
+  try {
+    raw = readFileSync(file, 'utf8')
+  } catch {
+    return /* No hay `.env`: es lo normal en producción, la variable viene del entorno. */
+  }
+
+  /* Se quita la marca de orden de bytes (U+FEFF) que deja el Bloc de notas de
+     Windows al guardar en UTF-8. Sin esto la primera clave del archivo pasaría
+     a llamarse "\uFEFFHEX_ADMIN_PASSWORD" y no la encontraría nadie. */
+  for (const line of raw.replace(/^\uFEFF/, '').split(/\r?\n/)) {
+    const clean = line.trim().replace(/^export\s+/, '')
+    if (!clean || clean.startsWith('#')) continue
+
+    const eq = clean.indexOf('=')
+    if (eq < 1) continue
+
+    const key = clean.slice(0, eq).trim()
+    let value = clean.slice(eq + 1).trim()
+    /* Comillas emparejadas: se quitan, y lo de dentro va literal. No se recortan
+       comentarios al final de la línea a propósito: una contraseña puede llevar
+       una almohadilla y truncarla en silencio sería peor que no soportarlo. */
+    if (value.length > 1 && (value[0] === '"' || value[0] === "'") && value.at(-1) === value[0]) {
+      value = value.slice(1, -1)
+    }
+
+    if (process.env[key] === undefined) process.env[key] = value
+  }
+}
+
+loadEnvFile(process.env.HEX_ENV_FILE || join(ROOT, '.env'))
+
 /* `resolve` normaliza separadores y relativos: sin esto, un HEX_STATIC_DIR escrito
    con las barras del otro sistema no coincidiría con las rutas que arma `join`, y
    el guardián contra el recorrido de rutas rechazaría archivos legítimos. */

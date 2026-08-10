@@ -1,4 +1,16 @@
-# Despliegue en Debian / Ubuntu
+# Despliegue
+
+Hay dos caminos y sólo hace falta uno:
+
+- **Servidor propio** (Debian/Ubuntu, nginx, systemd) — es el resto de esta guía.
+- **Coolify u otro PaaS** — salta a la [sección final](#despliegue-en-coolify-u-otro-paas).
+
+Los dos acaban en lo mismo: el servidor de Node sirviendo la web y guardando en
+disco lo que edites desde el panel.
+
+---
+
+## Servidor propio: Debian / Ubuntu
 
 Guía para dejar la web funcionando en un servidor propio, con HTTPS y arranque
 automático. Probada mentalmente contra Debian 12 y Ubuntu 22.04/24.04; los
@@ -19,7 +31,7 @@ y acceso `sudo`.
 ## 1. Node 20
 
 Los repositorios de Debian y Ubuntu traen versiones de Node demasiado viejas para
-Vite (el proyecto necesita **Node 18 o superior**; Ubuntu 22.04 trae la 12). Se
+Vite (el proyecto pide **Node 20 o superior**; Ubuntu 22.04 trae la 12). Se
 instala desde NodeSource:
 
 ```bash
@@ -326,7 +338,80 @@ Reiniciar cierra todas las sesiones abiertas, porque viven en memoria.
 | La barra dice **Sólo local** en el dominio | nginx no está pasando `/api/` al servidor: revisa el `location /` |
 | Al guardar sale **Sin guardar** y en la consola un 413 | Falta `client_max_body_size` en nginx (paso 6) |
 | Al guardar sale **Sin guardar** y un 401 | La sesión caducó (12 h) o se reinició el servicio. Vuelve a entrar |
-| `npm run build` falla con errores raros de sintaxis | Node demasiado viejo. `node -v` debe dar 18 o más |
+| `npm run build` falla con errores raros de sintaxis | Node demasiado viejo. `node -v` debe dar 20 o más |
+
+---
+
+## Despliegue en Coolify (u otro PaaS)
+
+Coolify, Dokploy, Railway y compañía construyen una imagen a partir del repo y la
+ejecutan. El riesgo de todos ellos es el mismo: **adivinan mal qué es este
+proyecto**. Ven Vite y una carpeta `dist/` y lo despliegan como sitio estático,
+que funciona a medias — la web se ve perfectamente, pero no hay nadie
+respondiendo a `/api/`, así que el panel no encuentra servidor, no usa
+`HEX_ADMIN_PASSWORD` y vuelve a guardar sólo en el navegador de quien edita.
+
+Por eso el repo trae un `Dockerfile`: deja escrito qué versión de Node, qué
+comando y qué puerto, y no queda nada que adivinar.
+
+### Los cuatro ajustes
+
+| Ajuste | Valor |
+| ------ | ----- |
+| **Build Pack** | `Dockerfile` |
+| **Port** (*Ports Exposes*) | `8080` |
+| **Environment Variables** | `HEX_ADMIN_PASSWORD` = tu contraseña larga |
+| **Persistent Storage** | un volumen montado en `/app/data` |
+
+Sobre los dos últimos, que son los que suelen fallar:
+
+**La variable tiene que ser de ejecución, no de construcción.** En Coolify, la
+casilla *Build Variable* la pasa sólo al `docker build` y el contenedor arranca
+sin ella; el servidor entonces se niega a arrancar. Déjala sin marcar.
+
+**El volumen no es opcional si piensas editar contenido.** Todo lo que guardas
+desde el panel vive en `data/content.json`, dentro del contenedor. Sin volumen,
+el siguiente despliegue lo borra y vuelves al catálogo de ejemplo. En Coolify:
+*Storages* → *Add* → tipo **Volume**, *Destination Path* `/app/data`.
+
+Que sea un *Volume* y no un *Bind Mount* importa: el proceso no corre como root
+—corre como el usuario `node`, UID 1000—, y un volumen con nombre hereda los
+permisos que la imagen ya le dio a esa carpeta. Un bind mount hereda los del
+host, que suelen ser de root, y entonces el panel guarda y falla con *Sin
+guardar*. Si necesitas un bind mount, un `chown -R 1000:1000` en la carpeta del
+host lo arregla.
+
+### Comprobar que de verdad hay servidor
+
+Esta es la prueba que distingue «desplegado» de «desplegado bien»:
+
+```bash
+curl -i https://tudominio.com/api/content
+```
+
+| Lo que responde | Qué significa |
+| --------------- | ------------- |
+| `204 No Content` | Correcto. Hay servidor y aún no has guardado nada |
+| `200` con `content-type: application/json` | Correcto. Hay servidor y hay contenido guardado |
+| `200` con `content-type: text/html` | **Se desplegó como estático.** Te está devolviendo el `index.html` |
+| `502` / `503` | El contenedor no arranca. Mira los registros del despliegue |
+
+Si sale HTML, el panel dirá *Sólo local* por mucho que la variable esté puesta:
+no es que no la detecte, es que no hay ningún proceso de Node que pueda leerla.
+
+### Si prefieres Nixpacks en vez del Dockerfile
+
+Funciona, pero hay que decirle dos cosas a mano:
+
+- **Start Command**: `npm start`
+- **Port**: `8080`
+
+Y asegurarte de que el recurso es de tipo aplicación, no *Static Site*. La
+versión de Node la toma del `engines` del `package.json`, que pide **20 o
+superior**.
+
+> El aviso de `client_max_body_size` del despliegue con nginx no aplica aquí:
+> Traefik, el proxy de Coolify, no limita el tamaño del cuerpo por defecto.
 
 ---
 
