@@ -83,6 +83,14 @@ export const DEFAULT_THEME = {
   style: 'nitido',
   /* Ver PIXEL_MODES: 'auto' | 'on' | 'off'. */
   pixel: 'off',
+  /**
+   * Kit de iconos: 'lucide' (el de siempre) o 'tabler'. Ver ICON_SETS en
+   * `src/components/ui/icons.jsx`.
+   *
+   * Sólo lo cambia el administrador, no el visitante: es una decisión de marca,
+   * no una preferencia de lectura como el contraste o el tamaño.
+   */
+  iconSet: 'lucide',
   /* Sprites de pixel art animados. Sólo quedan dos: la píldora del hero y el sello
      del footer — repartirlos por todas las secciones los convertía en el estilo. */
   sprites: true,

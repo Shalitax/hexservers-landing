@@ -35,6 +35,46 @@ import {
   Banknote,
   Smartphone,
 } from 'lucide-react'
+
+import {
+  IconServer,
+  IconBox,
+  IconCrosshair,
+  IconDeviceGamepad2,
+  IconShield,
+  IconDatabase,
+  IconBolt,
+  IconLayoutDashboard,
+  IconHeadset,
+  IconRocket,
+  IconCpu,
+  IconDeviceSdCard,
+  IconWorld,
+  IconLock,
+  IconNetwork,
+  IconClock,
+  IconUsers,
+  IconTool,
+  IconReceipt,
+  IconTerminal2,
+  IconBrandGithub,
+  IconBrandX,
+  IconSparkles,
+  IconMail,
+  IconCloud,
+  IconGauge,
+  IconCode,
+  IconStack2,
+  IconRefresh,
+  IconInfinity,
+  IconWallet,
+  IconCreditCard,
+  IconBuildingBank,
+  IconCash,
+  IconDeviceMobile,
+} from '@tabler/icons-react'
+
+import { useSite } from '../../store/useSite.js'
 import { cx } from '../../lib/utils.js'
 
 /**
@@ -69,6 +109,19 @@ export function DiscordIcon({ size = 24, className = '', ...props }) {
     </svg>
   )
 }
+
+/**
+ * Los kits de iconos, cada uno con el mismo juego de nombres.
+ *
+ * Que sean intercambiables no es casualidad, es lo que permite probarlos: en
+ * `content.json` lo que se guarda es la cadena `"shield"`, nunca el dibujo. Así
+ * que cambiar de kit no toca el contenido, ni los diecinueve archivos que pintan
+ * iconos —todos pasan por `Glyph` o por `Icon`—, sino sólo este mapa.
+ *
+ * La regla al añadir un kit es que **cubra todos los nombres**. Si a uno le falta
+ * alguno se cae al de lucide para ese icono en concreto, que es mejor que un
+ * hueco, pero es una mezcla que se nota: mejor buscar el equivalente.
+ */
 
 /** Mapa nombre -> componente, para que el admin elija iconos desde el panel. */
 export const ICONS = {
@@ -110,6 +163,66 @@ export const ICONS = {
   phone: Smartphone,
 }
 
+/**
+ * Tabler: la misma familia de trazo que lucide pero sobre una rejilla más
+ * estricta, así que se lee más seco y más técnico. Es el motivo de tenerlo aquí.
+ *
+ * Dos diferencias que se ven a simple vista y no son errores de mapeo:
+ * `twitter` es el logo actual de X y no el pájaro, y `disk` es una tarjeta de
+ * almacenamiento en vez de un disco duro — Tabler no tiene el segundo con un
+ * trazo que se distinga a 19 px.
+ *
+ * El de Discord se queda siendo el nuestro en los dos kits: Tabler trae uno,
+ * pero es su redibujo sobre su propia rejilla, y para una marca registrada vale
+ * más el trazo original.
+ */
+export const TABLER_ICONS = {
+  server: IconServer,
+  box: IconBox,
+  crosshair: IconCrosshair,
+  gamepad: IconDeviceGamepad2,
+  shield: IconShield,
+  database: IconDatabase,
+  zap: IconBolt,
+  layout: IconLayoutDashboard,
+  headset: IconHeadset,
+  rocket: IconRocket,
+  cpu: IconCpu,
+  disk: IconDeviceSdCard,
+  globe: IconWorld,
+  lock: IconLock,
+  network: IconNetwork,
+  clock: IconClock,
+  users: IconUsers,
+  wrench: IconTool,
+  receipt: IconReceipt,
+  terminal: IconTerminal2,
+  github: IconBrandGithub,
+  twitter: IconBrandX,
+  discord: DiscordIcon,
+  sparkles: IconSparkles,
+  mail: IconMail,
+  cloud: IconCloud,
+  gauge: IconGauge,
+  code: IconCode,
+  layers: IconStack2,
+  refresh: IconRefresh,
+  infinity: IconInfinity,
+  wallet: IconWallet,
+  card: IconCreditCard,
+  bank: IconBuildingBank,
+  banknote: IconCash,
+  phone: IconDeviceMobile,
+}
+
+/** Los kits disponibles. El `label` es el que sale en el panel → Diseño. */
+export const ICON_SETS = {
+  lucide: { label: 'Lucide', hint: 'El de siempre: trazo redondeado y suelto.', icons: ICONS },
+  tabler: { label: 'Tabler', hint: 'Rejilla más estricta: se lee más seco y técnico.', icons: TABLER_ICONS },
+}
+
+export const ICON_SET_NAMES = Object.keys(ICON_SETS)
+
 export const ICON_NAMES = Object.keys(ICONS)
 
 /**
@@ -122,8 +235,13 @@ export const ICON_NAMES = Object.keys(ICONS)
  * —ni tocar este archivo, ni un componente por icono, que es justo lo que hace
  * inmanejables a las librerías de iconos animados.
  */
-export function Icon({ name, ...props }) {
-  const Component = ICONS[name] || Sparkles
+export function Icon({ name, set, ...props }) {
+  /* El kit lo elige el administrador y no el visitante, así que se lee del tema
+     del sitio y no del efectivo. `set` permite forzar uno: lo usa el selector del
+     panel para enseñar los dos a la vez y poder compararlos. */
+  const active = useSite((s) => s.site.theme?.iconSet)
+  const icons = ICON_SETS[set || active]?.icons || ICONS
+  const Component = icons[name] || ICONS[name] || Sparkles
   return <Component data-icon={name} {...props} />
 }
 

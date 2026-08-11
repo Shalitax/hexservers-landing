@@ -12,6 +12,7 @@ import {
   themeVars,
 } from '../../lib/theme.js'
 import PixelSprite, { SPRITE_NAMES } from '../../components/ui/PixelSprite.jsx'
+import { Icon, ICON_SETS, ICON_SET_NAMES } from '../../components/ui/icons.jsx'
 import { ColorField, PanelSection, Toggle } from '../controls.jsx'
 
 const FIELDS = [
@@ -141,6 +142,22 @@ export default function ThemePanel() {
           </span>
           <span className="pixel shrink-0 text-sm text-hex-300">19,99 US$</span>
         </p>
+      </PanelSection>
+
+      <PanelSection
+        title="Kit de iconos"
+        description="El mismo juego de iconos dibujado por dos manos distintas. Cambia toda la web —son 36 iconos en diecinueve sitios— y no toca tu contenido: lo que guardaste es el nombre del icono, no el dibujo."
+      >
+        <div className="grid gap-2 sm:grid-cols-2">
+          {ICON_SET_NAMES.map((id) => (
+            <IconSetButton
+              key={id}
+              id={id}
+              active={(theme.iconSet || 'lucide') === id}
+              onClick={() => setField('theme.iconSet', id)}
+            />
+          ))}
+        </div>
       </PanelSection>
 
       <PanelSection
@@ -319,6 +336,52 @@ export default function ThemePanel() {
 }
 
 /** Opción de un modo (estilo o tipografía): nombre, explicación y marca de activo. */
+/**
+ * Botón de kit de iconos, con muestra dibujada en su propio kit.
+ *
+ * Los nombres «Lucide» y «Tabler» no le dicen nada a nadie, y la diferencia entre
+ * los dos es puramente visual: sólo se decide viéndolos. Cada botón pinta los
+ * mismos seis iconos con su kit —forzado con `set`, que por eso existe— así que
+ * la comparación se hace aquí y no cambiando y volviendo a cambiar.
+ */
+const SAMPLE_ICONS = ['shield', 'server', 'gauge', 'headset', 'globe', 'wallet']
+
+function IconSetButton({ id, active, onClick }) {
+  const kit = ICON_SETS[id]
+  return (
+    <button
+      onClick={onClick}
+      aria-pressed={active}
+      className={cx(
+        'rounded-xl border p-3 text-left transition',
+        active
+          ? 'border-hex-500/60 bg-hex-500/12'
+          : 'border-line bg-surface-1 hover:border-line-strong hover:bg-surface-2',
+      )}
+    >
+      <span className="flex items-center gap-2">
+        <span
+          className={cx(
+            'grid size-4 shrink-0 place-items-center rounded-full border transition',
+            active ? 'border-hex-400 bg-hex-500' : 'border-line-strong',
+          )}
+        >
+          {active && <Check size={10} className="text-white" strokeWidth={3.5} />}
+        </span>
+        <span className="text-sm font-medium text-slate-200">{kit.label}</span>
+      </span>
+
+      <span className="mt-2.5 flex items-center gap-3 text-hex-300">
+        {SAMPLE_ICONS.map((name) => (
+          <Icon key={name} name={name} set={id} size={19} />
+        ))}
+      </span>
+
+      <span className="mt-2 block text-micro leading-relaxed text-slate-500">{kit.hint}</span>
+    </button>
+  )
+}
+
 function ModeButton({ option, active, onClick }) {
   return (
     <button

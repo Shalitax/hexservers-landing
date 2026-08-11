@@ -345,6 +345,18 @@ Cómo se valida la contraseña depende de cómo esté servida la web:
     sello del pie (`.pixel-keep`). La regla es qué clase de texto es: un dato que se lee
     para decidir una compra —un precio, una cifra de RAM— se lee mejor en tipografía
     normal; en un adorno, el pixel suma.
+  - **kit de iconos** (`theme.iconSet`): `lucide` (de fábrica) o `tabler`. El mismo juego de
+    36 iconos dibujado por dos manos: lucide con trazo redondeado y suelto, tabler sobre una
+    rejilla más estricta, más seco y técnico. Cambiarlo **no toca el contenido**: en
+    `content.json` se guarda el nombre del icono (`"shield"`), nunca el dibujo, y los
+    diecinueve archivos que pintan iconos pasan todos por `Glyph` o `Icon`. Por eso el kit
+    entero vive en un solo archivo (`src/components/ui/icons.jsx`) y añadir otro es un mapa
+    más. Cuesta ~3,6 KB comprimidos tener los dos cargados; cuando haya kit elegido, quitar
+    el otro los devuelve.
+  - **iconos animados**: los de lucide y tabler son SVG de trazo, así que el nombre elegido
+    sale al marcado como `data-icon` y el CSS le da a cada uno el movimiento que significa
+    algo — el escudo late, el rayo destella, el globo gira, el casco se inclina. Sólo al
+    pasar el ratón por el contenedor, nunca en bucle. De momento hay cuatro, como muestra.
   - **sprites**: iconos de pixel art animados (`theme.sprites`), en dos sitios contados —
     la píldora del hero y el sello del pie. El dibujo se escribe como una rejilla de
     caracteres en `src/components/ui/PixelSprite.jsx` y se colorea con la paleta del sitio.
