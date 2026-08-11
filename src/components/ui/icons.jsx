@@ -112,9 +112,19 @@ export const ICONS = {
 
 export const ICON_NAMES = Object.keys(ICONS)
 
+/**
+ * `data-icon` lleva el nombre al DOM para que el CSS pueda darle a cada icono el
+ * movimiento que le corresponde: el escudo late, el rayo destella, el globo gira.
+ *
+ * Va por atributo y no por clase a propósito. El nombre del icono ya lo elige el
+ * administrador desde el panel y viaja en `content.json`; sacarlo tal cual al
+ * marcado significa que animar uno nuevo es una regla en `index.css` y nada más
+ * —ni tocar este archivo, ni un componente por icono, que es justo lo que hace
+ * inmanejables a las librerías de iconos animados.
+ */
 export function Icon({ name, ...props }) {
   const Component = ICONS[name] || Sparkles
-  return <Component {...props} />
+  return <Component data-icon={name} {...props} />
 }
 
 /**

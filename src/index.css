@@ -762,6 +762,75 @@
   animation: hex-blink 1.1s step-end infinite;
 }
 
+/* ------------------------------ Iconos animados ----------------------------- */
+
+/**
+ * MUESTRA — cuatro iconos, para decidir si esto se extiende a los 37.
+ *
+ * Los iconos de lucide son SVG de trazo, así que se animan con CSS y sin instalar
+ * nada. El nombre que eligió el administrador sale al marcado como `data-icon`
+ * (ver `icons.jsx`), y eso permite que cada uno tenga **el movimiento que
+ * significa algo**: el escudo late porque protege, el rayo destella porque es
+ * instantáneo, el globo gira porque hay ubicaciones repartidas, el casco se
+ * inclina porque alguien contesta. Ninguna librería genérica hace eso — en todas,
+ * el escudo se mueve igual que el resto.
+ *
+ * Sólo al pasar el ratón, y nunca en bucle. El sitio ya tiene los sprites de
+ * pixel art como elemento juguetón; treinta y siete iconos moviéndose solos serían
+ * el mismo ruido que quitamos del catálogo.
+ *
+ * El disparador es el contenedor y no el icono: los iconos miden 20 px y apuntar
+ * a uno con el ratón es un gesto que nadie hace. Se reacciona al pasar por encima
+ * de la tarjeta, el enlace o el botón que lo contiene, que es lo que la gente sí
+ * recorre. `.group` cubre las tarjetas que ya lo declaran para sus propios
+ * efectos de hover.
+ */
+@keyframes icon-shield {
+  0% { transform: scale(1); }
+  40% { transform: scale(1.14); }
+  70% { transform: scale(0.97); }
+  100% { transform: scale(1); }
+}
+
+@keyframes icon-zap {
+  0%, 100% { opacity: 1; transform: translateY(0); }
+  25% { opacity: 0.35; transform: translateY(-1px) scale(1.1); }
+  45% { opacity: 1; }
+  65% { opacity: 0.5; transform: translateY(1px) scale(1.05); }
+}
+
+@keyframes icon-globe {
+  to { transform: rotate(360deg); }
+}
+
+@keyframes icon-headset {
+  0%, 100% { transform: rotate(0); }
+  20% { transform: rotate(-11deg); }
+  45% { transform: rotate(9deg); }
+  70% { transform: rotate(-5deg); }
+}
+
+[data-anim='on'] {
+  [data-icon] {
+    /* El `transform` necesita un origen central o el giro del globo describe un
+       arco en lugar de girar sobre sí mismo. */
+    transform-origin: center;
+  }
+
+  :is(a, button, article, label, .glass, .group):hover [data-icon='shield'] {
+    animation: icon-shield 0.5s cubic-bezier(0.22, 1, 0.36, 1);
+  }
+  :is(a, button, article, label, .glass, .group):hover [data-icon='zap'] {
+    animation: icon-zap 0.55s ease-in-out;
+  }
+  :is(a, button, article, label, .glass, .group):hover [data-icon='globe'] {
+    animation: icon-globe 2.4s linear;
+  }
+  :is(a, button, article, label, .glass, .group):hover [data-icon='headset'] {
+    animation: icon-headset 0.6s ease-in-out;
+  }
+}
+
 /* ----------------------------- Tipografía pixel ----------------------------- */
 
 /**
@@ -801,7 +870,10 @@
   .anim-drift,
   .anim-blink,
   .sprite-a,
-  .sprite-b {
+  .sprite-b,
+  /* Los iconos animados: quietos se leen igual, así que aquí sí vale apagarlos
+     sin más — no nacen ocultos como el revelado. */
+  [data-icon] {
     animation: none !important;
   }
   /* El sprite se queda en su primer fotograma: el segundo iba encima. */
