@@ -25,7 +25,26 @@ npm run dev
 
 Otros comandos: `npm run build` (producción) y `npm run preview` (servir el build).
 
-Requiere **Node 18 o superior**.
+Requiere **Node 20 o superior**.
+
+### Si vas a tocar el panel de administración
+
+`npm run dev` solo levanta la web. El panel, sin nadie al otro lado, entra en
+**modo local**: pide usuario y contraseña, avisa de que lo editado no lo verán
+los visitantes y guarda en el navegador. Es el mismo comportamiento que tendría
+en un hosting estático, y es correcto — pero no es lo que hace en producción.
+
+Para trabajar como en producción, el servidor en una segunda terminal:
+
+```bash
+npm run dev:server
+```
+
+Vite le pasa `/api` automáticamente (está en `vite.config.js`). A partir de ahí
+el panel pide solo contraseña —la de `HEX_ADMIN_PASSWORD`, que puedes dejar en
+un `.env` en la raíz— y guarda en `data/content.json`.
+
+Si el servidor escucha en otro puerto, `HEX_API_PORT` se lo dice a Vite.
 
 ## Despliegue en un servidor
 
