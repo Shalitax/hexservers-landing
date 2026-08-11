@@ -190,20 +190,30 @@ visitante estaba viendo (`&currency=N`).
 
 ### Rutas
 
-Router por hash propio (`src/lib/router.js`), sin dependencias y sin necesidad de
-configurar el servidor: la web funciona como estático puro.
+Router propio y sin dependencias, sobre la History API. El análisis de rutas vive
+en `shared/routes.js` porque lo usan los dos lados: el navegador y el servidor,
+que necesita saber qué página sirve para escribir sus meta.
 
-| Ruta                                     | Página                                   |
-| ---------------------------------------- | ---------------------------------------- |
-| `#/`                                     | portada (bienvenida, no lista productos) |
-| `#/nosotros`                             | quiénes somos                            |
-| `#/hub`                                  | el núcleo: hardware por ubicación, equipo de soporte y próximos cambios |
-| `#/soporte`                              | abrir ticket en WHMCS y vías de contacto |
-| `#/productos`                            | catálogo completo                        |
-| `#/productos/{grupo}`                    | catálogo filtrado por subcategoría       |
-| `#/producto/{producto}`                  | ficha + configurador                     |
-| `#/producto/{producto}?ubicacion=&cpu=`  | el configurador con lo ya elegido        |
-| `#/producto/{producto}/plan/{planId}`    | detalle del plan y salida a WHMCS        |
+| Ruta                                    | Página                                   |
+| --------------------------------------- | ---------------------------------------- |
+| `/`                                     | portada (bienvenida, no lista productos) |
+| `/nosotros`                             | quiénes somos                            |
+| `/hub`                                  | el núcleo: hardware por ubicación, equipo de soporte y próximos cambios |
+| `/soporte`                              | abrir ticket en WHMCS y vías de contacto |
+| `/productos`                            | catálogo completo                        |
+| `/productos/{grupo}`                    | catálogo filtrado por subcategoría       |
+| `/producto/{producto}`                  | ficha + configurador                     |
+| `/producto/{producto}?ubicacion=&cpu=`  | el configurador con lo ya elegido        |
+| `/producto/{producto}/plan/{planId}`    | detalle del plan y salida a WHMCS        |
+
+> **Esto exige un servidor que devuelva el `index.html` en cualquier ruta.**
+> `server/index.js` lo hace, y Vite también en desarrollo. Antes la navegación
+> iba por hash (`#/productos`) y la web se podía abrir desde un `file://` o subir
+> a un estático sin configurar nada; eso se perdió a propósito. El `#` no se
+> envía nunca al servidor, así que para Google la web entera era **una sola URL**
+> y ninguna ficha de producto podía posicionar — y ningún enlace compartido en
+> Discord o WhatsApp podía enseñar su propio título. Los enlaces antiguos con
+> `#/…` se traducen solos al cargar.
 
 La selección viaja en la **query** y no en la ruta, porque ubicación y CPU no son páginas
 distintas. Aun así está en la URL a propósito: el botón atrás deshace la última elección y
@@ -286,7 +296,7 @@ Cómo se valida la contraseña depende de cómo esté servida la web:
     sobre el catálogo para que el visitante elija la suya, que se guarda en su navegador
     (`hexservers:catalog-layout`) igual que la divisa.
   - **pestaña «Todos»**: se puede quitar (`catalog.showAllTab`). Sin ella el catálogo abre
-    directamente en la primera subcategoría —`#/productos` redirige a su pestaña, sin
+    directamente en la primera subcategoría —`/productos` redirige a su pestaña, sin
     apilar historial— y siempre hay una pestaña activa. Su nombre se cambia junto al
     interruptor.
   - **divisas**: la base en la que escribes los precios, la que se muestra por defecto y
@@ -299,6 +309,30 @@ Cómo se valida la contraseña depende de cómo esté servida la web:
 - **Opciones configurables** — se activan por plan con un checkbox. Cada opción tiene un
   nombre y una lista de valores con su recargo; el cliente las ajusta en el detalle del
   plan y viajan al carrito de WHMCS.
+- **SEO y marca** — todo lo que ve de tu web quien no es una persona: un buscador, el
+  rastreador que dibuja la tarjeta al pegar un enlace en Discord, o el iPhone que guarda
+  el icono en la pantalla de inicio. Lo escribe **el servidor** en el HTML antes de
+  enviarlo, porque ninguno de ellos ejecuta JavaScript (`shared/seo.js`).
+  - **dirección del sitio** (`seo.siteUrl`): lo primero que hay que rellenar. El
+    canonical, la tarjeta y el sitemap necesitan direcciones absolutas. Vacío, se deduce
+    de la petición, que acierta salvo detrás de algunos proxys.
+  - **imágenes de marca**: imagen de la tarjeta (`og:image`, 1200 × 630), favicon, icono
+    de iOS y logo. Se suben como archivo o se pega una URL. Las subidas se guardan en el
+    contenido y **el servidor las republica en `/brand/…`**, porque ningún rastreador
+    acepta un `data:` como `og:image` — sin eso la tarjeta sale vacía. El logo sustituye
+    al dibujado en código del navbar y el pie.
+  - **título y descripción**: una plantilla (`%s · HexServers`), una descripción por
+    defecto y, si hace falta, título y descripción propios de cada página fija. Las
+    fichas de producto y de familia sacan los suyos del propio catálogo.
+  - **buscadores**: interruptor de indexación —`noindex` tapa la web entera y el
+    `robots.txt` pasa a prohibirlo todo, para mientras se monta— y la meta de
+    verificación de Search Console.
+  - **analítica**: Plausible o Umami autoalojados. Una etiqueta, sin cookies y sin banner
+    de consentimiento. Si falta la URL del script o el identificador no se inserta nada.
+  - `sitemap.xml` y `robots.txt` se **generan del catálogo** en cada petición: un producto
+    nuevo aparece solo. Los ocultos y los archivados se quedan fuera.
+  - Las rutas que no existen responden **404**, no un 200 con la página de «no
+    encontrado» dentro, que Google cuenta como *soft 404* y penaliza.
 - **Diseño** — el aspecto del sitio:
   - **estilo**: `nitido` (de fábrica), `sobrio` o `vivo`. Es un interruptor, no una
     reescritura: se aplica como `data-style` en `<html>` y las reglas de cada modo viven
@@ -414,13 +448,17 @@ credenciales; la URL de ese proxy se configura en el panel → WHMCS.
 ## Estructura
 
 ```
-server/index.js              Servidor: estáticos + API de contenido (sin dependencias)
+server/index.js              Servidor: estáticos + API + meta por página, sitemap y robots
+shared/                      Código que comparten el navegador y el servidor
+├── routes.js                Análisis de rutas, puro y sin dependencias
+└── seo.js                   Meta, Open Graph, JSON-LD, sitemap.xml y robots.txt
 src/
 ├── App.jsx                  Shell con router + atajos ocultos de admin
 ├── index.css                Tema, glass, tipografías, ritmo (.section), animaciones
 ├── data/defaultState.js     Contenido semilla (se copia a IndexedDB al arrancar)
 ├── lib/
-│   ├── router.js            Router por hash (rutas y pasos del flujo de compra)
+│   ├── router.js            Router del navegador: hook, navegación e intercepción de enlaces
+│   ├── head.js              Título de la pestaña al navegar sin recargar
 │   ├── catalog.js           Configurador ubicación → CPU → plan a partir de los planes
 │   ├── money.js             Divisas: conversión desde la base y formato
 │   ├── theme.js             Paleta editable: colores base → variables CSS

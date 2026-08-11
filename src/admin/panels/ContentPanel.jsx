@@ -511,14 +511,14 @@ export default function ContentPanel() {
       {/* ---------------------------- Enlaces del navbar -------------------------- */}
       <ListEditor
         title="Enlaces del navbar"
-        description="Rutas internas: #/ (portada), #/productos, #/productos/{slug}, #/producto/{slug}. Las anclas de la portada siguen valiendo (#features, #contacto)."
+        description="Rutas internas: #/ (portada), /productos, /productos/{slug}, /producto/{slug}. Las anclas de la portada siguen valiendo (#features, #contacto)."
         path="nav.links"
         items={site.nav.links}
         columns={[
           { key: 'label', placeholder: 'Inicio' },
-          { key: 'href', placeholder: '#/productos' },
+          { key: 'href', placeholder: '/productos' },
         ]}
-        onAdd={() => addListItem('nav.links', { label: 'Nuevo', href: '#/productos' })}
+        onAdd={() => addListItem('nav.links', { label: 'Nuevo', href: '/productos' })}
         onUpdate={updateListItem}
         onRemove={removeListItem}
         onMove={moveListItem}
@@ -548,7 +548,7 @@ export default function ContentPanel() {
       {/* -------------------------------- Nosotros ------------------------------- */}
       <PanelSection
         title="Página Nosotros"
-        description="Titular, párrafos y pilares se editan inline en la propia página (#/nosotros)."
+        description="Titular, párrafos y pilares se editan inline en la propia página (/nosotros)."
       >
         <TextField
           label="Eyebrow"

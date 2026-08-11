@@ -29,11 +29,18 @@ export default defineConfig({
      * Si el servidor no está levantado, el proxy falla y el panel vuelve al modo
      * local, que es lo correcto: efectivamente no hay servidor detrás.
      */
-    proxy: {
-      '/api': {
-        target: `http://127.0.0.1:${API_PORT}`,
-        changeOrigin: false,
-      },
-    },
+    proxy: Object.fromEntries(
+      /**
+       * `/api` es el contenido. Los otros tres los genera también el servidor:
+       * el sitemap y el robots.txt a partir del catálogo, y `/brand/…` republica
+       * las imágenes que se suben desde el panel. Pasarlos por el proxy es lo
+       * que permite comprobarlos en desarrollo en vez de descubrir en producción
+       * que salen mal.
+       */
+      ['/api', '/sitemap.xml', '/robots.txt', '/brand'].map((path) => [
+        path,
+        { target: `http://127.0.0.1:${API_PORT}`, changeOrigin: false },
+      ]),
+    ),
   },
 })

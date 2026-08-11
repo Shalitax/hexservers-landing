@@ -34,7 +34,7 @@ export default function Footer() {
         <div className="grid gap-10 lg:grid-cols-[1.4fr_repeat(3,1fr)]">
           {/* Marca */}
           <div className="max-w-sm">
-            <Logo name={brand.name} size={30} />
+            <Logo name={brand.name} image={brand.logo} size={30} />
             <Editable
               path="footer.description"
               as="p"

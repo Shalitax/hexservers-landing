@@ -26,10 +26,11 @@ técnica (estructura de carpetas, stack, build), está en [README.md](README.md)
 14. [Latencia real en las ubicaciones](#14-latencia-real-en-las-ubicaciones)
 15. [Conectar con WHMCS](#15-conectar-con-whmcs)
 16. [El popup de código promocional](#16-el-popup-de-código-promocional)
-17. [Copias de seguridad](#17-copias-de-seguridad)
-18. [Seguridad: lo que debes saber](#18-seguridad-lo-que-debes-saber)
-19. [Problemas frecuentes](#19-problemas-frecuentes)
-20. [Chuleta rápida](#20-chuleta-rápida)
+17. [SEO y marca: cómo te ve Google](#17-seo-y-marca-cómo-te-ve-google)
+18. [Copias de seguridad](#18-copias-de-seguridad)
+19. [Seguridad: lo que debes saber](#19-seguridad-lo-que-debes-saber)
+20. [Problemas frecuentes](#20-problemas-frecuentes)
+21. [Chuleta rápida](#21-chuleta-rápida)
 
 ---
 
@@ -797,7 +798,107 @@ nombre exacto. Si no existe, WHMCS lo ignora sin avisar.
 
 ---
 
-## 17. Copias de seguridad
+## 17. SEO y marca: cómo te ve Google
+
+Panel → pestaña **SEO**.
+
+Aquí se configura lo que ve de tu web **quien no es una persona**: el buscador
+que la indexa, el rastreador que dibuja la tarjeta cuando alguien pega tu enlace
+en un Discord, o el iPhone que guarda el icono al añadirla a la pantalla de
+inicio.
+
+> **Esto sólo se ve con servidor.** Ninguno de esos ejecuta JavaScript: leen la
+> página tal como sale del servidor. Si la barra inferior dice *Sólo local*,
+> guarda igual pero no llega a ninguna parte — publícalo.
+
+### Lo primero: la dirección del sitio
+
+Escribe tu dominio completo, con `https://` y sin barra al final:
+
+```
+https://hexservers.com
+```
+
+**Sin esto no funciona casi nada de lo demás.** La tarjeta de enlace, la
+dirección canónica y el sitemap necesitan direcciones absolutas, y no hay forma
+de inventarlas.
+
+### Las imágenes
+
+| Imagen | Medida | Para qué |
+| ------ | ------ | -------- |
+| **Tarjeta de enlace** | 1200 × 630 | La imagen grande al pegar tu enlace en Discord, WhatsApp o X |
+| **Favicon** | 32 × 32 o más | El icono de la pestaña del navegador |
+| **Icono de iOS** | 180 × 180 | Al añadir la web a la pantalla de inicio del iPhone |
+| **Logo** | libre, horizontal | Sustituye al logo dibujado del navbar y el pie |
+
+La que más se nota con diferencia es **la de la tarjeta**. Sin ella, un enlace
+tuyo compartido en un Discord sale como una línea de texto gris; con ella ocupa
+un recuadro con imagen, título y descripción. En un sector donde la gente se pasa
+enlaces por Discord todo el día, es de lo más rentable de esta pestaña.
+
+Para el icono de iOS, **PNG sin transparencia**: iOS rellena lo transparente de
+negro.
+
+### Título y descripción
+
+- **Plantilla del título** — `%s · HexServers`. El `%s` es el título de cada
+  página. La portada no pasa por aquí: usa el suyo entero.
+- **Descripción por defecto** — la que se usa donde no haya una propia. Google
+  corta alrededor de los 155 caracteres, así que pon delante lo que importa.
+- **Por página** — título y descripción propios de la portada, productos, hub,
+  nosotros y soporte. Vacío = se calcula del contenido.
+
+Las fichas de producto y de familia **no se tocan aquí**: sacan su título y su
+descripción del propio producto, del nombre y la descripción que ya escribiste en
+el catálogo. Un producto nuevo queda bien sin hacer nada.
+
+### Mientras montas la web
+
+*Permitir la indexación* → **No, sitio en construcción**. Eso pone `noindex` en
+todas las páginas y un `robots.txt` que lo prohíbe todo.
+
+**Acuérdate de quitarlo al terminar.** Es el error más caro de esta pestaña: se
+queda puesto, y luego pasan semanas preguntándose por qué no aparece nada en
+Google.
+
+### Search Console
+
+Google te da una etiqueta como esta:
+
+```html
+<meta name="google-site-verification" content="AbC123..." />
+```
+
+Pega **sólo** el valor del `content`, no la etiqueta entera. Es lo que te deja
+ver qué búsquedas te traen gente y qué páginas dan problemas.
+
+### El sitemap se hace solo
+
+`tudominio.com/sitemap.xml` y `tudominio.com/robots.txt` se generan con tu
+catálogo cada vez que se piden. **No hay que mantenerlos**: si añades un producto,
+aparece. Los productos ocultos y los archivados se quedan fuera, que es lo
+coherente — no tiene sentido pedirle a Google que indexe algo que no quieres
+enseñar.
+
+### Analítica
+
+Plausible y Umami, los dos **autoalojados** (en un servidor tuyo). No usan
+cookies, así que no necesitas banner de consentimiento.
+
+Hacen falta dos datos y los da el panel de tu instalación:
+
+| | Plausible | Umami |
+| --- | --- | --- |
+| **URL del script** | `https://…/js/script.js` | `https://…/script.js` |
+| **Identificador** | el dominio dado de alta | el *website id* |
+
+Si falta cualquiera de los dos no se inserta nada, a propósito: un script a
+medias no mide y carga igual.
+
+---
+
+## 18. Copias de seguridad
 
 Los datos viven **en el navegador de este ordenador**. No hay servidor. Eso
 significa que se pierden si limpias los datos del navegador, si usas modo
@@ -819,7 +920,7 @@ la nube sin regalar accesos. Al importar, tus credenciales actuales se mantienen
 
 ---
 
-## 18. Seguridad: lo que debes saber
+## 19. Seguridad: lo que debes saber
 
 Dicho sin rodeos, para que no te lleves sorpresas:
 
@@ -843,7 +944,7 @@ contraseña debe moverse al servidor.
 
 ---
 
-## 19. Problemas frecuentes
+## 20. Problemas frecuentes
 
 **He editado algo y al recargar volvió atrás.**
 Comprueba que en la barra inferior pone `INDEXEDDB`. Si pone `localStorage
@@ -920,7 +1021,7 @@ restablecen las credenciales por defecto.
 
 ---
 
-## 20. Chuleta rápida
+## 21. Chuleta rápida
 
 | Acción | Dónde |
 | --- | --- |

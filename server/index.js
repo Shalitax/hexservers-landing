@@ -34,6 +34,9 @@ import { promisify } from 'node:util'
 import { join, extname, normalize, dirname, resolve } from 'node:path'
 import { fileURLToPath } from 'node:url'
 
+import { parsePath } from '../shared/routes.js'
+import { renderHead, renderSitemap, renderRobots, BRAND_ASSETS } from '../shared/seo.js'
+
 const scrypt = promisify(scryptCb)
 
 const ROOT = join(dirname(fileURLToPath(import.meta.url)), '..')
@@ -219,6 +222,58 @@ async function loadContent() {
   }
 }
 
+/**
+ * El contenido ya interpretado, para las meta y el sitemap.
+ *
+ * Se cachea contra la fecha de modificación del archivo. Sin esto, cada visita
+ * a cualquier página releería y volvería a interpretar un JSON que ronda los
+ * 100 KB —y con imágenes, bastante más—, y esto se ejecuta en la ruta crítica de
+ * absolutamente todas las peticiones de HTML.
+ *
+ * Si el archivo está corrupto se devuelve `null` y la página sale con las meta
+ * de respaldo del `index.html`: una web con el título genérico es mucho menos
+ * grave que una web caída.
+ */
+let siteCache = { key: '', site: null }
+
+async function loadSite() {
+  let key
+  try {
+    const info = await stat(CONTENT_FILE)
+    key = `${info.mtimeMs}:${info.size}`
+  } catch {
+    return null
+  }
+
+  if (siteCache.key === key) return siteCache.site
+
+  try {
+    const site = JSON.parse(await readFile(CONTENT_FILE, 'utf8'))
+    siteCache = { key, site: site && typeof site === 'object' ? site : null }
+  } catch (err) {
+    console.error('[hexservers] contenido ilegible, se usan las meta de respaldo:', err.message)
+    siteCache = { key, site: null }
+  }
+  return siteCache.site
+}
+
+/**
+ * Origen público (`https://hexservers.com`).
+ *
+ * Manda lo que el administrador haya escrito en el panel, porque es lo único que
+ * sobrevive a un proxy que no reenvíe bien las cabeceras. Si está vacío se
+ * deduce de la petición, que acierta en la mayoría de los casos.
+ */
+function originOf(req, site) {
+  const declared = String(site?.seo?.siteUrl || '').trim()
+  if (declared) return declared.replace(/\/+$/, '')
+
+  const host = req.headers['x-forwarded-host'] || req.headers.host
+  if (!host) return ''
+  const proto = String(req.headers['x-forwarded-proto'] || '').split(',')[0].trim() || 'http'
+  return `${proto}://${host}`
+}
+
 /* ----------------------------------- HTTP ----------------------------------- */
 
 const MIME = {
@@ -348,8 +403,8 @@ async function serveStatic(req, res, url) {
     info = await stat(file).catch(() => null)
   }
 
-  // Cualquier ruta desconocida devuelve el index: la app enruta por hash, pero
-  // así un enlace a /algo tampoco se rompe.
+  /* Cualquier ruta desconocida devuelve el index: la app enruta por el lado del
+     cliente, así que /producto/minecraft no es un archivo pero sí una página. */
   if (!info?.isFile()) {
     file = join(STATIC_DIR, 'index.html')
     info = await stat(file).catch(() => null)
@@ -359,6 +414,8 @@ async function serveStatic(req, res, url) {
       return
     }
   }
+
+  if (file === join(STATIC_DIR, 'index.html')) return serveHtml(req, res, url, file)
 
   const type = MIME[extname(file).toLowerCase()] || 'application/octet-stream'
   /* Los assets llevan hash en el nombre: se pueden cachear para siempre. El
@@ -373,6 +430,146 @@ async function serveStatic(req, res, url) {
   createReadStream(file).pipe(res)
 }
 
+/* ------------------------------- HTML con meta ------------------------------ */
+
+/* El bloque del `index.html` que se sustituye por las meta de cada página. */
+const SEO_OPEN = '<!--seo-->'
+const SEO_CLOSE = '<!--/seo-->'
+
+/* La plantilla sólo cambia al desplegar, así que se lee una vez. */
+let templateCache = { key: '', html: '' }
+
+async function readTemplate(file) {
+  const info = await stat(file)
+  const key = `${info.mtimeMs}:${info.size}`
+  if (templateCache.key !== key) {
+    templateCache = { key, html: await readFile(file, 'utf8') }
+  }
+  return templateCache.html
+}
+
+/**
+ * El `index.html` con las meta de la página que se está pidiendo.
+ *
+ * Esto es lo único que ven Google, Discord, WhatsApp y X: ninguno ejecuta el
+ * JavaScript de la página. Lo que la aplicación ponga en el `<head>` después de
+ * cargar sirve para la pestaña del navegador y para nada más.
+ */
+async function serveHtml(req, res, url, file) {
+  const template = await readTemplate(file)
+  const site = await loadSite()
+
+  let html = template
+  let status = 200
+
+  const open = template.indexOf(SEO_OPEN)
+  const close = template.indexOf(SEO_CLOSE)
+
+  if (site && open !== -1 && close > open) {
+    const route = parsePath(url.pathname, url.search)
+    const head = renderHead(site, route, originOf(req, site))
+    html = template.slice(0, open + SEO_OPEN.length) + '\n' + head + template.slice(close)
+
+    /* Una ruta que no existe debe responder 404 y no 200 con la página de
+       «no encontrado» dentro. Un 200 en una página vacía es un «soft 404»: el
+       buscador la indexa igualmente y penaliza por ello. */
+    if (route.name === 'notfound') status = 404
+  }
+
+  const body = Buffer.from(html, 'utf8')
+  res.writeHead(status, {
+    'Content-Type': 'text/html; charset=utf-8',
+    'Content-Length': body.length,
+    'Cache-Control': 'no-cache',
+  })
+  res.end(req.method === 'HEAD' ? undefined : body)
+}
+
+/* ------------------------------ imágenes de marca --------------------------- */
+
+/* Sólo formatos que un navegador pinta como icono o como tarjeta de enlace. Que
+   la lista sea cerrada evita que subir un archivo cualquiera acabe sirviéndose
+   con un tipo que el navegador interprete como otra cosa. */
+const IMAGE_TYPES = new Set(['image/png', 'image/jpeg', 'image/webp', 'image/svg+xml', 'image/x-icon', 'image/gif'])
+
+/** Separa un data URL en tipo y bytes. Devuelve null si no lo es o no vale. */
+function decodeDataUrl(value) {
+  const match = /^data:([\w.+/-]+);base64,(.+)$/s.exec(String(value || '').trim())
+  if (!match) return null
+  const [, type, base64] = match
+  if (!IMAGE_TYPES.has(type)) return null
+  try {
+    return { type, body: Buffer.from(base64, 'base64') }
+  } catch {
+    return null
+  }
+}
+
+/**
+ * Las imágenes que se suben desde el panel, publicadas en una URL de verdad.
+ *
+ * Se guardan en el contenido como data URL, que sirve para pintarlas dentro de
+ * la página pero no vale para lo que más importa: **ningún rastreador acepta un
+ * data URL como `og:image`**. La tarjeta de un enlace en Discord o WhatsApp sale
+ * vacía. Así que el servidor las republica aquí, con su tipo y su longitud.
+ */
+async function serveBrandAsset(req, res, url) {
+  const site = await loadSite()
+  const field = Object.entries(BRAND_ASSETS).find(([, path]) => path === url.pathname)?.[0]
+  const asset = field ? decodeDataUrl(site?.brand?.[field]) : null
+
+  if (!asset) {
+    res.writeHead(404, { 'Content-Type': 'text/plain; charset=utf-8' })
+    res.end('No hay imagen configurada.')
+    return
+  }
+
+  res.writeHead(200, {
+    'Content-Type': asset.type,
+    'Content-Length': asset.body.length,
+    /* Corta: la imagen cambia cuando el administrador sube otra, y ahí interesa
+       que se vea el cambio pronto. Los rastreadores la cachean por su cuenta
+       mucho más tiempo, y eso no lo decide esta cabecera. */
+    'Cache-Control': 'public, max-age=300',
+  })
+  res.end(req.method === 'HEAD' ? undefined : asset.body)
+}
+
+/* ---------------------------- sitemap y robots.txt -------------------------- */
+
+async function serveSitemap(req, res, url) {
+  const site = await loadSite()
+  if (!site) {
+    res.writeHead(503, { 'Content-Type': 'text/plain; charset=utf-8' })
+    res.end('Todavía no hay contenido publicado.')
+    return
+  }
+  const body = Buffer.from(renderSitemap(site, originOf(req, site)), 'utf8')
+  res.writeHead(200, {
+    'Content-Type': 'application/xml; charset=utf-8',
+    'Content-Length': body.length,
+    'Cache-Control': 'public, max-age=3600',
+  })
+  res.end(req.method === 'HEAD' ? undefined : body)
+}
+
+async function serveRobots(req, res) {
+  const site = await loadSite()
+  /* Sin contenido aún, lo prudente es no invitar a indexar: el sitio está a
+     medio montar y lo que se indexe ahora cuesta semanas en corregirse. */
+  const text = site
+    ? renderRobots(site, originOf(req, site))
+    : 'User-agent: *\nDisallow: /\n'
+
+  const body = Buffer.from(text, 'utf8')
+  res.writeHead(200, {
+    'Content-Type': 'text/plain; charset=utf-8',
+    'Content-Length': body.length,
+    'Cache-Control': 'public, max-age=3600',
+  })
+  res.end(req.method === 'HEAD' ? undefined : body)
+}
+
 /* --------------------------------- arranque --------------------------------- */
 
 const server = createServer(async (req, res) => {
@@ -384,6 +581,11 @@ const server = createServer(async (req, res) => {
       res.end('Método no permitido')
       return
     }
+
+    if (url.pathname === '/sitemap.xml') return await serveSitemap(req, res, url)
+    if (url.pathname === '/robots.txt') return await serveRobots(req, res)
+    if (url.pathname.startsWith('/brand/')) return await serveBrandAsset(req, res, url)
+
     await serveStatic(req, res, url)
   } catch (err) {
     console.error('[hexservers] error no controlado:', err)

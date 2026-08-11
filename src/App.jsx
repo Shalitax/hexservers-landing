@@ -3,6 +3,7 @@ import { useSite, useEffectiveTheme } from './store/useSite.js'
 import { useRoute } from './lib/router.js'
 import { applyTheme } from './lib/theme.js'
 import { useRevealSystem } from './lib/reveal.js'
+import { useDocumentMeta } from './lib/head.js'
 
 import Backdrop from './components/Backdrop.jsx'
 import Navbar from './components/Navbar.jsx'
@@ -47,6 +48,10 @@ export default function App() {
   /* Revelado por scroll. Se monta un único observador para toda la página; los
      componentes sólo marcan `data-reveal`. Ver src/lib/reveal.js. */
   useRevealSystem(theme.animations !== false)
+
+  /* Título de la pestaña al cambiar de página sin recargar. Las meta que leen
+     los buscadores las pone el servidor; ver shared/seo.js. */
+  useDocumentMeta(route)
 
   /* Accesos ocultos al panel: Ctrl+Shift+A y la ruta #admin. */
   useEffect(() => {

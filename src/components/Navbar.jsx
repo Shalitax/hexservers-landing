@@ -38,12 +38,19 @@ export default function Navbar({ route }) {
 
   const { links, logins } = site.nav
 
-  /** Un enlace está activo si su ruta coincide con la actual (o la contiene). */
+  /**
+   * Un enlace está activo si su ruta coincide con la actual (o la contiene).
+   *
+   * Se admite todavía la forma antigua con hash (`#/productos`): los enlaces del
+   * menú los escribe el administrador y pueden llevar años guardados en su
+   * `content.json`. La migración los reescribe, pero uno tecleado a mano en el
+   * panel puede seguir llegando así.
+   */
   const isActive = (link) => {
-    const target = String(link.href || '')
-    if (!target.startsWith('#/')) return false
-    const path = target.slice(1)
-    if (path === '/') return route?.path === '/'
+    const target = String(link.href || '').replace(/^#(?=\/)/, '')
+    if (!target.startsWith('/')) return false
+    if (target === '/') return route?.path === '/'
+    const path = target.split('?')[0].replace(/\/$/, '')
     return route?.path === path || route?.path?.startsWith(`${path}/`)
   }
 
@@ -57,8 +64,8 @@ export default function Navbar({ route }) {
       )}
     >
       <nav className="mx-auto flex h-16 max-w-7xl items-center gap-4 px-4 sm:px-6 lg:px-8">
-        <a href="#/" className="group shrink-0" aria-label={site.brand.name}>
-          <Logo name={site.brand.name} size={32} />
+        <a href="/" className="group shrink-0" aria-label={site.brand.name}>
+          <Logo name={site.brand.name} image={site.brand.logo} size={32} />
         </a>
 
         {/* Navegación central */}

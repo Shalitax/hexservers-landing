@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react'
-import { X, Boxes, FileText, Tag, Plug, Database, Palette, LifeBuoy } from 'lucide-react'
+import { X, Boxes, FileText, Tag, Plug, Database, Palette, LifeBuoy, Search } from 'lucide-react'
 import { useSite } from '../store/useSite.js'
 import { cx } from '../lib/utils.js'
 import CatalogPanel from './panels/CatalogPanel.jsx'
@@ -9,12 +9,14 @@ import PromoPanel from './panels/PromoPanel.jsx'
 import WhmcsPanel from './panels/WhmcsPanel.jsx'
 import DataPanel from './panels/DataPanel.jsx'
 import HubPanel from './panels/HubPanel.jsx'
+import SeoPanel from './panels/SeoPanel.jsx'
 
 const TABS = [
   { id: 'catalog', label: 'Catálogo', icon: Boxes, Component: CatalogPanel },
   { id: 'content', label: 'Contenido', icon: FileText, Component: ContentPanel },
   { id: 'hub', label: 'Hub', icon: LifeBuoy, Component: HubPanel },
   { id: 'theme', label: 'Diseño', icon: Palette, Component: ThemePanel },
+  { id: 'seo', label: 'SEO', icon: Search, Component: SeoPanel },
   { id: 'promo', label: 'Promo', icon: Tag, Component: PromoPanel },
   { id: 'whmcs', label: 'WHMCS', icon: Plug, Component: WhmcsPanel },
   { id: 'data', label: 'Datos', icon: Database, Component: DataPanel },

@@ -4,12 +4,26 @@
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <meta name="theme-color" content="#0a0a0f" />
+
+    <!--
+      Todo lo que hay entre estas dos marcas lo sustituye `server/index.js` por
+      las meta de la página concreta que se está sirviendo: título, descripción,
+      canonical, tarjeta de enlace y datos estructurados (ver shared/seo.js).
+
+      Lo de aquí abajo es sólo el respaldo — lo que se ve en `npm run dev` sin
+      servidor al lado, o si algún día esto se sirve como estático. No lo borres
+      y no quites los comentarios: sin ellos el servidor no sabe dónde escribir y
+      se queda con este texto fijo en todas las páginas.
+    -->
+    <!--seo-->
+    <title>HexServers — VPS y Servidores de Juegos</title>
     <meta
       name="description"
-      content="HexServers — VPS y servidores de juegos de alto rendimiento. NVMe, anti-DDoS y despliegue en 60 segundos."
+      content="Servidores de juegos y VPS con NVMe, anti-DDoS y despliegue en menos de un minuto. Soporte en español y panel propio."
     />
-    <title>HexServers — VPS y Servidores de Juegos</title>
     <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
+    <!--/seo-->
+
     <link rel="preconnect" href="https://fonts.googleapis.com" />
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
     <link

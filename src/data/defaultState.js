@@ -18,8 +18,9 @@
 
 import { DEFAULT_THEME } from '../lib/theme.js'
 import { DEFAULT_CYCLE_DISCOUNTS } from '../lib/billing.js'
+import { DEFAULT_SEO } from '../../shared/seo.js'
 
-export const SCHEMA_VERSION = 7
+export const SCHEMA_VERSION = 8
 
 export const PRODUCT_STATUS = {
   available: { label: 'Disponible', tone: 'emerald' },
@@ -948,16 +949,33 @@ export function createDefaultState() {
       name: 'HexServers',
       claim: 'Hosting chileno, trato directo',
       poweredBy: 'Powered by HexServers',
+
+      /**
+       * Imágenes de marca. Se suben desde el panel → Marca y se guardan aquí
+       * como data URL, pero el servidor las publica en rutas propias
+       * (`/brand/…`, ver `BRAND_ASSETS`) porque ni el `og:image` ni el favicon
+       * admiten un data URL cuando quien los pide es un rastreador.
+       *
+       * Vacías, el sitio usa lo de siempre: el favicon de `public/` y el logo
+       * dibujado en código.
+       */
+      logo: '',
+      favicon: '',
+      appleIcon: '',
+      ogImage: '',
     },
+
+    /* Meta de cada página, datos estructurados y analítica. Ver shared/seo.js. */
+    seo: { ...DEFAULT_SEO },
 
     nav: {
       links: [
-        { id: 'nav_home', label: 'Inicio', href: '#/' },
-        { id: 'nav_products', label: 'Productos', href: '#/productos' },
-        { id: 'nav_hub', label: 'Hub', href: '#/hub' },
-        { id: 'nav_about', label: 'Nosotros', href: '#/nosotros' },
+        { id: 'nav_home', label: 'Inicio', href: '/' },
+        { id: 'nav_products', label: 'Productos', href: '/productos' },
+        { id: 'nav_hub', label: 'Hub', href: '/hub' },
+        { id: 'nav_about', label: 'Nosotros', href: '/nosotros' },
         /* Ocupa el sitio que tenía «Contacto»: soporte es a donde se va a escribir. */
-        { id: 'nav_support', label: 'Soporte', href: '#/soporte' },
+        { id: 'nav_support', label: 'Soporte', href: '/soporte' },
       ],
       logins: [
         {
@@ -988,7 +1006,7 @@ export function createDefaultState() {
       highlight: 'alguien detrás que te responde',
       subtitle:
         'Minecraft, Unturned y VPS con servidor local en Chile. Precios en pesos, especificaciones claras y soporte por Discord con la persona que administra las máquinas: sin call center ni tickets que se pierden.',
-      primaryCta: { label: 'Ver planes', href: '#/productos' },
+      primaryCta: { label: 'Ver planes', href: '/productos' },
       secondaryCta: { label: 'Ver ubicaciones', href: '#ubicaciones' },
       stats: [
         { id: 'st_1', value: 'Santiago', label: 'Servidor local' },
@@ -1372,7 +1390,7 @@ export function createDefaultState() {
       ctaText:
         'Preguntamos poco y contamos mucho: escríbenos y te detallamos el hardware exacto, la red y las políticas de backup del servicio que te interese.',
       ctaLabel: 'Ver productos',
-      ctaHref: '#/productos',
+      ctaHref: '/productos',
     },
 
     /* Textos de la página /productos y del recorrido de compra. */
@@ -1482,19 +1500,19 @@ export function createDefaultState() {
           id: 'fc_prod',
           title: 'Productos',
           links: [
-            { id: 'fl_1', label: 'VPS Linux', href: '#/producto/vps-linux' },
-            { id: 'fl_2', label: 'Minecraft', href: '#/producto/minecraft' },
-            { id: 'fl_3', label: 'Unturned', href: '#/producto/unturned' },
-            { id: 'fl_13', label: 'Minecraft económico', href: '#/producto/minecraft?gama=tier_economica' },
-            { id: 'fl_4', label: 'Hosting cPanel', href: '#/producto/hosting-cpanel' },
+            { id: 'fl_1', label: 'VPS Linux', href: '/producto/vps-linux' },
+            { id: 'fl_2', label: 'Minecraft', href: '/producto/minecraft' },
+            { id: 'fl_3', label: 'Unturned', href: '/producto/unturned' },
+            { id: 'fl_13', label: 'Minecraft económico', href: '/producto/minecraft?gama=tier_economica' },
+            { id: 'fl_4', label: 'Hosting cPanel', href: '/producto/hosting-cpanel' },
           ],
         },
         {
           id: 'fc_help',
           title: 'Soporte',
           links: [
-            { id: 'fl_14', label: 'Abrir un ticket', href: '#/soporte' },
-            { id: 'fl_15', label: 'Hub', href: '#/hub' },
+            { id: 'fl_14', label: 'Abrir un ticket', href: '/soporte' },
+            { id: 'fl_15', label: 'Hub', href: '/hub' },
             { id: 'fl_5', label: 'Portal de clientes', href: 'https://billing.hexservers.com/clientarea.php' },
             { id: 'fl_6', label: 'Panel de juegos', href: 'https://panel.hexservers.com' },
             { id: 'fl_7', label: 'Estado del servicio', href: 'https://status.hexservers.com' },
@@ -1531,7 +1549,7 @@ export function createDefaultState() {
       triggerSeconds: 8,
       triggerOnScroll: true,
       ctaLabel: 'Ver productos',
-      ctaHref: '#/productos',
+      ctaHref: '/productos',
     },
 
     whmcs: {

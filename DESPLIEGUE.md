@@ -212,6 +212,12 @@ sudo ln -sf /etc/nginx/sites-available/hexservers /etc/nginx/sites-enabled/ && s
 sudo nginx -t && sudo systemctl reload nginx
 ```
 
+> **Ese `location /` que lo manda todo al servidor de Node no es opcional.** La
+> web navega por rutas reales (`/producto/minecraft`), y quien las resuelve —y
+> quien escribe el título y la tarjeta de enlace de cada página— es el servidor.
+> Servir `dist/` directamente con nginx daría un 404 en cualquier ruta que no sea
+> la portada.
+
 > **`client_max_body_size` no es opcional.** Es el fallo más probable de este
 > despliegue: todo parece ir bien —el texto se guarda, son 93 KB— hasta que subes
 > el primer logo y el guardado empieza a fallar con un 413 que solo se ve en la
@@ -270,6 +276,15 @@ Con el panel abierto, la barra inferior te dice dónde queda cada cambio:
 | **Sólo local** (ámbar) | No detectó servidor: estás guardando solo en tu navegador |
 
 Si ves *Sólo local* en el dominio, algo va mal en el proxy — revisa el paso 6.
+
+Comprueba de paso que el SEO salió bien:
+
+```bash
+curl -s https://tudominio.com/producto/minecraft | grep -E '<title>|og:image'
+```
+
+Debe dar el título **de ese producto**, no el de la portada. Y en el panel →
+pestaña **SEO**, lo primero de todo: escribir la URL pública del sitio.
 
 Lo primero que conviene configurar, porque hoy son datos de ejemplo inventados:
 los PID de WHMCS de cada plan, los precios, las cifras de la portada, el hardware
@@ -362,6 +377,12 @@ comando y qué puerto, y no queda nada que adivinar.
 | **Port** (*Ports Exposes*) | `8080` |
 | **Environment Variables** | `HEX_ADMIN_PASSWORD` = tu contraseña larga |
 | **Persistent Storage** | un volumen montado en `/app/data` |
+
+> No lo despliegues como **sitio estático**. Con Nixpacks hay un interruptor
+> *«Is it a static site?»* que lo hace: sirve `dist/` con Caddy y nunca ejecuta
+> el servidor. La web se ve, pero no hay `/api/`, el panel no encuentra servidor,
+> `HEX_ADMIN_PASSWORD` no la lee nadie y todas las páginas comparten el mismo
+> título. Con el `Dockerfile` ese interruptor no existe.
 
 Sobre los dos últimos, que son los que suelen fallar:
 

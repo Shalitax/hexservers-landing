@@ -178,7 +178,7 @@ export default function CatalogPanel({ onEditProduct, onEditPlan }) {
 /* --------------------------- Presentación del catálogo ----------------------- */
 
 /**
- * Cómo se listan los productos en #/productos. Seis formas del mismo contenido
+ * Cómo se listan los productos en /productos. Seis formas del mismo contenido
  * (ver src/lib/layouts.js); aquí se fija la que ve todo el mundo al entrar y si el
  * visitante puede cambiarla desde la propia página.
  */
@@ -252,7 +252,7 @@ function CatalogLayoutSection() {
 
       <Toggle
         label="Mostrar la pestaña «Todos»"
-        hint="Apagada, el catálogo abre directamente en la primera subcategoría y sólo se ve una familia cada vez. El enlace #/productos sigue funcionando: lleva a esa primera pestaña."
+        hint="Apagada, el catálogo abre directamente en la primera subcategoría y sólo se ve una familia cada vez. El enlace /productos sigue funcionando: lleva a esa primera pestaña."
         checked={showAllTab}
         onChange={(value) => setField('catalog.showAllTab', value)}
       />
@@ -754,10 +754,10 @@ function GroupForm({ group }) {
         label="Slug (URL)"
         value={group.slug}
         onChange={(v) => set({ slug: v })}
-        hint={`#/productos/${group.slug || '…'}`}
+        hint={`/productos/${group.slug || '…'}`}
       />
       {/**
-       * Con titular propio, `#/productos/{slug}` deja de ser «el catálogo filtrado»
+       * Con titular propio, `/productos/{slug}` deja de ser «el catálogo filtrado»
        * y se presenta como una página que vende esta familia. Vacío = se usa el
        * titular genérico del catálogo, como hasta ahora.
        */}
@@ -767,7 +767,7 @@ function GroupForm({ group }) {
         onChange={(v) => set({ headline: v })}
         className="sm:col-span-2"
         placeholder="Elige tu juego. Del resto nos encargamos nosotros."
-        hint={`Encabeza #/productos/${group.slug || '…'} en lugar del titular general. Déjalo vacío para usar el del catálogo.`}
+        hint={`Encabeza /productos/${group.slug || '…'} en lugar del titular general. Déjalo vacío para usar el del catálogo.`}
       />
       <TextField
         label="Frase corta"

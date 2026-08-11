@@ -260,7 +260,7 @@ export default function ThemePanel() {
           </div>
           <p className="text-sm text-slate-400">
             Texto normal con un <span className="text-gradient font-semibold">degradado</span> y un{' '}
-            <a href="#/productos" className="font-semibold text-hex-300">
+            <a href="/productos" className="font-semibold text-hex-300">
               enlace
             </a>
             .

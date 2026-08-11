@@ -33,8 +33,14 @@ ENV PORT=8080
 
 # El servidor no tiene dependencias: le basta su propio código y el `dist/`. Así
 # la imagen final no arrastra ni el `node_modules` ni el código fuente.
+#
+# `shared/` no es opcional: de ahí salen las rutas y las meta que el servidor
+# escribe en cada página. Sin esa carpeta el proceso no llega ni a arrancar.
+# `package.json` tampoco, porque su `"type": "module"` es lo que hace que Node
+# lea todo esto como ESM.
 COPY --from=build /app/dist ./dist
 COPY server ./server
+COPY shared ./shared
 COPY package.json ./
 
 # Aquí escribe el panel. Monta un volumen en esta ruta desde el PaaS: sin él, el

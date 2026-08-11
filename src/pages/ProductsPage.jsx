@@ -43,7 +43,7 @@ export default function ProductsPage({ route, onEditProduct }) {
 
   /**
    * Sin pestaña «Todos» no hay ninguna vista «sin filtrar» que enseñar, así que
-   * `#/productos` entra en la primera subcategoría. Se reemplaza en el historial —y
+   * `/productos` entra en la primera subcategoría. Se reemplaza en el historial —y
    * no se apila— para que el botón atrás siga saliendo de la página, no rebotando
    * contra la redirección.
    */

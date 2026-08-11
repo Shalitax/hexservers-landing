@@ -11,8 +11,36 @@ import { useId } from 'react'
  * color con el resto del sitio.
  *
  * `variant="mark"` muestra sólo el ícono (favicon inline, espacios estrechos, etc.).
+ *
+ * Con `image` —el logo que se sube desde el panel → SEO y marca— se pinta esa en
+ * lugar de todo lo anterior, wordmark incluido: un logo propio casi siempre trae
+ * ya el nombre dentro, y repetirlo al lado se vería mal. Se ajusta por altura y
+ * se deja el ancho libre, que es lo que respeta la proporción de cualquier logo
+ * sin saber de antemano si es cuadrado o alargado.
  */
-export default function Logo({ name = 'HexServers', variant = 'full', className = '', size = 34 }) {
+export default function Logo({
+  name = 'HexServers',
+  variant = 'full',
+  className = '',
+  size = 34,
+  image = '',
+}) {
+  if (image) {
+    return (
+      <img
+        src={image}
+        alt={name}
+        style={{ height: size }}
+        className={`w-auto max-w-[220px] object-contain transition-transform duration-300 group-hover:scale-105 ${className}`}
+      />
+    )
+  }
+
+  return <DrawnLogo name={name} variant={variant} className={className} size={size} />
+}
+
+/** El logo dibujado en código, el de siempre. */
+function DrawnLogo({ name, variant, className, size }) {
   // `useId` evita ids duplicados: el logo se pinta a la vez en navbar y footer.
   // Se le quitan los `:` porque no son válidos en un selector CSS.
   const gradientId = `hexGrad${useId().replace(/:/g, '')}`

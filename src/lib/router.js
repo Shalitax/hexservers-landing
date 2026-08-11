@@ -1,148 +1,175 @@
 /**
- * Router mínimo por hash. Sin dependencias y sin servidor: la landing sigue
- * funcionando abierta desde un `file://` o servida como estático puro.
+ * Router del navegador, sobre la History API.
  *
- * Rutas:
- *   #/                                     → portada
- *   #/nosotros                             → quiénes somos
- *   #/hub                                  → núcleo: hardware, equipo y próximos cambios
- *   #/soporte                              → soporte: ticket de WHMCS y contacto
- *   #/productos                            → catálogo completo
- *   #/productos/{grupo}                    → catálogo filtrado por subcategoría
- *   #/producto/{producto}                  → ficha + configurador
- *   #/producto/{producto}?ubicacion=&cpu=  → el configurador con lo ya elegido
- *   #/producto/{producto}/plan/{planId}    → detalle del plan elegido
+ * El análisis de rutas en sí vive en `shared/routes.js`, fuera de `src/`, porque
+ * el servidor necesita exactamente el mismo para saber qué página está sirviendo
+ * antes de mandar el HTML. Aquí queda sólo lo que requiere un navegador: el hook
+ * que re-renderiza, la navegación sin recarga y la intercepción de enlaces.
  *
- * El configurador es una sola página: ubicación, CPU y planes son bloques que se
- * despliegan hacia abajo conforme el cliente elige. La selección viaja en la query
- * y no en la ruta, porque no son páginas distintas — pero sigue estando en la URL
- * a propósito: el botón atrás deshace la última elección y un enlace reproduce la
- * pantalla exacta.
+ * Antes esto iba por hash (`#/productos`). Se cambió porque el `#` no se envía
+ * nunca al servidor: se queda en el navegador. Eso tenía dos consecuencias que
+ * no se arreglaban de ninguna otra forma.
  *
- * Las rutas del recorrido antiguo por pasos (`/ubicacion`, `/cpu/…`, `/planes/…`)
- * se siguen entendiendo y la página las redirige a la nueva; `_` era su hueco de
- * «sin filtrar».
+ * La primera es que para un buscador la web entera era **una sola URL** — todas
+ * las fichas de producto colapsaban en la portada, así que ninguna podía
+ * posicionar. El esquema que hacía funcionar aquello (`#!`) lo abandonó Google
+ * en 2015.
  *
- * Los hashes que no empiezan por `/` se tratan como anclas de la portada, para
- * que sigan valiendo enlaces antiguos como `#features`, `#contacto` o `#admin`.
+ * La segunda es que el servidor no podía saber qué página le pedían, y sin eso
+ * no hay forma de poner un título ni una imagen distintos en cada una. Los
+ * rastreadores de Discord, WhatsApp o X no ejecutan JavaScript: leen el HTML tal
+ * como llega. Con hash, todo enlace compartido enseñaba lo mismo.
+ *
+ * A cambio hace falta que el servidor devuelva el `index.html` en cualquier ruta
+ * —`server/index.js` ya lo hace, y Vite también en desarrollo—, así que la web
+ * ya no se puede abrir desde un `file://` ni subir a un estático sin una regla
+ * de reescritura.
+ *
+ * Los enlaces antiguos con `#/…` se siguen entendiendo: al cargar se traducen a
+ * su ruta equivalente y se sustituyen en el historial.
+ *
+ * Los hashes que no empiezan por `/` siguen siendo anclas de la portada, para
+ * que valgan enlaces como `#features`, `#contacto` o `#admin`.
  */
 
 import { useEffect, useState } from 'react'
+import { parsePath, productPath, decodeSegment, STATIC_PATHS } from '../../shared/routes.js'
 
-export function parseHash(hash = window.location.hash) {
-  const raw = decodeURIComponent(String(hash).replace(/^#/, ''))
+export { parsePath, productPath, STATIC_PATHS }
 
-  // Ancla suelta (#features) → portada + scroll a la sección.
-  if (!raw.startsWith('/')) {
-    return { name: 'home', path: '/', anchor: raw, segments: [] }
-  }
+/* --------------------------------- lectura --------------------------------- */
 
-  const [pathAndQuery, anchor = ''] = raw.split('#')
-  const [pathPart, queryPart = ''] = pathAndQuery.split('?')
-  const segments = pathPart.split('/').filter(Boolean)
-  const query = new URLSearchParams(queryPart)
-  const base = { path: `/${segments.join('/')}`, anchor, segments, query }
-
-  if (segments.length === 0) return { ...base, name: 'home', path: '/' }
-
-  if (segments[0] === 'nosotros') return { ...base, name: 'about' }
-
-  if (segments[0] === 'hub') return { ...base, name: 'hub' }
-
-  if (segments[0] === 'soporte') return { ...base, name: 'support' }
-
-  if (segments[0] === 'productos') {
-    return { ...base, name: 'products', groupSlug: segments[1] || '' }
-  }
-
-  if (segments[0] === 'producto' && segments[1]) {
-    const sub = segments[2] || ''
-    const product = { ...base, name: 'product', productSlug: segments[1], legacy: false }
-
-    if (sub === 'plan' && segments[3]) {
-      return { ...product, stage: 'detail', planId: segments[3], tierId: '', locationId: '', cpuId: '' }
-    }
-
-    // Recorrido antiguo por pasos: se conserva la selección y se redirige.
-    if (sub === 'ubicacion' || sub === 'cpu' || sub === 'planes') {
-      return {
-        ...product,
-        stage: 'config',
-        legacy: true,
-        planId: '',
-        locationId: sub === 'ubicacion' ? '' : slot(segments[3]),
-        cpuId: sub === 'planes' ? slot(segments[4]) : '',
-      }
-    }
-
-    return {
-      ...product,
-      stage: 'config',
-      planId: '',
-      tierId: query.get('gama') || '',
-      locationId: query.get('ubicacion') || '',
-      cpuId: query.get('cpu') || '',
-    }
-  }
-
-  return { ...base, name: 'notfound' }
+/** La ruta de la barra de direcciones, con el ancla ya separada. */
+export function parseLocation(loc = window.location) {
+  const route = parsePath(loc.pathname, loc.search)
+  return { ...route, anchor: decodeSegment(String(loc.hash || '').replace(/^#/, '')) }
 }
 
-/** Hueco de la ruta antigua: `_` (o vacío) significaba «sin filtrar». */
-const slot = (segment) => (!segment || segment === '_' ? '' : segment)
+/**
+ * Traduce un enlace antiguo con hash a su ruta.
+ *
+ * `#/productos/vps` → `/productos/vps`, y `#features` → '' porque eso sigue
+ * siendo un ancla de la portada y no una ruta.
+ */
+export function legacyHashTarget(hash = window.location.hash) {
+  const raw = String(hash || '').replace(/^#/, '')
+  if (!raw.startsWith('/')) return ''
+  // El ancla podía ir detrás de la ruta: `#/productos#comparativa`.
+  const [pathAndQuery, anchor = ''] = raw.split('#')
+  return anchor ? `${pathAndQuery}#${anchor}` : pathAndQuery
+}
 
-/** Ruta actual, re-renderizada en cada `hashchange`. */
+/* -------------------------------- navegación ------------------------------- */
+
+/* Un `pushState` no dispara ningún evento, así que el router se avisa a sí mismo
+   con uno propio. `popstate` cubre los botones atrás y adelante. */
+const ROUTE_EVENT = 'hexservers:route'
+
+const normalize = (to) => (String(to).startsWith('/') ? String(to) : `/${to}`)
+
+/** Navega a una ruta interna. `to` es la ruta (ej. '/productos/vps'). */
+export function navigate(to, { replace = false } = {}) {
+  const target = normalize(to)
+  const current = `${window.location.pathname}${window.location.search}${window.location.hash}`
+
+  if (target === current) {
+    /* Misma ruta: no hay nada que cambiar en el historial, pero quien pulsó
+       espera al menos volver arriba. */
+    window.scrollTo({ top: 0, behavior: 'smooth' })
+    return
+  }
+
+  if (replace) window.history.replaceState(null, '', target)
+  else window.history.pushState(null, '', target)
+
+  window.dispatchEvent(new Event(ROUTE_EVENT))
+}
+
+/**
+ * Enlaces internos sin recarga.
+ *
+ * Se intercepta en `document` en lugar de envolver cada `<a>` en un componente
+ * propio. No es por ahorrar trabajo: buena parte de los enlaces del sitio los
+ * escribe el administrador desde el panel —el menú, el pie, los CTA— y salen de
+ * `content.json` como cadenas de texto. Un componente `<Link>` no los cubriría,
+ * y son justo los que más cambian.
+ */
+function interceptLinks(event) {
+  if (event.defaultPrevented || event.button !== 0) return
+  /* Ctrl/⌘ para abrir en pestaña nueva, Shift para ventana: son del navegador. */
+  if (event.metaKey || event.ctrlKey || event.shiftKey || event.altKey) return
+
+  const anchor = event.target?.closest?.('a')
+  if (!anchor) return
+
+  const raw = anchor.getAttribute('href')
+  if (!raw) return
+
+  /* Se respeta lo que pide el propio enlace: abrir fuera, descargar o salir. */
+  if (anchor.hasAttribute('download')) return
+  if (anchor.target && anchor.target !== '_self') return
+  if (anchor.getAttribute('rel')?.includes('external')) return
+
+  /* Anclas de la propia página y esquemas que no son navegación: mailto:, tel:,
+     y el `javascript:` que `safeUrl` ya bloquea antes de llegar aquí. */
+  if (raw.startsWith('#') || /^[a-z][a-z0-9+.-]*:/i.test(raw)) return
+
+  let url
+  try {
+    url = new URL(raw, window.location.href)
+  } catch {
+    return
+  }
+  if (url.origin !== window.location.origin) return
+
+  event.preventDefault()
+  navigate(`${url.pathname}${url.search}${url.hash}`)
+}
+
+/** Ruta actual. Se re-renderiza al navegar y con los botones atrás y adelante. */
 export function useRoute() {
-  const [route, setRoute] = useState(() => parseHash())
+  const [route, setRoute] = useState(() => {
+    /* Antes del primer render: si se ha entrado por un enlace antiguo con hash,
+       se corrige la barra de direcciones sin dejar rastro en el historial, para
+       que el botón atrás no rebote contra la propia redirección. */
+    const legacy = legacyHashTarget()
+    if (legacy) window.history.replaceState(null, '', normalize(legacy))
+    return parseLocation()
+  })
 
   useEffect(() => {
-    const sync = () => setRoute(parseHash())
+    const sync = () => setRoute(parseLocation())
+
+    window.addEventListener('popstate', sync)
+    window.addEventListener(ROUTE_EVENT, sync)
+    /* Sigue haciendo falta: un ancla (`#contacto`) cambia el hash sin pasar por
+       `navigate`, y la ruta tiene que enterarse para hacer scroll. */
     window.addEventListener('hashchange', sync)
-    return () => window.removeEventListener('hashchange', sync)
+    document.addEventListener('click', interceptLinks)
+
+    return () => {
+      window.removeEventListener('popstate', sync)
+      window.removeEventListener(ROUTE_EVENT, sync)
+      window.removeEventListener('hashchange', sync)
+      document.removeEventListener('click', interceptLinks)
+    }
   }, [])
 
   return route
 }
 
-/** Navega a una ruta interna. `to` es la ruta sin `#` (ej. '/productos/vps'). */
-export function navigate(to, { replace = false } = {}) {
-  const target = `#${to.startsWith('/') ? to : `/${to}`}`
-  if (window.location.hash === target) {
-    // Mismo hash: no hay `hashchange`, así que al menos subimos al principio.
-    window.scrollTo({ top: 0, behavior: 'smooth' })
-    return
-  }
-  if (replace) window.location.replace(target)
-  else window.location.hash = target
-}
-
-/** Href listo para un `<a>` interno. */
-export const href = (to) => `#${to.startsWith('/') ? to : `/${to}`}`
-
-export const groupHref = (group) => href(`/productos/${group.slug}`)
+/* --------------------------------- enlaces --------------------------------- */
 
 /**
- * Ruta de una pantalla de producto.
+ * Href listo para un `<a>` interno.
  *
- *   productPath(product)                                   → configurador vacío
- *   productPath(product, 'config', { tierId, locationId, cpuId })  → con lo ya elegido
- *   productPath(product, 'detail', { planId })             → detalle del plan
+ * Desde la migración a rutas reales esto es casi la identidad, pero se conserva
+ * como el único sitio por el que pasan los enlaces internos: si algún día la web
+ * cuelga de un subdirectorio, el prefijo se pone aquí y en ningún otro lugar.
  */
-export function productPath(
-  product,
-  stage = 'config',
-  { tierId = '', locationId = '', cpuId = '', planId = '' } = {},
-) {
-  const base = `/producto/${product.slug}`
-  if (stage === 'detail' && planId) return `${base}/plan/${planId}`
+export const href = (to) => normalize(to)
 
-  const query = new URLSearchParams()
-  if (tierId) query.set('gama', tierId)
-  if (locationId) query.set('ubicacion', locationId)
-  if (cpuId) query.set('cpu', cpuId)
-  const search = query.toString()
-  return search ? `${base}?${search}` : base
-}
+export const groupHref = (group) => href(`/productos/${group.slug}`)
 
 export const productHref = (product, stage = 'config', params) =>
   href(productPath(product, stage, params))

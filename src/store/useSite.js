@@ -384,6 +384,35 @@ const normalizeCpu = (cpu = {}) => ({
   badge: cpu.badge || '',
 })
 
+/**
+ * Enlaces internos del hash a la ruta real (v8).
+ *
+ * El sitio navegaba por hash y todo lo que el administrador escribió en el panel
+ * quedó guardado así: el menú, los CTA de la portada, las columnas del pie. Al
+ * pasar a rutas reales esos `#/productos` seguirían funcionando —el router los
+ * entiende— pero cada uno costaría una redirección, y sobre todo saldrían con el
+ * `#` en el sitemap y en las meta, que es justo lo que veníamos a arreglar.
+ *
+ * Se recorre el documento entero en lugar de tocar los sitios conocidos uno a
+ * uno: son ocho o nueve hoy, y la lista crecería cada vez que se añada un campo
+ * con enlace. Sólo se tocan claves que acaban en `href`, así que las URL
+ * externas de los accesos del navbar (`url`) no se rozan.
+ */
+function migrateInternalLinks(value) {
+  if (Array.isArray(value)) return value.map(migrateInternalLinks)
+  if (!value || typeof value !== 'object') return value
+
+  const out = {}
+  for (const [key, item] of Object.entries(value)) {
+    if (typeof item === 'string' && /href$/i.test(key) && item.startsWith('#/')) {
+      out[key] = item.slice(1)
+    } else {
+      out[key] = migrateInternalLinks(item)
+    }
+  }
+  return out
+}
+
 /** Rellena campos nuevos que no existían en documentos guardados previamente. */
 function migrate(stored) {
   const base = createDefaultState()
@@ -399,6 +428,15 @@ function migrate(stored) {
     cpus: Array.isArray(stored.cpus) ? stored.cpus.map(normalizeCpu) : base.cpus,
     tiers: Array.isArray(stored.tiers) ? stored.tiers.map(normalizeTier) : base.tiers,
     brand: { ...base.brand, ...stored.brand },
+    /* Dos niveles a mano: `pages` y `analytics` son objetos con claves fijas y
+       un `...stored.seo` los reemplazaría enteros, perdiendo las que se añadan
+       después. */
+    seo: {
+      ...base.seo,
+      ...stored.seo,
+      pages: { ...base.seo.pages, ...stored.seo?.pages },
+      analytics: { ...base.seo.analytics, ...stored.seo?.analytics },
+    },
     nav: migrateNav(stored, base),
     hero: { ...base.hero, ...stored.hero },
     showcase: { ...base.showcase, ...stored.showcase },
@@ -443,7 +481,7 @@ function migrate(stored) {
   site.hero = { ...site.hero, secondaryCta: fixLegacyAnchor(site.hero.secondaryCta, base) }
   site.nav = { ...site.nav, links: site.nav.links.filter((link) => link.href !== STEPS_ANCHOR) }
 
-  return site
+  return migrateInternalLinks(site)
 }
 
 /**
