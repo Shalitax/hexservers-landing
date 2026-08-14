@@ -1,65 +1,202 @@
 import { useMemo } from 'react'
-import { CircleDot, Clock, Check } from 'lucide-react'
+import { AlertTriangle, CheckCircle2, CircleDot, Clock, Check, ExternalLink, Ticket } from 'lucide-react'
 import { useSite } from '../store/useSite.js'
-import { cx } from '../lib/utils.js'
+import { cx, safeUrl } from '../lib/utils.js'
+import { ticketUrl } from '../lib/whmcs.js'
 import Editable from '../components/ui/Editable.jsx'
 import Flag from '../components/ui/Flag.jsx'
-import { Icon } from '../components/ui/icons.jsx'
+import { Icon, DiscordIcon } from '../components/ui/icons.jsx'
+import CountUp from '../components/ui/CountUp.jsx'
+import { stagger } from '../lib/reveal.js'
 
 /**
  * Página «Hub»: el núcleo de la operación contado sin marketing.
  *
- * Tres bloques y en este orden a propósito — el hierro que hay debajo, quién lo
- * atiende y qué falta por hacer. Es la página que se enseña cuando alguien
- * pregunta «¿pero qué máquinas tenéis?» o «¿esto lo lleva alguien?».
+ * El orden a propósito — el hierro que hay debajo, quién lo atiende y qué falta
+ * por hacer. Es la página que se enseña cuando alguien pregunta «¿pero qué
+ * máquinas tenéis?» o «¿esto lo lleva alguien?».
  *
- * Los nodos se agrupan por `locationId` contra `locations.items`: la ubicación
- * es la fuente de verdad, así que añadir un datacenter en el panel hace aparecer
- * su bloque aquí sin tocar nada más.
+ * Todo lo que se pinta sale de los datos que ya edita el panel (nodos, equipo,
+ * cambios): los avisos se derivan de los nodos en mantenimiento y de los cambios
+ * en curso, y el resumen cuenta los nodos, las ubicaciones y las personas. No
+ * hay una segunda fuente de verdad que mantener.
  */
 export default function HubPage() {
-  const hub = useSite((s) => s.site.hub)
-  const locations = useSite((s) => s.site.locations.items)
+  const site = useSite((s) => s.site)
+  const hub = site.hub
+  const locations = site.locations.items
 
   const groups = useMemo(() => groupNodes(hub.nodes, locations), [hub.nodes, locations])
 
+  /* Avisos: nodos en mantenimiento + cambios en curso. */
+  const maintenance = hub.nodes.filter((node) => node.status === 'maintenance')
+  const inProgress = hub.changes.filter((change) => change.status === 'progress')
+
+  const alerts = [
+    ...maintenance.map((node) => ({
+      id: `alert-node-${node.id}`,
+      icon: 'server',
+      title: `${node.name}${node.role ? ` · ${node.role}` : ''}`,
+      description: 'Nodo en mantenimiento programado.',
+      meta: locations.find((location) => location.id === node.locationId)?.city,
+    })),
+    ...inProgress.map((change) => ({
+      id: `alert-change-${change.id}`,
+      icon: 'refresh',
+      title: change.title,
+      description: change.description,
+      meta: change.date,
+    })),
+  ]
+
+  const stats = [
+    { id: 'hs_nodes', value: hub.nodes.length, label: 'Nodos' },
+    { id: 'hs_locs', value: groups.length, label: 'Ubicaciones' },
+    { id: 'hs_team', value: hub.team.length, label: 'Personas en soporte' },
+    { id: 'hs_prog', value: inProgress.length, label: 'Cambios en marcha' },
+  ]
+
+  const resolvedTicketUrl = ticketUrl(site.whmcs, site.support?.ticketUrl)
+
   return (
-    <main className="pt-28 pb-8 sm:pt-32">
-      <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
-        {/* Cabecera */}
-        <header className="mx-auto max-w-3xl text-center">
+    <main className="pb-8">
+      {/* Cabecera, al ritmo de la portada. */}
+      <header className="pt-32 sm:pt-44">
+        <div className="mx-auto max-w-3xl px-4 text-center sm:px-6 lg:px-8">
           <div className="eyebrow mb-3">{hub.eyebrow}</div>
           <Editable
             path="hub.title"
             as="h1"
             multiline
-            className="display text-3xl font-bold text-balance text-white sm:text-4xl lg:text-5xl"
+            className="display text-4xl leading-[1.06] font-extrabold text-balance text-white sm:text-5xl lg:text-6xl"
           />
           <Editable
             path="hub.subtitle"
             as="p"
             multiline
-            className="mt-5 text-base leading-relaxed text-pretty text-slate-400 sm:text-lg"
-          />
-        </header>
-
-        {/* ------------------------------- Hardware ------------------------------- */}
-        <section id="hardware" className="mt-20 scroll-mt-24">
-          <Editable
-            path="hub.hardwareTitle"
-            as="h2"
-            className="display text-2xl font-bold text-white sm:text-3xl"
-          />
-          <Editable
-            path="hub.hardwareSubtitle"
-            as="p"
-            multiline
-            className="mt-2 max-w-2xl text-sm leading-relaxed text-slate-400"
+            className="anim-up mx-auto mt-6 max-w-2xl text-base leading-relaxed text-pretty text-slate-400 sm:text-lg"
           />
 
-          <div className="mt-8 space-y-6">
+          {/* Estado de la red de un vistazo, sin sección entera. */}
+          <div
+            className={cx(
+              'anim-up mt-8 inline-flex items-center gap-2 rounded-full border px-3.5 py-1.5 [animation-delay:160ms]',
+              maintenance.length === 0
+                ? 'border-emerald-400/25 bg-emerald-400/[0.08]'
+                : 'border-amber-400/25 bg-amber-400/[0.08]',
+            )}
+          >
+            {maintenance.length === 0 ? (
+              <>
+                <CheckCircle2 size={15} className="text-emerald-400" />
+                <span className="text-sm font-medium text-emerald-300">
+                  Todos los nodos operativos
+                </span>
+              </>
+            ) : (
+              <>
+                <AlertTriangle size={15} className="text-amber-400" />
+                <span className="text-sm font-medium text-amber-300">
+                  {maintenance.length} {maintenance.length === 1 ? 'nodo en' : 'nodos en'}{' '}
+                  mantenimiento
+                </span>
+              </>
+            )}
+          </div>
+        </div>
+      </header>
+
+      {/* ------------------------------ Resumen ------------------------------ */}
+      <section className="section">
+        <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
+          <div className="grid grid-cols-2 lg:grid-cols-4">
+            {stats.map((stat, index) => (
+              <div
+                key={stat.id}
+                data-reveal
+                style={stagger(index)}
+                className={cx(
+                  'px-5 py-8 text-center sm:py-10',
+                  index % 2 === 1 && 'max-lg:border-l max-lg:border-line-soft',
+                  index >= 2 && 'max-lg:border-t max-lg:border-line-soft',
+                  index > 0 && 'lg:border-l lg:border-line-soft',
+                )}
+              >
+                <CountUp
+                  value={String(stat.value)}
+                  className="display block text-3xl font-bold text-white sm:text-4xl"
+                />
+                <div className="mt-2 text-micro font-medium tracking-wider text-slate-500 uppercase">
+                  {stat.label}
+                </div>
+              </div>
+            ))}
+          </div>
+        </div>
+      </section>
+
+      {/* ------------------------------- Avisos ------------------------------ */}
+      {alerts.length > 0 && (
+        <section id="avisos" className="section">
+          <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
+            <div data-reveal>
+              <div className="eyebrow mb-3">Estado</div>
+              <h2 className="display text-2xl font-bold text-white sm:text-3xl">
+                Avisos activos
+              </h2>
+            </div>
+
+            <div className="mt-8 grid gap-4 sm:grid-cols-2">
+              {alerts.map((alert, index) => (
+                <article
+                  key={alert.id}
+                  data-reveal
+                  style={stagger(index)}
+                  className="glass glass-hover flex gap-4 p-5"
+                >
+                  <span className="grid size-11 shrink-0 place-items-center rounded-xl border border-amber-400/25 bg-amber-400/10 text-amber-300">
+                    <Icon name={alert.icon} size={18} />
+                  </span>
+                  <div className="min-w-0 flex-1">
+                    <h3 className="display text-base font-bold text-white">{alert.title}</h3>
+                    {alert.description && (
+                      <p className="mt-1 text-sm leading-relaxed text-slate-400">
+                        {alert.description}
+                      </p>
+                    )}
+                    {alert.meta && (
+                      <span className="mt-2 inline-flex items-center gap-1.5 text-micro font-medium text-amber-300/90">
+                        {alert.meta}
+                      </span>
+                    )}
+                  </div>
+                </article>
+              ))}
+            </div>
+          </div>
+        </section>
+      )}
+
+      {/* ------------------------------- Hardware ------------------------------- */}
+      <section id="hardware" className="section">
+        <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
+          <div className="max-w-2xl" data-reveal>
+            <Editable
+              path="hub.hardwareTitle"
+              as="h2"
+              className="display text-3xl font-bold text-white sm:text-4xl"
+            />
+            <Editable
+              path="hub.hardwareSubtitle"
+              as="p"
+              multiline
+              className="mt-3 text-base leading-relaxed text-pretty text-slate-400"
+            />
+          </div>
+
+          <div className="mt-10 space-y-6">
             {groups.map((group) => (
-              <article key={group.id} className="glass overflow-hidden">
+              <article key={group.id} className="glass overflow-hidden" data-reveal>
                 <header className="flex items-center gap-3 border-b border-line-soft px-5 py-4">
                   {group.location ? (
                     <Flag flag={group.location.flag} size={26} />
@@ -74,14 +211,28 @@ export default function HubPage() {
                       <p className="truncate text-xs text-slate-500">{group.country}</p>
                     )}
                   </div>
+
+                  {/* LEDs del rack: uno por nodo, en su color de estado. */}
+                  <div className="flex items-center gap-1.5" aria-hidden="true">
+                    {group.nodes.map((node) => (
+                      <span
+                        key={node.id}
+                        className={cx(
+                          'size-1.5 rounded-full',
+                          NODE_STATUS[node.status]?.led || 'bg-slate-600',
+                        )}
+                      />
+                    ))}
+                  </div>
+
                   <span className="chip shrink-0">
                     {group.nodes.length} {group.nodes.length === 1 ? 'nodo' : 'nodos'}
                   </span>
                 </header>
 
-                <div className="divide-y divide-line-soft">
+                <div className="space-y-3 p-4 sm:p-5">
                   {group.nodes.map((node) => (
-                    <NodeRow key={node.id} node={node} />
+                    <NodeUnit key={node.id} node={node} />
                   ))}
                 </div>
               </article>
@@ -93,25 +244,55 @@ export default function HubPage() {
               </p>
             )}
           </div>
-        </section>
+        </div>
+      </section>
 
-        {/* ----------------------------- Equipo de soporte ------------------------- */}
-        <section id="equipo" className="mt-20 scroll-mt-24">
-          <Editable
-            path="hub.teamTitle"
-            as="h2"
-            className="display text-2xl font-bold text-white sm:text-3xl"
-          />
-          <Editable
-            path="hub.teamSubtitle"
-            as="p"
-            multiline
-            className="mt-2 max-w-2xl text-sm leading-relaxed text-slate-400"
-          />
+      {/* ----------------------------- Equipo de soporte ------------------------- */}
+      <section id="equipo" className="section">
+        <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
+          <div className="flex flex-wrap items-end justify-between gap-6">
+            <div className="max-w-2xl" data-reveal>
+              <Editable
+                path="hub.teamTitle"
+                as="h2"
+                className="display text-3xl font-bold text-white sm:text-4xl"
+              />
+              <Editable
+                path="hub.teamSubtitle"
+                as="p"
+                multiline
+                className="mt-3 text-base leading-relaxed text-pretty text-slate-400"
+              />
+            </div>
+
+            {/* Acciones: del «quiénes son» al «háblales». */}
+            <div className="flex flex-wrap gap-3" data-reveal>
+              {resolvedTicketUrl && (
+                <a href={resolvedTicketUrl} className="btn-ghost px-5 py-2.5">
+                  <Ticket size={15} />
+                  Abrir ticket
+                </a>
+              )}
+              <a
+                href={safeUrl(site.contact.discord)}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="btn-primary px-5 py-2.5"
+              >
+                <DiscordIcon size={15} />
+                Discord
+              </a>
+            </div>
+          </div>
 
           <div className="mt-8 grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
-            {hub.team.map((member) => (
-              <article key={member.id} className="glass glass-hover flex items-start gap-4 p-5">
+            {hub.team.map((member, index) => (
+              <article
+                key={member.id}
+                className="glass glass-hover flex items-start gap-4 p-5"
+                data-reveal
+                style={stagger(index)}
+              >
                 {/* Único sitio donde la imagen se recorta en vez de ajustarse: es la
                     foto de una persona, y un avatar con bandas a los lados queda peor
                     que uno bien encuadrado. */}
@@ -136,7 +317,15 @@ export default function HubPage() {
                   </div>
                   <p className="mt-0.5 text-sm leading-snug text-slate-400">{member.role}</p>
                   {member.handle && (
-                    <p className="mt-2 font-mono text-micro text-hex-300">{member.handle}</p>
+                    <a
+                      href={safeUrl(site.contact.discord)}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="mt-2 inline-flex items-center gap-1 font-mono text-micro text-hex-300 transition hover:text-hex-200"
+                    >
+                      {member.handle}
+                      <ExternalLink size={10} className="text-slate-600" />
+                    </a>
                   )}
                   {member.schedule && (
                     <p className="mt-1 inline-flex items-center gap-1.5 text-micro text-slate-500">
@@ -154,25 +343,29 @@ export default function HubPage() {
               </p>
             )}
           </div>
-        </section>
+        </div>
+      </section>
 
-        {/* ----------------------------- Próximos cambios -------------------------- */}
-        <section id="proximos-cambios" className="mt-20 scroll-mt-24">
-          <Editable
-            path="hub.roadmapTitle"
-            as="h2"
-            className="display text-2xl font-bold text-white sm:text-3xl"
-          />
-          <Editable
-            path="hub.roadmapSubtitle"
-            as="p"
-            multiline
-            className="mt-2 max-w-2xl text-sm leading-relaxed text-slate-400"
-          />
+      {/* ----------------------------- Próximos cambios -------------------------- */}
+      <section id="proximos-cambios" className="section">
+        <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
+          <div className="max-w-2xl" data-reveal>
+            <Editable
+              path="hub.roadmapTitle"
+              as="h2"
+              className="display text-3xl font-bold text-white sm:text-4xl"
+            />
+            <Editable
+              path="hub.roadmapSubtitle"
+              as="p"
+              multiline
+              className="mt-3 text-base leading-relaxed text-pretty text-slate-400"
+            />
+          </div>
 
           <ol className="mt-8 space-y-3">
-            {hub.changes.map((change) => (
-              <ChangeRow key={change.id} change={change} />
+            {hub.changes.map((change, index) => (
+              <ChangeRow key={change.id} change={change} data-reveal style={stagger(index)} />
             ))}
           </ol>
 
@@ -181,8 +374,8 @@ export default function HubPage() {
               Nada anunciado por ahora.
             </p>
           )}
-        </section>
-      </div>
+        </div>
+      </section>
     </main>
   )
 }
@@ -190,38 +383,72 @@ export default function HubPage() {
 /* ---------------------------------- nodos ---------------------------------- */
 
 const NODE_STATUS = {
-  online: { label: 'Operativo', chip: 'border-emerald-400/20 bg-emerald-400/10 !text-emerald-300' },
-  maintenance: { label: 'En mantenimiento', chip: 'border-amber-400/20 bg-amber-400/10 !text-amber-300' },
-  soon: { label: 'Próximamente', chip: 'border-line bg-surface-2 !text-slate-400' },
+  online: {
+    label: 'Operativo',
+    chip: 'border-emerald-400/20 bg-emerald-400/10 !text-emerald-300',
+    led: 'bg-emerald-400',
+  },
+  maintenance: {
+    label: 'En mantenimiento',
+    chip: 'border-amber-400/20 bg-amber-400/10 !text-amber-300',
+    led: 'bg-amber-400',
+  },
+  soon: {
+    label: 'Próximamente',
+    chip: 'border-line bg-surface-2 !text-slate-400',
+    led: 'bg-slate-500',
+  },
 }
 
-/** Una fila de hardware: qué máquina es y qué lleva dentro. */
-function NodeRow({ node }) {
+/**
+ * Una unidad del rack: qué máquina es y qué lleva dentro.
+ *
+ * El frente imita a una caja de 1U — LED de estado, nombre en tipografía de
+ * máquina y el estado a la derecha — y el cuerpo son las especificaciones con su
+ * etiqueta. Es adorno, no dato: nada de esto se mantiene a mano más allá de lo
+ * que ya se edita en el panel.
+ */
+function NodeUnit({ node }) {
   const status = NODE_STATUS[node.status] || NODE_STATUS.online
   const specs = [
-    ['cpu', node.cpu],
-    ['database', node.ram],
-    ['disk', node.disk],
-    ['network', node.network],
-  ].filter(([, value]) => value)
+    ['CPU', 'cpu', node.cpu],
+    ['RAM', 'database', node.ram],
+    ['Disco', 'disk', node.disk],
+    ['Red', 'network', node.network],
+  ].filter(([, , value]) => value)
 
   return (
-    <div className="flex flex-col gap-3 px-5 py-4 sm:flex-row sm:items-center">
-      <div className="min-w-0 sm:w-52 sm:shrink-0">
-        <div className="flex items-center gap-2">
-          <span className="pixel text-xs text-hex-300">{node.name}</span>
-          <span className={cx('chip shrink-0 !px-2 !py-0.5 !text-micro', status.chip)}>
-            {status.label}
-          </span>
-        </div>
-        {node.role && <p className="mt-1 text-xs text-slate-500">{node.role}</p>}
+    <div className="overflow-hidden rounded-xl border border-line-soft bg-surface-1 transition hover:border-line-strong">
+      {/* Frente de la unidad */}
+      <div className="flex items-center gap-2.5 border-b border-line-soft bg-black/25 px-4 py-2.5">
+        <span className="relative flex size-2">
+          {node.status === 'online' && (
+            <span className="absolute inline-flex size-full animate-ping rounded-full bg-emerald-400 opacity-60" />
+          )}
+          <span className={cx('relative inline-flex size-2 rounded-full', status.led)} />
+        </span>
+        <span className="pixel text-xs text-hex-300">{node.name}</span>
+        {node.role && (
+          <span className="truncate text-micro text-slate-500">{node.role}</span>
+        )}
+        <span className={cx('chip ml-auto shrink-0 !px-2 !py-0.5 !text-micro', status.chip)}>
+          {status.label}
+        </span>
       </div>
 
-      <dl className="grid min-w-0 flex-1 gap-x-4 gap-y-1.5 sm:grid-cols-2">
-        {specs.map(([icon, value]) => (
-          <div key={icon} className="flex items-start gap-2 text-xs text-slate-400">
-            <Icon name={icon} size={13} className="mt-0.5 shrink-0 text-slate-600" />
-            <dd className="min-w-0">{value}</dd>
+      {/* Especificaciones con etiqueta: se leen sin preguntar qué es cada dato. */}
+      <dl className="grid gap-x-6 gap-y-3 px-4 py-4 sm:grid-cols-2 lg:grid-cols-4">
+        {specs.map(([label, icon, value]) => (
+          <div key={label} className="flex min-w-0 items-start gap-2.5">
+            <Icon name={icon} size={14} className="mt-0.5 shrink-0 text-slate-600" />
+            <div className="min-w-0">
+              <dt className="text-micro font-semibold tracking-wider text-slate-600 uppercase">
+                {label}
+              </dt>
+              <dd className="mt-0.5 truncate text-sm text-slate-300" title={value}>
+                {value}
+              </dd>
+            </div>
           </div>
         ))}
       </dl>
@@ -272,12 +499,12 @@ const CHANGE_STATUS = {
 }
 
 /** Una entrada del listado de cambios: qué es, en qué estado está y cuándo. */
-function ChangeRow({ change }) {
+function ChangeRow({ change, ...reveal }) {
   const status = CHANGE_STATUS[change.status] || CHANGE_STATUS.planned
   const StatusIcon = status.icon
 
   return (
-    <li className={cx('glass glass-hover flex gap-4 p-5', change.status === 'done' && 'opacity-75')}>
+    <li className={cx('glass glass-hover flex gap-4 p-5', change.status === 'done' && 'opacity-75')} {...reveal}>
       <span
         className={cx(
           'grid size-11 shrink-0 place-items-center rounded-xl border',

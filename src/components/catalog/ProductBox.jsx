@@ -1,15 +1,16 @@
-import { ArrowRight, EyeOff, Layers, Settings2, Star } from 'lucide-react'
+import { ArrowRight, Settings2 } from 'lucide-react'
 import { useCatalogMoney } from '../../store/useSite.js'
 import { cx } from '../../lib/utils.js'
 import { productHref } from '../../lib/router.js'
-import { Icon, Glyph, glyphBox } from '../ui/icons.jsx'
-import StatusPill from './StatusPill.jsx'
+import ProductCover from './ProductCover.jsx'
 
 /**
- * La "box" grande de un producto en la página de catálogo: Minecraft, VPS Linux,
- * Hosting cPanel… No vende nada por sí misma, lleva al flujo de compra del producto.
+ * Ficha grande de producto: la portada manda, y debajo nombre, descripción y
+ * precio. Es el modo «detalladas» — lo que la distingue de la baldosa es el
+ * tamaño, no el ruido: sin argumentos sueltos ni contadores, igual que el resto
+ * de tarjetas del catálogo.
  */
-export default function ProductBox({ product, group, plans, editMode, onEdit }) {
+export default function ProductBox({ product, plans, editMode, onEdit }) {
   const money = useCatalogMoney()
   const sellable = plans.filter((plan) => plan.status === 'available')
   const reference = sellable[0] || plans[0]
@@ -21,112 +22,41 @@ export default function ProductBox({ product, group, plans, editMode, onEdit }) 
   return (
     <article
       className={cx(
-        'glass group relative flex flex-col overflow-hidden p-6 transition duration-300 sm:p-7',
-        open && 'hover:-translate-y-1 hover:border-line-strong hover:bg-surface-3',
+        'glass group relative flex flex-col overflow-hidden transition duration-300',
+        open && 'hover:-translate-y-1 hover:border-line-strong',
         product.featured && 'border-hex-500/35 bg-hex-500/[0.055]',
         !open && 'opacity-75',
-        /* Sólo se ve en modo edición: el visitante no lo tiene en la lista. */
         product.hidden && 'border-dashed border-amber-400/30 opacity-70',
       )}
     >
-      {product.featured && (
-        <div
-          className="glow-blue pointer-events-none absolute -top-24 -right-20 size-72 opacity-50"
-          aria-hidden="true"
-        />
-      )}
+      <ProductCover product={product} aspect="aspect-[16/8]" iconSize={72} />
 
-      {/* Cabecera: identidad del producto */}
-      <header className="relative flex items-start gap-4">
-        {product.image ? (
-          <img
-            src={product.image}
-            alt=""
-            loading="lazy"
-            className="size-16 shrink-0 rounded-xl border border-line object-cover sm:size-16"
-          />
-        ) : (
-          <span className="grid size-16 shrink-0 place-items-center rounded-xl border border-line bg-gradient-to-br from-hex-500/20 to-plasma-500/15 text-hex-300 sm:size-16">
-            <Icon name={product.icon} size={30} />
-          </span>
+      <div className="flex flex-1 flex-col p-6 sm:p-7">
+        <h3 className="display text-xl font-bold text-white sm:text-2xl">{product.name}</h3>
+
+        {product.tagline && (
+          <p className="mt-2 text-sm font-medium text-slate-400">{product.tagline}</p>
         )}
 
-        <div className="min-w-0 flex-1">
-          <div className="flex flex-wrap items-center gap-2">
-            <h3 className="display text-xl font-bold text-white sm:text-2xl">{product.name}</h3>
-            {product.badge && (
-              <span className="chip pixel border-hex-400/30 bg-hex-500/15 !text-micro !text-hex-200">
-                <Star size={9} className="fill-current" />
-                {product.badge}
-              </span>
-            )}
-            {product.status !== 'available' && <StatusPill status={product.status} />}
-            {product.hidden && (
-              <span className="chip shrink-0 border-amber-400/25 bg-amber-400/10 !text-micro !text-amber-300">
-                <EyeOff size={10} />
-                Oculto
-              </span>
-            )}
-          </div>
+        {product.description && (
+          <p className="mt-2 text-sm leading-relaxed text-slate-400">{product.description}</p>
+        )}
 
-          {group && (
-            <p className="mt-1.5 inline-flex items-center gap-1.5 text-micro font-semibold tracking-wider text-slate-500 uppercase">
-              <Glyph name={group.icon} image={group.image} size={12} className="text-hex-400" />
-              {group.name}
-            </p>
-          )}
-
-          {product.tagline && (
-            <p className="mt-2 text-sm font-medium text-slate-400">{product.tagline}</p>
-          )}
-        </div>
-      </header>
-
-      {product.description && (
-        <p className="relative mt-4 text-sm leading-relaxed text-slate-400">{product.description}</p>
-      )}
-
-      {/* Argumentos de venta del producto */}
-      {product.highlights?.length > 0 && (
-        <ul className="relative mt-5 grid gap-3 border-t border-line-soft pt-5 sm:grid-cols-3">
-          {product.highlights.map((item) => (
-            <li key={item.id} className="flex gap-2.5">
-              <span
-                className={cx(
-                  'mt-0.5 grid size-8 shrink-0 place-items-center rounded-lg border border-line',
-                  glyphBox(item.image, { flat: true }),
-                )}
-              >
-                <Glyph name={item.icon} image={item.image} size={14} />
-              </span>
-              <span className="min-w-0">
-                <span className="block text-xs font-semibold text-white">{item.title}</span>
-                <span className="mt-0.5 block text-micro leading-snug text-slate-500">
-                  {item.description}
-                </span>
-              </span>
-            </li>
-          ))}
-        </ul>
-      )}
-
-      {/* Pie: precio de entrada y acceso al flujo de compra */}
-      <div className="relative mt-6 flex flex-wrap items-end justify-between gap-4 border-t border-line-soft pt-5">
+        {/* Pie: precio de entrada y acceso al flujo de compra */}
+        <div className="mt-6 flex flex-wrap items-end justify-between gap-4 border-t border-line-soft pt-5">
         <div>
-          <div className="flex items-center gap-2 text-micro font-semibold tracking-wider text-slate-500 uppercase">
-            <Layers size={12} className="text-hex-400" />
-            {plans.length === 1 ? '1 plan' : `${plans.length} planes`}
-          </div>
           {fromPrice !== null ? (
-            <div className="mt-1.5 flex items-baseline gap-1.5">
-              <span className="text-xs text-slate-500">desde</span>
-              <span className="pixel text-lg text-white">
-                {money(fromPrice)}
-              </span>
-              <span className="text-xs font-medium text-slate-500">{reference?.period}</span>
-            </div>
+            <>
+              <div className="text-micro font-semibold tracking-wider text-slate-500 uppercase">
+                Desde
+              </div>
+              <div className="mt-1 flex items-baseline gap-1.5">
+                <span className="pixel text-2xl text-white">{money(fromPrice)}</span>
+                <span className="text-micro text-slate-500">{reference?.period}</span>
+              </div>
+            </>
           ) : (
-            <div className="mt-1.5 text-sm text-slate-500">Sin planes disponibles</div>
+            <div className="text-sm text-slate-500">Sin planes disponibles</div>
           )}
         </div>
 
@@ -144,17 +74,18 @@ export default function ProductBox({ product, group, plans, editMode, onEdit }) 
           {open ? 'Ver planes' : 'No disponible'}
           <ArrowRight size={15} className="transition-transform group-hover:translate-x-0.5" />
         </a>
-      </div>
+        </div>
 
-      {editMode && (
-        <button
-          onClick={() => onEdit(product.id)}
-          className="btn-ghost btn-sm relative mt-4 w-full border-hex-500/30 bg-hex-500/10 py-2 text-hex-200"
-        >
-          <Settings2 size={13} />
-          Editar producto y sus planes
-        </button>
-      )}
+        {editMode && (
+          <button
+            onClick={() => onEdit(product.id)}
+            className="btn-ghost btn-sm mt-4 w-full border-hex-500/30 bg-hex-500/10 py-2 text-hex-200"
+          >
+            <Settings2 size={13} />
+            Editar producto y sus planes
+          </button>
+        )}
+      </div>
     </article>
   )
 }

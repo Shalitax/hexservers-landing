@@ -380,6 +380,70 @@
   animation: hex-drift 22s ease-in-out infinite;
 }
 
+/**
+ * Titular del hero: las palabras entran de una en una, como en los hosts de
+ * referencia. Igual que el revelado, todo cuelga de `[data-anim='on']` para que
+ * con las animaciones apagadas el titular se lea sin más: nunca se oculta
+ * contenido por un adorno.
+ */
+@keyframes hex-word {
+  from {
+    opacity: 0;
+    transform: translateY(0.55em);
+    filter: blur(6px);
+  }
+  to {
+    opacity: 1;
+    transform: none;
+    filter: blur(0);
+  }
+}
+
+[data-anim='on'] .anim-word {
+  display: inline-block;
+  animation: hex-word 0.7s cubic-bezier(0.22, 1, 0.36, 1) both;
+  animation-delay: calc(var(--wi, 0) * 55ms);
+}
+
+/**
+ * Marquee de la portada: dos cintas que se deslizan en direcciones opuestas.
+ *
+ * La cinta contiene la lista duplicada y se desplaza exactamente la mitad de su
+ * ancho, así que el bucle no da saltos. Los huecos entre piezas van como margen
+ * de cada pieza y no como `gap` del contenedor: un `gap` deja medio hueco fuera
+ * del -50 % y el bucle cabecea una vez por vuelta.
+ */
+@keyframes hex-marquee {
+  to {
+    transform: translateX(-50%);
+  }
+}
+
+.marquee-mask {
+  overflow: hidden;
+  mask-image: linear-gradient(90deg, transparent, #000 14%, #000 86%, transparent);
+  -webkit-mask-image: linear-gradient(90deg, transparent, #000 14%, #000 86%, transparent);
+}
+
+.marquee {
+  display: flex;
+  width: max-content;
+  will-change: transform;
+}
+
+[data-anim='on'] .marquee {
+  animation: hex-marquee var(--marquee-speed, 44s) linear infinite;
+}
+
+[data-anim='on'] .marquee-reverse {
+  animation-direction: reverse;
+}
+
+/* Al pasar el ratón la cinta se detiene: lo que cruza la vista se puede leer. */
+[data-anim='on'] .marquee-mask:hover .marquee {
+  animation-play-state: paused;
+}
+
 /* ------------------------------- Modo sobrio -------------------------------- */
 
 /**
@@ -871,10 +935,19 @@
   .anim-blink,
   .sprite-a,
   .sprite-b,
+  .marquee,
   /* Los iconos animados: quietos se leen igual, así que aquí sí vale apagarlos
      sin más — no nacen ocultos como el revelado. */
   [data-icon] {
     animation: none !important;
+  }
+  /* Las palabras del hero nacen ocultas dentro de su animación: quitársela sin
+     más las dejaría a mitad de entrada. Mejor que se lean enteras, quietas. */
+  [data-anim='on'] .anim-word {
+    animation: none;
+    opacity: 1;
+    transform: none;
+    filter: none;
   }
   /* El sprite se queda en su primer fotograma: el segundo iba encima. */
   .sprite-b {

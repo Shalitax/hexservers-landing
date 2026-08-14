@@ -1456,8 +1456,12 @@ export function createDefaultState() {
       /**
        * Cómo se listan los productos. Ver CATALOG_LAYOUTS en src/lib/layouts.js:
        * 'detalle' | 'rejilla' | 'lista' | 'escaparate' | 'tabla'.
+       *
+       * La rejilla buscable es la de fábrica: carátula, nombre y «desde $X», el
+       * patrón de los hosts de referencia. Las fichas detalladas siguen ahí para
+       * quien las elija desde el panel.
        */
-      layout: 'detalle',
+      layout: 'buscable',
       /* Si el visitante puede cambiar esa forma desde la propia página. */
       allowViewerLayout: true,
       /**

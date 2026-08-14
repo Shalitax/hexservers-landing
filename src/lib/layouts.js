@@ -16,7 +16,7 @@ export const CATALOG_LAYOUTS = [
     short: 'Detalle',
     icon: 'layout',
     description:
-      'Dos columnas con la ficha entera: descripción, argumentos de venta y precio. Luce con pocos productos.',
+      'Fichas grandes en dos columnas: portada, descripción y precio. Luce con pocos productos.',
   },
   {
     id: 'rejilla',

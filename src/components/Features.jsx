@@ -1,5 +1,4 @@
 import { useSite } from '../store/useSite.js'
-import { cx } from '../lib/utils.js'
 import { stagger } from '../lib/reveal.js'
 import SectionHeading from './SectionHeading.jsx'
 import Editable from './ui/Editable.jsx'
@@ -17,29 +16,23 @@ export default function Features() {
           subtitlePath="features.subtitle"
         />
 
-        {/* Complementos */}
-        <div className="mt-12 grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+        {/* Fila editorial: línea capilar arriba de cada motivo, sin tarjetas
+            alrededor. La página ya tiene bastante superficie, esto pesa menos. */}
+        <div className="mt-14 grid gap-x-8 gap-y-12 sm:grid-cols-2 lg:grid-cols-4">
           {features.items.map((item, index) => (
             <article
               key={item.id}
-              className="glass glass-hover group p-5"
+              className="group border-t border-line pt-6"
               data-reveal
               style={stagger(index)}
             >
-              <span
-                className={cx(
-                  'mb-4 grid size-11 place-items-center rounded-xl border border-line transition',
-                  item.image
-                    ? 'bg-surface-2 p-1.5'
-                    : 'bg-gradient-to-br from-hex-500/20 to-plasma-500/15 text-hex-300 group-hover:from-hex-500/30 group-hover:text-hex-200',
-                )}
-              >
-                <Glyph name={item.icon} image={item.image} size={item.image ? 28 : 19} alt="" />
+              <span className="grid size-11 place-items-center rounded-lg border border-line bg-surface-1 text-hex-300 transition group-hover:border-hex-500/40 group-hover:text-hex-200">
+                <Glyph name={item.icon} image={item.image} size={item.image ? 26 : 19} alt="" />
               </span>
               <Editable
                 path={`features.items.${index}.title`}
                 as="h3"
-                className="display text-base font-bold text-white"
+                className="display mt-4 text-base font-bold text-white"
               />
               <Editable
                 path={`features.items.${index}.description`}
